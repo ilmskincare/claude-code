@@ -1,0 +1,9 @@
+{
+  "name": "agent-mesh",
+  "version": "1.0.0",
+  "description": "Peer-to-peer communication channel for concurrent Claude Code agents. Agents running in parallel sessions can post messages to a shared filesystem bus and read messages addressed to them, enabling true collaborative multi-agent workflows.",
+  "author": {
+    "name": "Anthropic",
+    "email": "claude-code@anthropic.com"
+  }
+}

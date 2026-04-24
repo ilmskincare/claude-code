@@ -1,0 +1,9 @@
+{
+  "name": "context-budget",
+  "version": "1.0.0",
+  "description": "Context window budget awareness for Claude Code agents. Hooks into PreCompact to preserve critical state before compaction, and provides patterns for agents to reason about their remaining context budget to prevent silent late-task failures.",
+  "author": {
+    "name": "Anthropic",
+    "email": "claude-code@anthropic.com"
+  }
+}

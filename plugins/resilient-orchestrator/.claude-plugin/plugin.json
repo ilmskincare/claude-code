@@ -1,0 +1,9 @@
+{
+  "name": "resilient-orchestrator",
+  "version": "1.0.0",
+  "description": "Retry and fallback patterns for multi-agent orchestration. Provides circuit-breaker logic, exponential backoff, and fallback strategies so that a failing subagent does not silently break a multi-step workflow.",
+  "author": {
+    "name": "Anthropic",
+    "email": "claude-code@anthropic.com"
+  }
+}

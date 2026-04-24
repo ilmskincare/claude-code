@@ -1,0 +1,16 @@
+{
+  "description": "Eval loop plugin - grades task completion against rubric criteria before allowing session exit",
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/eval-stop.sh",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}

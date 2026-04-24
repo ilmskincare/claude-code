@@ -1,0 +1,9 @@
+{
+  "name": "eval-loop",
+  "version": "1.0.0",
+  "description": "Rubric-based evaluation loop that grades agent output against explicit success criteria before allowing task completion. Extends the Ralph Wiggum loop pattern with structured pass/fail scoring.",
+  "author": {
+    "name": "Anthropic",
+    "email": "claude-code@anthropic.com"
+  }
+}
