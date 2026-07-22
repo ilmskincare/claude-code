@@ -8,6 +8,8 @@ each Arena ID to real card data via Scryfall, and writes:
 
   collection_full.csv      - every owned card, all attributes
   collection_standard.csv  - only cards currently legal in Standard
+  collection_manabox.csv   - ManaBox collection import format (CSV)
+  collection_manabox.txt   - "4 Card Name (SET) 123" lines for text importers
   unresolved_ids.csv       - Arena IDs Scryfall could not resolve (if any)
 
 Usage:
@@ -199,6 +201,7 @@ def slim_card(card):
         f.get("mana_cost", "") for f in faces
     )
     return {
+        "scryfall_id": card.get("id", ""),
         "name": card.get("name", ""),
         "set": card.get("set", "").upper(),
         "collector_number": card.get("collector_number", ""),
@@ -215,9 +218,40 @@ def slim_card(card):
 
 def write_csv(path, rows):
     with path.open("w", newline="", encoding="utf-8") as fh:
-        writer = csv.DictWriter(fh, fieldnames=CSV_COLUMNS)
+        writer = csv.DictWriter(fh, fieldnames=CSV_COLUMNS, extrasaction="ignore")
         writer.writeheader()
         writer.writerows(rows)
+
+
+MANABOX_COLUMNS = [
+    "Name", "Set code", "Collector number", "Quantity", "Foil",
+    "Condition", "Language", "Scryfall ID",
+]
+
+
+def write_manabox(out_dir, rows):
+    """Write ManaBox collection-import CSV plus a plain text list.
+
+    The CSV matches ManaBox's own export headers so its column mapping is
+    automatic; Scryfall ID pins the exact printing. Arena's log doesn't
+    distinguish foils, so everything is exported as normal/near mint.
+    """
+    with (out_dir / "collection_manabox.csv").open(
+        "w", newline="", encoding="utf-8"
+    ) as fh:
+        writer = csv.writer(fh)
+        writer.writerow(MANABOX_COLUMNS)
+        for r in rows:
+            writer.writerow([
+                r["name"], r["set"].lower(), r["collector_number"],
+                r["count"], "normal", "near_mint", "en",
+                r.get("scryfall_id", ""),
+            ])
+    with (out_dir / "collection_manabox.txt").open("w", encoding="utf-8") as fh:
+        for r in rows:
+            fh.write(
+                f'{r["count"]} {r["name"]} ({r["set"]}) {r["collector_number"]}\n'
+            )
 
 
 def main():
@@ -257,6 +291,7 @@ def main():
     write_csv(args.out_dir / "collection_full.csv", rows)
     std_rows = [r for r in rows if r["standard_legal"]]
     write_csv(args.out_dir / "collection_standard.csv", std_rows)
+    write_manabox(args.out_dir, rows)
     if missing:
         with (args.out_dir / "unresolved_ids.csv").open("w") as fh:
             fh.write("arena_id,count\n")

@@ -57,6 +57,10 @@ The script (stdlib only, Python 3.8+):
   - `collection_full.csv` — every owned card: count, name, set, rarity, mana
     cost, cmc, type line, colors, Standard legality, oracle text.
   - `collection_standard.csv` — only cards currently Standard-legal.
+  - `collection_manabox.csv` — ManaBox collection import (headers match
+    ManaBox's own export; includes Scryfall IDs so printings map exactly).
+  - `collection_manabox.txt` — plain `4 Card Name (SET) 123` lines for
+    text-based importers (ManaBox deck import, Moxfield, Archidekt).
   - `unresolved_ids.csv` — any Arena IDs Scryfall doesn't know (usually
     cosmetic variants or brand-new set cards); report these to the user
     rather than silently dropping them.
@@ -73,6 +77,12 @@ Send the user `collection_full.csv` and `collection_standard.csv` (via
 SendUserFile or equivalent) and summarise: unique cards, total copies,
 Standard-legal counts by rarity and colour. Offer a nicer format (spreadsheet,
 sortable HTML artifact) if useful.
+
+If the user wants the collection in **ManaBox**: send `collection_manabox.csv`
+and tell them to open ManaBox → Collection tab → import (⤓) → **Import from
+CSV** and pick the file — its "text or link" prompt is the *deck* importer,
+which is the wrong tool for a large collection (though `collection_manabox.txt`
+pasted there works for smaller lists or single decks).
 
 ### Step 4 — Deck building (if asked)
 
