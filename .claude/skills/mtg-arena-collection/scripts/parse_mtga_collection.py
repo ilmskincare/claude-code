@@ -14,6 +14,11 @@ each Arena ID to real card data via Scryfall, and writes:
 
 Usage:
   python3 parse_mtga_collection.py PLAYER_LOG [--out-dir DIR] [--offline]
+  python3 parse_mtga_collection.py --names-csv CARDS.csv [--out-dir DIR]
+
+The --names-csv mode takes a headerless CSV of "name,count" lines (e.g.
+transcribed from collection screenshots) instead of a Player.log, resolving
+each name via Scryfall's fuzzy lookup.
 
 Only the Python standard library is required. Scryfall lookups are cached
 in <out-dir>/scryfall_cache.json so re-runs are instant and offline-safe.
@@ -26,6 +31,7 @@ import re
 import sys
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from pathlib import Path
 
@@ -33,6 +39,7 @@ SCRYFALL_SEARCH_URL = (
     "https://api.scryfall.com/cards/search?q=game%3Aarena&unique=prints"
 )
 SCRYFALL_ARENA_URL = "https://api.scryfall.com/cards/arena/{}"
+SCRYFALL_NAMED_URL = "https://api.scryfall.com/cards/named?fuzzy={}"
 REQUEST_DELAY_S = 0.15   # Scryfall asks for 50-100ms between requests
 USER_AGENT = "mtga-collection-skill/1.0 (Claude Code skill; personal collection export)"
 
@@ -254,13 +261,73 @@ def write_manabox(out_dir, rows):
             )
 
 
+def names_lookup(name_counts, cache_path):
+    """Resolve card names (e.g. from screenshots) via Scryfall fuzzy lookup.
+
+    Returns (rows, unresolved_names). Unlike the log path there is no Arena
+    ID, so the printing is whatever Scryfall returns for the name.
+    """
+    cache = json.loads(cache_path.read_text()) if cache_path.exists() else {}
+    rows, unresolved = [], []
+    todo = [n for n, _ in name_counts if n not in cache]
+    for i, name in enumerate(todo, 1):
+        card = http_get_json(
+            SCRYFALL_NAMED_URL.format(urllib.parse.quote(name))
+        )
+        cache[name] = slim_card(card) if card else None
+        if i % 25 == 0 or i == len(todo):
+            print(f"  Scryfall name lookup: {i}/{len(todo)}", file=sys.stderr)
+        time.sleep(REQUEST_DELAY_S)
+    cache_path.write_text(json.dumps(cache))
+    for name, count in name_counts:
+        card = cache.get(name)
+        if card:
+            rows.append({"count": count, "arena_id": "", **card})
+        else:
+            unresolved.append(name)
+    return rows, unresolved
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("log", type=Path, help="Path to MTG Arena Player.log")
+    ap.add_argument("log", type=Path, nargs="?",
+                    help="Path to MTG Arena Player.log")
+    ap.add_argument("--names-csv", type=Path,
+                    help="Headerless CSV of name,count lines instead of a log")
     ap.add_argument("--out-dir", type=Path, default=Path("mtga_collection"))
     ap.add_argument("--offline", action="store_true",
                     help="Skip Scryfall network calls; use cache only")
     args = ap.parse_args()
+    if bool(args.log) == bool(args.names_csv):
+        ap.error("provide exactly one of PLAYER_LOG or --names-csv")
+
+    if args.names_csv:
+        args.out_dir.mkdir(parents=True, exist_ok=True)
+        with args.names_csv.open(encoding="utf-8") as fh:
+            name_counts = [
+                (row[0].strip(), int(row[1]) if len(row) > 1 else 1)
+                for row in csv.reader(fh) if row and row[0].strip()
+            ]
+        rows, unresolved = names_lookup(
+            name_counts, args.out_dir / "scryfall_name_cache.json"
+        )
+        rows.sort(key=lambda r: (not r["standard_legal"], r["name"]))
+        write_csv(args.out_dir / "collection_full.csv", rows)
+        std_rows = [r for r in rows if r["standard_legal"]]
+        write_csv(args.out_dir / "collection_standard.csv", std_rows)
+        write_manabox(args.out_dir, rows)
+        if unresolved:
+            (args.out_dir / "unresolved_names.txt").write_text(
+                "\n".join(unresolved) + "\n"
+            )
+        print(json.dumps({
+            "unique_cards": len(rows),
+            "total_copies": sum(r["count"] for r in rows),
+            "standard_unique": len(std_rows),
+            "unresolved_names": unresolved,
+            "out_dir": str(args.out_dir),
+        }, indent=2))
+        return
 
     text = args.log.read_text(encoding="utf-8", errors="replace")
     collection = extract_collection(text)

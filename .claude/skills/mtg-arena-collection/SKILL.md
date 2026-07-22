@@ -21,6 +21,11 @@ user can browse and build decks from.
 
 ## Workflow
 
+There are two input routes: the **Player.log** (preferred — exact and
+complete, needs a PC or Mac once) and **collection screenshots** (for
+iPad/mobile-only users — Apple sandboxes the app's log so it cannot be
+reached from the device itself).
+
 ### Step 1 — Get the Player.log from the user
 
 Ask the user to do this on their gaming machine (one-time setup):
@@ -38,6 +43,38 @@ Ask the user to do this on their gaming machine (one-time setup):
 
 If running locally on the same machine as Arena, skip the upload and pass the
 path directly.
+
+### Step 1 (alternative) — Collection screenshots (iPad/mobile only)
+
+If the user genuinely has no access to any PC or Mac, extract from
+screenshots instead:
+
+1. In Arena on the iPad: **Decks → Collection**. Set the **CRAFT toggle off /
+   owned filter on** so only owned cards show, and if the goal is a Standard
+   deck, apply the **Standard** format filter to cut the page count.
+2. Screenshot every page of the grid (side button + volume up), swiping
+   through in order. Batches of 10–20 screenshots per message are fine.
+3. Read each screenshot carefully: record every card's **name** and its
+   **owned count** (the ×2/×3/×4 badge on the card; no badge with a single
+   art frame means 1 copy). Watch for split/adventure cards — record the
+   full name. Aggregate across images, deduplicate (pages can overlap),
+   and confirm the total unique count with the user against what Arena's
+   collection counter shows.
+4. Write the results to a headerless CSV of `name,count` lines and run:
+
+   ```bash
+   python3 scripts/parse_mtga_collection.py --names-csv cards.csv --out-dir mtga_collection
+   ```
+
+   This resolves names via Scryfall fuzzy lookup (cached in
+   `scryfall_name_cache.json`), writes the same output files as the log
+   route, and lists any unmatched names in `unresolved_names.txt` — show
+   those to the user for correction rather than dropping them.
+
+Caveats to state up front: screenshot extraction is only as complete as the
+pages captured, and exact printings/set codes are Scryfall's best guess since
+the screenshots don't reliably show them (counts and names are what matter
+for deck building).
 
 ### Step 2 — Parse it
 
