@@ -1,0 +1,8 @@
+{
+  "name": "creative-studio",
+  "version": "1.0.0",
+  "description": "Image generation with OpenAI GPT Image (ChatGPT) and Google Gemini, plus a playbook for using the full Adobe connector (Express, Photoshop-style editing, Illustrator vectors, Firefly Boards, fonts, PDF, video)",
+  "author": {
+    "name": "Nikki Lloyd"
+  }
+}

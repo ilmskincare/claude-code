@@ -145,6 +145,16 @@
       },
       "source": "./plugins/security-guidance",
       "category": "security"
+    },
+    {
+      "name": "creative-studio",
+      "description": "Image generation with OpenAI GPT Image and Google Gemini, plus a playbook for the full Adobe connector (Express, Photoshop-style editing, Illustrator vectors, Firefly Boards)",
+      "version": "1.0.0",
+      "author": {
+        "name": "Nikki Lloyd"
+      },
+      "source": "./plugins/creative-studio",
+      "category": "productivity"
     }
   ]
 }
