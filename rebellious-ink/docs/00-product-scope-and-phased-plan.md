@@ -116,3 +116,6 @@ Decisions taken with the owner before building: every game is free to play and o
 - **Admin and artists**: `/owner/flash` (everyone's) and `/studio/flash` (own): add single designs, upload a sheet and drag hotspots over each design, retire. Shareable sheets with prices rendered from the live catalogue: Instagram feed and story images and an A4 PDF, each with a QR code per design.
 - **Not yet**: the games themselves (gumball, wheel, tarot, slots, claw), drops, advent, Needle Town editions and certificates, touch-ups, crown card.
 
+## Apprenticeship catalogue v2 (21 October 2026)
+
+The apprentice portal's skills catalogue was cross-checked against the owner's comprehensive syllabus and rebuilt as prerequisites plus five stages, 118 items, adapted to UK practice (council registration, UK infection-control training, NHS hepatitis B, COSHH). Every v1 item and all recorded progress is kept. See `docs/11-apprenticeship-cross-check.md`.

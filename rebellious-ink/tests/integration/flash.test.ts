@@ -25,7 +25,7 @@ describe("flash catalogue pricing", () => {
     const d1 = await createDesign(artistA, { ...base, artistId: s.artist.id }, png());
     const d2 = await createDesign(artistA, { ...base, title: "Dagger", priceSmall: 7500, artistId: s.artist.id }, png());
     await expect(createDesign(artistA, { ...base, title: "Hijack", artistId: s.artistB.id }, png())).rejects.toThrow(/permission/i);
-    let { items, settings } = await catalogue();
+    const first = await catalogue(); let items = first.items; const settings = first.settings;
     expect(items.find((i) => i.id === d1.id)!.prices).toMatchObject({ small: 6000, palm: 11000, apprenticeSmall: null });
     expect(items.find((i) => i.id === d2.id)!.prices.small).toBe(7500);
     expect(priceFor(d1, "small", "artist", settings)).toMatchObject({ totalPence: 6000, depositPence: 2000, estimatedMinutes: 60, maxCm: 6 });

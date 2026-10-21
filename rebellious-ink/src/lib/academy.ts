@@ -3,7 +3,7 @@ import { db } from "./db";
 import { audit } from "./audit";
 import { can, type Principal, ForbiddenError, NotFoundError, ValidationError } from "./rbac";
 import { assertAllowedUpload, newStorageKey, putObject } from "./storage";
-import { SKILL_AREAS } from "@/content/skills";
+import { SKILL_AREAS, STAGE_LABELS } from "@/content/skills";
 
 export const DEFAULT_MINIMUM_HOURS = 500;
 
@@ -48,7 +48,7 @@ async function minimumMinutes() {
 export async function apprenticeDashboard(apprenticeUserId: string) {
   const [user, skills, progress, logs, evidence, signoff, minMinutes] = await Promise.all([
     db.user.findUnique({ where: { id: apprenticeUserId }, include: { artistProfile: { include: { supervisor: true } } } }),
-    db.skill.findMany({ orderBy: [{ area: "asc" }, { sortOrder: "asc" }] }),
+    db.skill.findMany({ where: { isActive: true }, orderBy: [{ stage: "asc" }, { sortOrder: "asc" }] }),
     db.skillProgress.findMany({ where: { apprenticeId: apprenticeUserId }, include: { signedOffBy: { select: { name: true } } } }),
     db.practiceLog.findMany({ where: { apprenticeId: apprenticeUserId }, include: { supervisor: true }, orderBy: { date: "desc" }, take: 100 }),
     db.apprenticeEvidence.findMany({ where: { apprenticeId: apprenticeUserId }, include: { asset: true, skill: true }, orderBy: { createdAt: "desc" }, take: 60 }),
@@ -57,14 +57,21 @@ export async function apprenticeDashboard(apprenticeUserId: string) {
   ]);
   if (!user) throw new NotFoundError("Apprentice not found");
   const byId = new Map(progress.map((x) => [x.skillId, x]));
-  const areas = Object.entries(SKILL_AREAS).map(([key, label]) => ({ key, label, skills: skills.filter((s) => s.area === key).map((s) => ({ ...s, progress: byId.get(s.id) ?? null })) })).filter((a) => a.skills.length);
+  // Stage, then area within the stage, in catalogue order.
+  const stages = Object.entries(STAGE_LABELS).map(([st, label]) => {
+    const stage = Number(st);
+    const inStage = skills.filter((s) => s.stage === stage);
+    const areaKeys = [...new Set(inStage.map((s) => s.area))];
+    return { stage, label, areas: areaKeys.map((key) => ({ key, label: SKILL_AREAS[key] ?? key, skills: inStage.filter((s) => s.area === key).map((s) => ({ ...s, progress: byId.get(s.id) ?? null })) })) };
+  }).filter((st) => st.areas.length);
+  const areas = stages.flatMap((st) => st.areas);
   const verifiedMinutes = logs.filter((l) => l.verifiedAt).reduce((s, l) => s + l.minutes, 0);
   const pendingMinutes = logs.filter((l) => !l.verifiedAt && !l.rejectedNote).reduce((s, l) => s + l.minutes, 0);
   const core = skills.filter((s) => s.isCore);
   const coreCompetent = core.filter((s) => byId.get(s.id)?.status === "COMPETENT").length;
   const competent = skills.filter((s) => byId.get(s.id)?.status === "COMPETENT").length;
   return {
-    user, areas, logs, evidence, signoff,
+    user, stages, areas, logs, evidence, signoff,
     verifiedMinutes, pendingMinutes, minMinutes,
     coreTotal: core.length, coreCompetent, total: skills.length, competent,
     readyForJunior: !signoff && verifiedMinutes >= minMinutes && coreCompetent === core.length,
@@ -146,12 +153,12 @@ export async function signOffAsJuniorArtist(p: Principal, apprenticeUserId: stri
 export async function listApprentices() {
   const members = await db.membership.findMany({ where: { roles: { has: "APPRENTICE" }, status: "ACTIVE" }, include: { user: { include: { artistProfile: { include: { supervisor: true } }, juniorSignoff: true } } } });
   const minMinutes = await minimumMinutes();
-  const coreTotal = await db.skill.count({ where: { isCore: true } });
+  const coreTotal = await db.skill.count({ where: { isCore: true, isActive: true } });
   return Promise.all(members.map(async (m) => {
     const [verified, pendingLogs, competent] = await Promise.all([
       db.practiceLog.aggregate({ _sum: { minutes: true }, where: { apprenticeId: m.userId, verifiedAt: { not: null } } }),
       db.practiceLog.count({ where: { apprenticeId: m.userId, verifiedAt: null, rejectedNote: null } }),
-      db.skillProgress.count({ where: { apprenticeId: m.userId, status: "COMPETENT", skill: { isCore: true } } }),
+      db.skillProgress.count({ where: { apprenticeId: m.userId, status: "COMPETENT", skill: { isCore: true, isActive: true } } }),
     ]);
     const review = await db.skillProgress.count({ where: { apprenticeId: m.userId, status: "READY_FOR_REVIEW" } });
     return { user: m.user, verifiedMinutes: verified._sum.minutes ?? 0, minMinutes, pendingLogs, coreCompetent: competent, coreTotal, readyForReview: review };

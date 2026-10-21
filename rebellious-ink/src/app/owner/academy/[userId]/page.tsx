@@ -21,7 +21,7 @@ export default async function ApprenticeReview({ params }: { params: Promise<{ u
     <h2 className="text-2xl font-bold mb-3">Hours to verify</h2>
     <HoursTable apprenticeId={userId} logs={v.logs} mentorMode />
     <h2 className="text-2xl font-bold mt-10 mb-3">Skills</h2>
-    <SkillsBoard apprenticeId={userId} areas={v.areas} mentorMode />
+    <SkillsBoard apprenticeId={userId} stages={v.stages} mentorMode />
     <h2 className="text-2xl font-bold mt-10 mb-3">Progression photos</h2>
     <EvidenceGrid apprenticeId={userId} items={v.evidence} mentorMode />
     {can(p, "studio.manage") && !d.signoff && <div className="mt-10"><JuniorSignoffForm apprenticeId={userId} ready={d.readyForJunior} blockers={v.blockers} /></div>}

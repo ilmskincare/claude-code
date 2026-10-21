@@ -1748,13 +1748,16 @@ model SocialPost {
 // ─── Apprentice portal ────────────────────────────────────────────────────────
 
 model Skill {
-  id          String   @id @default(cuid())
-  key         String   @unique
-  area        String   // hygiene | client_service | fundamentals | equipment | linework | shading | colour | stencil | design | anatomy | operations | photography | aftercare | communication | portfolio | piercing
-  title       String
-  description String?
-  isCore      Boolean  @default(true)
-  sortOrder   Int      @default(0)
+  id           String   @id @default(cuid())
+  key          String   @unique
+  area         String   // see SKILL_AREAS in src/content/skills.ts
+  stage        Int      @default(1) // 0 = prerequisites, 1..5 = apprenticeship stages
+  title        String
+  description  String?
+  evidenceType String?  // observation | written | certificate | practical | portfolio
+  isCore       Boolean  @default(true)
+  isActive     Boolean  @default(true) // retired catalogue items keep their progress history but are hidden
+  sortOrder    Int      @default(0)
 
   progress    SkillProgress[]
   evidence    ApprenticeEvidence[]

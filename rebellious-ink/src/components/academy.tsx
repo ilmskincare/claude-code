@@ -4,8 +4,9 @@ import { useActionState } from "react";
 import { logHoursAction, addEvidenceAction, updateSkillAction, verifyHoursAction, commentEvidenceAction, juniorSignoffAction } from "@/app/actions/academy";
 import { Alert } from "./ui";
 
-export type SkillRow = { id: string; key: string; title: string; description: string | null; isCore: boolean; progress: { status: string; apprenticeNote: string | null; mentorNote: string | null; signedOffAt: string | null; signedOffByName: string | null } | null };
+export type SkillRow = { id: string; key: string; title: string; description: string | null; isCore: boolean; evidenceType?: string | null; progress: { status: string; apprenticeNote: string | null; mentorNote: string | null; signedOffAt: string | null; signedOffByName: string | null } | null };
 export type AreaRow = { key: string; label: string; skills: SkillRow[] };
+export type StageRow = { stage: number; label: string; areas: AreaRow[]; total: number; competent: number };
 export type LogRow = { id: string; date: string; minutes: number; activity: string; notes: string | null; supervisorName: string | null; verifiedAt: string | null; rejectedNote: string | null };
 export type EvidenceRow = { id: string; url: string; caption: string | null; stage: string | null; skillTitle: string | null; mentorComment: string | null; createdAt: string };
 
@@ -48,16 +49,33 @@ export function EvidenceForm({ apprenticeId, skills }: { apprenticeId: string; s
   );
 }
 
-export function SkillsBoard({ apprenticeId, areas, mentorMode }: { apprenticeId: string; areas: AreaRow[]; mentorMode: boolean }) {
+const EVIDENCE: Record<string, string> = { observation: "mentor observes", written: "written work", certificate: "certificate on file", practical: "practical demonstration", portfolio: "portfolio evidence" };
+
+/** Stages collapse so a long catalogue stays readable; the current stage (first with work outstanding) opens by default. */
+export function SkillsBoard({ apprenticeId, stages, mentorMode }: { apprenticeId: string; stages: StageRow[]; mentorMode: boolean }) {
+  const currentStage = stages.find((st) => st.competent < st.total)?.stage ?? stages[stages.length - 1]?.stage;
   return (
     <div className="space-y-4">
-      {areas.map((a) => (
-        <section key={a.key} className="card p-4">
+      {stages.map((st) => (
+        <details key={st.stage} className="card p-4" open={st.stage === currentStage}>
+          <summary className="cursor-pointer flex flex-wrap items-center justify-between gap-2"><h2 className="font-bold text-xl">{st.label}</h2><span className={`badge ${st.competent === st.total ? "badge-acid" : "badge-muted"}`}>{st.competent} of {st.total} signed off</span></summary>
+          <div className="mt-3 space-y-4">
+          {st.areas.map((a) => <AreaSection key={a.key} a={a} apprenticeId={apprenticeId} mentorMode={mentorMode} />)}
+          </div>
+        </details>
+      ))}
+    </div>
+  );
+}
+
+function AreaSection({ a, apprenticeId, mentorMode }: { a: AreaRow; apprenticeId: string; mentorMode: boolean }) {
+  return (
+        <section key={a.key} className="border-t border-graphite pt-3">
           <h3 className="font-bold text-lg">{a.label}</h3>
           <ul className="mt-2 divide-y divide-graphite">
             {a.skills.map((s) => { const st = s.progress?.status ?? "NOT_STARTED"; const [label, tone] = STATUS[st]; return (
               <li key={s.id} className="py-2 flex flex-wrap items-start gap-2">
-                <div className="flex-1 min-w-[12rem]"><p className="font-semibold">{s.title}{!s.isCore && <span className="hint"> · optional</span>}</p><p className="hint">{s.description}</p>{s.progress?.apprenticeNote && <p className="text-sm mt-1">Apprentice: {s.progress.apprenticeNote}</p>}{s.progress?.mentorNote && <p className="text-sm mt-1">Mentor: {s.progress.mentorNote}</p>}{s.progress?.signedOffAt && <p className="hint">Signed off {d(s.progress.signedOffAt)}{s.progress.signedOffByName ? ` by ${s.progress.signedOffByName}` : ""}</p>}</div>
+                <div className="flex-1 min-w-[12rem]"><p className="font-semibold">{s.title}{!s.isCore && <span className="hint"> · optional</span>}{s.evidenceType && <span className="hint"> · {EVIDENCE[s.evidenceType] ?? s.evidenceType}</span>}</p><p className="hint">{s.description}</p>{s.progress?.apprenticeNote && <p className="text-sm mt-1">Apprentice: {s.progress.apprenticeNote}</p>}{s.progress?.mentorNote && <p className="text-sm mt-1">Mentor: {s.progress.mentorNote}</p>}{s.progress?.signedOffAt && <p className="hint">Signed off {d(s.progress.signedOffAt)}{s.progress.signedOffByName ? ` by ${s.progress.signedOffByName}` : ""}</p>}</div>
                 <span className={`badge ${tone}`}>{label}</span>
                 {!mentorMode && st !== "COMPETENT" && (
                   <form action={updateSkillAction} className="flex gap-1 items-center"><input type="hidden" name="apprenticeId" value={apprenticeId} /><input type="hidden" name="skillId" value={s.id} /><input name="note" className="input !min-h-9 !py-1 text-sm w-40" placeholder="note" />{st !== "READY_FOR_REVIEW" && st !== "IN_PROGRESS" && <button name="status" value="IN_PROGRESS" className="btn btn-secondary !min-h-9 !py-1 text-sm">Start</button>}{st !== "READY_FOR_REVIEW" && <button name="status" value="READY_FOR_REVIEW" className="btn btn-primary !min-h-9 !py-1 text-sm">Ready for review</button>}</form>
@@ -68,8 +86,6 @@ export function SkillsBoard({ apprenticeId, areas, mentorMode }: { apprenticeId:
               </li>); })}
           </ul>
         </section>
-      ))}
-    </div>
   );
 }
 

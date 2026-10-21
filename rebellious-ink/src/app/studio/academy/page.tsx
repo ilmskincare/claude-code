@@ -20,7 +20,7 @@ export default async function AcademyPage() {
       <section className="card p-5"><h2 className="text-xl font-bold mb-2">Add progress photos</h2><EvidenceForm apprenticeId={p.userId} skills={v.allSkills} /></section>
     </div>
     <h2 className="text-2xl font-bold mb-3">Skills</h2>
-    <SkillsBoard apprenticeId={p.userId} areas={v.areas} mentorMode={false} />
+    <SkillsBoard apprenticeId={p.userId} stages={v.stages} mentorMode={false} />
     <h2 className="text-2xl font-bold mt-10 mb-3">Hours log</h2>
     <HoursTable apprenticeId={p.userId} logs={v.logs} mentorMode={false} />
     <h2 className="text-2xl font-bold mt-10 mb-3">Progression photos</h2>

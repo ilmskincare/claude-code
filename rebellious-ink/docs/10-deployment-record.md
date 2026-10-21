@@ -146,3 +146,9 @@ Deployed (`vercel deploy --prod`) and verified in a real browser against https:/
 
 Note: during one full local test run the marketing integration test failed once while the Playwright suite was running at the same time; it passed on its own and in the next full run (45/45). The two suites use different databases, so this is logged as unexplained rather than fixed.
 
+## Staging update, 21 October 2026, late evening: apprenticeship catalogue v2
+
+- Migration `20261021144800_apprenticeship_stages` applied and recorded (seven migrations listed): `stage`, `evidenceType` and `isActive` on `Skill`.
+- Catalogue upserted by key (run twice, same counts): 118 active items, 89 core, 0 retired; the 4 existing progress rows survived and still show on the board.
+- Apprentice portal verified on staging: six collapsible stages with "n of m signed off" counts, prerequisites open first, "Hand hygiene and glove use" still Competent (`staging-apprentice-stages.png`).
+

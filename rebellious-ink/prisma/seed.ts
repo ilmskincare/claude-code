@@ -109,8 +109,11 @@ async function main() {
   }
   // Skills catalogue + apprentice progress
   for (const [i, sk] of SEED_SKILLS.entries()) {
-    await db.skill.upsert({ where: { key: sk.key }, create: { key: sk.key, area: sk.area, title: sk.title, description: sk.description, isCore: sk.isCore ?? true, sortOrder: i }, update: { title: sk.title, description: sk.description, isCore: sk.isCore ?? true, sortOrder: i, area: sk.area } });
+    const data = { area: sk.area, stage: sk.stage, title: sk.title, description: sk.description, evidenceType: sk.evidenceType ?? null, isCore: sk.isCore ?? true, isActive: true, sortOrder: i };
+    await db.skill.upsert({ where: { key: sk.key }, create: { key: sk.key, ...data }, update: data });
   }
+  // Catalogue items no longer in the list are retired, not deleted, so recorded progress survives.
+  await db.skill.updateMany({ where: { key: { notIn: SEED_SKILLS.map((x) => x.key) } }, data: { isActive: false } });
   const skillByKey = Object.fromEntries((await db.skill.findMany()).map((x) => [x.key, x.id]));
   if ((await db.skillProgress.count({ where: { apprenticeId: apprentice.id } })) === 0) {
     await db.skillProgress.createMany({ data: [
