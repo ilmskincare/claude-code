@@ -102,6 +102,13 @@ model User {
   signatures      Signature[]
   healthRecords   ClientHealthRecord[]
   healthAccess    HealthAccessLog[]
+  skillProgress   SkillProgress[]      @relation("ApprenticeProgress")
+  skillSignoffs   SkillProgress[]      @relation("SkillSignoffs")
+  practiceLogs    PracticeLog[]        @relation("ApprenticeLogs")
+  verifiedLogs    PracticeLog[]        @relation("LogVerifier")
+  evidence        ApprenticeEvidence[] @relation("ApprenticeEvidence")
+  juniorSignoff   JuniorArtistSignoff? @relation("JuniorSignoff")
+  juniorSignoffsGiven JuniorArtistSignoff[] @relation("JuniorSignoffBy")
 
   @@schema("public")
 }
@@ -238,6 +245,7 @@ model Invitation {
 
 enum PractitionerKind {
   TATTOO_ARTIST
+  JUNIOR_ARTIST
   PIERCER
   APPRENTICE
 
@@ -280,6 +288,8 @@ model ArtistProfile {
   payouts           Payout[]
   flashDesigns      FlashDesign[]
   applications      ArtistApplication[]
+  stockMovements    StockMovement[]
+  supervisedLogs    PracticeLog[]       @relation("LogSupervisor")
 
   @@schema("public")
 }
@@ -802,6 +812,7 @@ model ImageAsset {
 
   permissions     ImagePermission[]
   portfolioItems  PortfolioItem[]
+  evidence        ApprenticeEvidence[]
 
   @@schema("public")
 }
@@ -995,6 +1006,9 @@ enum LedgerAccount {
   STRIPE_CLEARING
   EXPENSES
   VAT
+  ARTIST_RECEIVABLE
+  STOCK_SALES
+  INVENTORY
 
   @@schema("public")
 }
@@ -1054,6 +1068,9 @@ model CompensationModel {
   eligibleBase       Json                  @default("{}")
   rentDueWeekday     Int?                  // 1 = Monday
   vatOnRent          Boolean               @default(false)
+  /// Consumables from studio stock are included in this arrangement (issued free); otherwise the artist buys them.
+  suppliesIncluded   Boolean               @default(false)
+  suppliesNote       String?
   notes              String?
   effectiveFrom      DateTime              @db.Date
   effectiveTo        DateTime?             @db.Date
@@ -1419,14 +1436,22 @@ model InventoryLot {
 }
 
 model StockMovement {
-  id        String       @id @default(cuid())
-  lotId     String
-  lot       InventoryLot @relation(fields: [lotId], references: [id])
-  delta     Int
-  reason    String       // received | used_in_session | adjustment | shrinkage | transfer | count
-  reference String?
-  actorId   String?
-  createdAt DateTime     @default(now()) @db.Timestamptz(3)
+  id             String         @id @default(cuid())
+  lotId          String
+  lot            InventoryLot   @relation(fields: [lotId], references: [id])
+  delta          Int
+  reason         String         // received | used_in_session | adjustment | shrinkage | transfer | count | issued_to_artist | sold_to_artist
+  reference      String?
+  actorId        String?
+  /// Set when stock leaves to a practitioner (issued under their arrangement, or sold to them).
+  artistId       String?
+  artist         ArtistProfile? @relation(fields: [artistId], references: [id])
+  unitPricePence Int?           // only for sold_to_artist
+  ledgerGroupId  String?        // journal posted for a sale
+  note           String?
+  createdAt      DateTime       @default(now()) @db.Timestamptz(3)
+
+  @@index([artistId, createdAt])
 
   @@schema("public")
 }
@@ -1576,6 +1601,107 @@ model MentorSignoff {
   note        String?
   expiresAt   DateTime? @db.Date
   createdAt   DateTime  @default(now()) @db.Timestamptz(3)
+
+  @@schema("public")
+}
+
+// ─── Apprentice portal ────────────────────────────────────────────────────────
+
+model Skill {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  area        String   // hygiene | client_service | fundamentals | equipment | linework | shading | colour | stencil | design | anatomy | operations | photography | aftercare | communication | portfolio | piercing
+  title       String
+  description String?
+  isCore      Boolean  @default(true)
+  sortOrder   Int      @default(0)
+
+  progress    SkillProgress[]
+  evidence    ApprenticeEvidence[]
+
+  @@schema("public")
+}
+
+enum SkillStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  READY_FOR_REVIEW
+  COMPETENT
+  RENEWAL_DUE
+
+  @@schema("public")
+}
+
+/// Only a mentor/supervisor/owner may set COMPETENT; apprentices can only mark READY_FOR_REVIEW.
+model SkillProgress {
+  id              String      @id @default(cuid())
+  apprenticeId    String
+  apprentice      User        @relation("ApprenticeProgress", fields: [apprenticeId], references: [id], onDelete: Cascade)
+  skillId         String
+  skill           Skill       @relation(fields: [skillId], references: [id])
+  status          SkillStatus @default(NOT_STARTED)
+  apprenticeNote  String?
+  mentorNote      String?
+  signedOffById   String?
+  signedOffBy     User?       @relation("SkillSignoffs", fields: [signedOffById], references: [id])
+  signedOffAt     DateTime?   @db.Timestamptz(3)
+  updatedAt       DateTime    @updatedAt @db.Timestamptz(3)
+
+  @@unique([apprenticeId, skillId])
+  @@schema("public")
+}
+
+/// Supervised practice hours. Counted towards sign-off only once verified by a mentor.
+model PracticeLog {
+  id            String         @id @default(cuid())
+  apprenticeId  String
+  apprentice    User           @relation("ApprenticeLogs", fields: [apprenticeId], references: [id], onDelete: Cascade)
+  date          DateTime       @db.Date
+  minutes       Int
+  activity      String
+  notes         String?
+  supervisorId  String?
+  supervisor    ArtistProfile? @relation("LogSupervisor", fields: [supervisorId], references: [id])
+  verifiedById  String?
+  verifiedBy    User?          @relation("LogVerifier", fields: [verifiedById], references: [id])
+  verifiedAt    DateTime?      @db.Timestamptz(3)
+  rejectedNote  String?
+  createdAt     DateTime       @default(now()) @db.Timestamptz(3)
+
+  @@index([apprenticeId, date])
+  @@schema("public")
+}
+
+/// Photos of practice work and progression. Private training material, never published.
+model ApprenticeEvidence {
+  id           String      @id @default(cuid())
+  apprenticeId String
+  apprentice   User        @relation("ApprenticeEvidence", fields: [apprenticeId], references: [id], onDelete: Cascade)
+  assetId      String
+  asset        ImageAsset  @relation(fields: [assetId], references: [id])
+  skillId      String?
+  skill        Skill?      @relation(fields: [skillId], references: [id])
+  caption      String?
+  stage        String?     // practice_skin | supervised_client | design | other
+  mentorComment String?
+  createdAt    DateTime    @default(now()) @db.Timestamptz(3)
+
+  @@index([apprenticeId, createdAt])
+  @@schema("public")
+}
+
+/// The owner's formal decision that an apprentice may work as a junior artist. Immutable.
+model JuniorArtistSignoff {
+  id               String   @id @default(cuid())
+  apprenticeId     String   @unique
+  apprentice       User     @relation("JuniorSignoff", fields: [apprenticeId], references: [id])
+  signedOffById    String
+  signedOffBy      User     @relation("JuniorSignoffBy", fields: [signedOffById], references: [id])
+  verifiedMinutes  Int
+  skillsSnapshot   Json
+  conditions       String?
+  statement        String
+  createdAt        DateTime @default(now()) @db.Timestamptz(3)
 
   @@schema("public")
 }

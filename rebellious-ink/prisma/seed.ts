@@ -6,6 +6,7 @@ import "dotenv/config";
 import { PrismaClient } from "../src/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { SEED_DOCUMENTS } from "../src/content/documents";
+import { SEED_SKILLS } from "../src/content/skills";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { DateTime } from "luxon";
@@ -67,8 +68,8 @@ async function main() {
   // Compensation models (effective-dated; A = chair rent £200/wk, B = 60/40).
   const mA = await db.membership.findUniqueOrThrow({ where: { userId_studioId: { userId: artistA.id, studioId: studio.id } } });
   const mB = await db.membership.findUniqueOrThrow({ where: { userId_studioId: { userId: artistB.id, studioId: studio.id } } });
-  if (!(await db.compensationModel.findFirst({ where: { membershipId: mA.id } }))) await db.compensationModel.create({ data: { membershipId: mA.id, type: "CHAIR_RENT_WEEKLY", weeklyRentPence: 20000, rentDueWeekday: 1, effectiveFrom: new Date("2026-01-05"), eligibleBase: {}, notes: "TEST: artist retains 100% of sales under own merchant account (to be confirmed)." } });
-  if (!(await db.compensationModel.findFirst({ where: { membershipId: mB.id } }))) await db.compensationModel.create({ data: { membershipId: mB.id, type: "COMMISSION_SPLIT", artistPercent: 60, studioPercent: 40, effectiveFrom: new Date("2026-01-05"), eligibleBase: { excludeVat: false, excludeTips: true, excludeCardFees: false, excludeMaterials: false }, notes: "TEST: 60/40 on gross service sales excluding tips." } });
+  if (!(await db.compensationModel.findFirst({ where: { membershipId: mA.id } }))) await db.compensationModel.create({ data: { membershipId: mA.id, type: "CHAIR_RENT_WEEKLY", weeklyRentPence: 20000, rentDueWeekday: 1, effectiveFrom: new Date("2026-01-05"), eligibleBase: {}, notes: "TEST: artist retains 100% of sales under own merchant account (to be confirmed).", suppliesIncluded: false, suppliesNote: "Buys consumables from studio stock at artist price." } });
+  if (!(await db.compensationModel.findFirst({ where: { membershipId: mB.id } }))) await db.compensationModel.create({ data: { membershipId: mB.id, type: "COMMISSION_SPLIT", artistPercent: 60, studioPercent: 40, effectiveFrom: new Date("2026-01-05"), eligibleBase: { excludeVat: false, excludeTips: true, excludeCardFees: false, excludeMaterials: false }, notes: "TEST: 60/40 on gross service sales excluding tips.", suppliesIncluded: true, suppliesNote: "Studio consumables included; jewellery and retail excluded." } });
 
   // Portfolio placeholders with explicit publication permission on record.
   const colours: [number, number, number][] = [[140, 176, 0], [40, 44, 40], [95, 131, 0], [166, 209, 24], [30, 30, 30], [120, 150, 20]];
@@ -105,6 +106,43 @@ async function main() {
     await db.financialLedgerEntry.createMany({ data: [{ entryGroupId: "seed-dep-1", account: "BANK", debitPence: 6000, creditPence: 0, description: "Deposit received for RI-2026-000001 (TEST)", occurredAt: new Date(), appointmentId: appt.id, paymentId: pay.id, artistId: b.id }, { entryGroupId: "seed-dep-1", account: "CLIENT_DEPOSITS_HELD", debitPence: 0, creditPence: 6000, description: "Deposit received for RI-2026-000001 (TEST)", occurredAt: new Date(), appointmentId: appt.id, paymentId: pay.id, artistId: b.id }] });
     await db.bookingReferenceCounter.upsert({ where: { prefix_year: { prefix: "RI", year: 2026 } }, create: { prefix: "RI", year: 2026, next: 2 }, update: { next: 2 } });
   }
+  // Skills catalogue + apprentice progress
+  for (const [i, sk] of SEED_SKILLS.entries()) {
+    await db.skill.upsert({ where: { key: sk.key }, create: { key: sk.key, area: sk.area, title: sk.title, description: sk.description, isCore: sk.isCore ?? true, sortOrder: i }, update: { title: sk.title, description: sk.description, isCore: sk.isCore ?? true, sortOrder: i, area: sk.area } });
+  }
+  const skillByKey = Object.fromEntries((await db.skill.findMany()).map((x) => [x.key, x.id]));
+  if ((await db.skillProgress.count({ where: { apprenticeId: apprentice.id } })) === 0) {
+    await db.skillProgress.createMany({ data: [
+      { apprenticeId: apprentice.id, skillId: skillByKey["hyg-hand-hygiene"], status: "COMPETENT", signedOffById: artistA.id, signedOffAt: new Date("2026-09-10"), mentorNote: "(TEST) Observed over four sessions." },
+      { apprenticeId: apprentice.id, skillId: skillByKey["hyg-station-setup"], status: "COMPETENT", signedOffById: artistA.id, signedOffAt: new Date("2026-09-17") },
+      { apprenticeId: apprentice.id, skillId: skillByKey["hyg-clean-down"], status: "READY_FOR_REVIEW", apprenticeNote: "(TEST) Done solo three times this week." },
+      { apprenticeId: apprentice.id, skillId: skillByKey["line-single-pass"], status: "IN_PROGRESS", apprenticeNote: "(TEST) Practice skin daily." },
+    ] });
+    await db.practiceLog.createMany({ data: [
+      { apprenticeId: apprentice.id, date: new Date("2026-10-13"), minutes: 420, activity: "Station set-up, clean-down, practice skin linework", supervisorId: a.id, verifiedById: artistA.id, verifiedAt: new Date("2026-10-14") },
+      { apprenticeId: apprentice.id, date: new Date("2026-10-15"), minutes: 360, activity: "Shadowing consultations; stencil practice", supervisorId: a.id, verifiedById: artistA.id, verifiedAt: new Date("2026-10-16") },
+      { apprenticeId: apprentice.id, date: new Date("2026-10-20"), minutes: 300, activity: "Practice skin: single-pass lines, 3 and 5 liners", supervisorId: a.id },
+    ] });
+  }
+  // Stock: a few products and lots
+  const supplier = await db.supplier.upsert({ where: { id: "sup-test-1" }, create: { id: "sup-test-1", name: "Killer Ink Supplies (TEST)" }, update: {} });
+  const products: [string, string, string, number, number | null, number | null, string | null][] = [
+    ["INK-BLK-30", "Tattoo ink, lining black 30 ml (TEST)", "ink", 2, 1200, 1500, "Dynamic"],
+    ["CART-RL-3", "Cartridges 3RL, box of 20 (TEST)", "cartridge", 5, 1800, 2200, "Cheyenne"],
+    ["CART-RL-5", "Cartridges 5RL, box of 20 (TEST)", "cartridge", 5, 1800, 2200, "Cheyenne"],
+    ["GLV-NIT-M", "Nitrile gloves, medium, box of 100 (TEST)", "glove", 3, 650, 800, null],
+    ["FILM-2ND", "Adhesive film dressing roll 15 cm (TEST)", "dressing", 2, 2400, 3000, null],
+    ["JEW-TI-16", "Titanium labret 16g 8 mm (TEST)", "jewellery", 4, 350, 1200, "Neometal"],
+  ];
+  for (const [sku, name, category, reorderLevel, costPence, retailPence, brand] of products) {
+    const pr = await db.product.upsert({ where: { sku }, create: { sku, name, category, reorderLevel, costPence, retailPence, brand, supplierId: supplier.id, ...(category === "jewellery" ? { material: "ASTM F-136 titanium", gauge: "16g", length: "8 mm" } : {}) }, update: {} });
+    if ((await db.inventoryLot.count({ where: { productId: pr.id } })) === 0) {
+      const lot = await db.inventoryLot.create({ data: { productId: pr.id, lotNumber: `LOT-${sku}-A`, expiresAt: category === "ink" || category === "cartridge" ? new Date("2027-06-30") : null, quantity: category === "ink" ? 2 : 8 } });
+      await db.stockMovement.create({ data: { lotId: lot.id, delta: lot.quantity, reason: "received", reference: "PO-TEST-001", actorId: owner.id } });
+    }
+  }
+  await db.studioSetting.upsert({ where: { studioId_key: { studioId: studio.id, key: "academy.minimumHours" } }, create: { studioId: studio.id, key: "academy.minimumHours", value: 500 }, update: {} });
+
   console.log("Seeded fictional TEST data for studio", studio.id);
 }
 

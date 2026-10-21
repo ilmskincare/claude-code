@@ -20,7 +20,12 @@ export function hashIp(ip?: string | null) {
   return createHash("sha256").update(ip + (process.env.AUTH_SECRET ?? "")).digest("hex").slice(0, 32);
 }
 
-/** Append an audit entry. Never throws into the caller's business flow. */
+/**
+ * Append an audit entry. Outside a transaction a failure is logged, not thrown.
+ * Inside a transaction it must propagate: Postgres aborts the transaction on any
+ * failed statement, and a silently swallowed audit failure would roll back the
+ * business change while the caller believes it succeeded.
+ */
 export async function audit(input: AuditInput, tx?: Tx) {
   const client = tx ?? db;
   try {
@@ -40,6 +45,7 @@ export async function audit(input: AuditInput, tx?: Tx) {
       },
     });
   } catch (err) {
+    if (tx) throw err;
     console.error("audit write failed", err);
   }
 }

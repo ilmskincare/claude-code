@@ -81,3 +81,11 @@ Phase 4 — Growth
 - Studio revenue (studio receipts): what the studio itself earns: chair rent billed, the studio's percentage of eligible sales under commission, retail margin.
 - Client deposits held: a liability. A deposit is not income until applied to a completed session or forfeited under the published policy.
 - Studio profit: studio revenue less overheads, consumables, fees and taxes. Phase 1 shows a net position only in the illustrative calculator; the dashboard never invents profit.
+
+
+## Added after staging went live (21 October 2026, afternoon)
+
+- **Artist hours**: weekly pattern, walk-in hours (public, never bookable online), one-off days, time off; owner can edit any artist. `/studio/hours`, `/owner/artists/[id]/hours`.
+- **Consultation attachments**: clients and practitioners attach images or PDFs to thread messages; private, signed links.
+- **Stock**: products, suppliers, lots with expiry, receiving, adjustments and counts, low-stock and expiring flags; stock issued free under an arrangement with supplies included, or sold to an artist at the artist price with an `ARTIST_RECEIVABLE` ledger entry and a payment-received action. `/owner/stock`, `/owner/artists/[id]/stock`, `/studio/stock`.
+- **Apprentice portal**: hours log with mentor verification, 29-skill catalogue across 15 areas with mentor-only sign-off, progression photos with mentor feedback, and the owner's irreversible junior-artist sign-off gated on a configurable verified-hours target and all core skills. `/studio/academy`, `/owner/academy`.

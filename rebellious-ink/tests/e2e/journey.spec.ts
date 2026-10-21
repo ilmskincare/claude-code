@@ -180,3 +180,62 @@ test("8. artist sets walk-in hours and time off; walk-ins show publicly but neve
   await expect(a.page.getByText("12:00–16:00 · Walk-ins only")).toHaveCount(0);
   await a.context.close();
 });
+
+test("9. owner sells stock to a chair-rent artist; the artist sees what they owe (acceptance 13)", async ({ browser }, info) => {
+  const o = await newSignedInPage(browser, "owner@test.rebelliousink.local");
+  await o.page.goto("/owner/stock");
+  await expect(o.page.getByRole("heading", { name: "Stock" })).toBeVisible();
+  await o.page.screenshot({ path: path.join(SHOTS, `${info.project.name}-18-owner-stock.png`), fullPage: true });
+  await o.page.getByRole("link", { name: /Nitrile gloves/ }).click();
+  await o.page.waitForLoadState("networkidle");
+  const onHand = () => o.page.locator(".stat", { hasText: "On hand" }).locator(".value").textContent().then((t) => Number(t!.split(" ")[0]));
+  const before = await onHand();
+  const moValue = await o.page.locator("select#artistId option", { hasText: "Mo Blackwork" }).getAttribute("value");
+  await o.page.getByLabel("Artist", { exact: true }).selectOption(moValue!);
+  await o.page.locator("#iquantity").fill("1");
+  await o.page.getByLabel("How").selectOption("sold");
+  await o.page.getByRole("button", { name: "Record" }).click();
+  await expect(o.page.getByText("Stock moved to the artist and recorded.")).toBeVisible();
+  await expect(o.page.locator(".stat", { hasText: "On hand" }).locator(".value")).toContainText(String(before - 1));
+  await expect(o.page.getByText("sold to artist").first()).toBeVisible();
+  await o.context.close();
+  const a = await newSignedInPage(browser, "artist-a@test.rebelliousink.local");
+  await a.page.goto("/studio/stock");
+  await expect(a.page.locator(".stat", { hasText: "Your arrangement" }).locator(".value")).toHaveText("Buy from studio");
+  await expect(a.page.locator(".stat", { hasText: "You owe for stock" }).locator(".value")).toContainText(/£\d/);
+  await a.page.screenshot({ path: path.join(SHOTS, `${info.project.name}-19-artist-stock.png`), fullPage: true });
+  await a.context.close();
+});
+
+test("10. apprentice logs hours and marks a skill ready; cannot sign off; owner verifies and signs off (acceptance 14)", async ({ browser }, info) => {
+  const ap = await newSignedInPage(browser, "apprentice@test.rebelliousink.local");
+  await ap.page.goto("/studio/academy");
+  await expect(ap.page.getByRole("heading", { name: "My training" })).toBeVisible();
+  await ap.page.getByLabel("Hours", { exact: true }).fill("2");
+  await ap.page.getByLabel("What you did").fill("(E2E) Practice skin, shading drills");
+  await ap.page.getByRole("button", { name: "Log hours" }).click();
+  await expect(ap.page.getByText("Logged. Your mentor will verify it.")).toBeVisible();
+  // Apprentice sees no "Sign off" button anywhere
+  await expect(ap.page.getByRole("button", { name: "Sign off", exact: true })).toHaveCount(0);
+  const skillRow = ap.page.locator("li", { hasText: "Skin stretch" }).first();
+  await skillRow.getByRole("button", { name: "Ready for review" }).click();
+  await expect(ap.page.locator("li", { hasText: "Skin stretch" }).first().locator(".badge", { hasText: "Ready for review" })).toBeVisible();
+  await ap.page.screenshot({ path: path.join(SHOTS, `${info.project.name}-20-apprentice-portal.png`), fullPage: true });
+  await ap.context.close();
+
+  const o = await newSignedInPage(browser, "owner@test.rebelliousink.local");
+  await o.page.goto("/owner/academy");
+  await o.page.getByRole("link", { name: /Ash Apprentice/ }).click();
+  await o.page.waitForLoadState("networkidle");
+  const pending = o.page.locator("tr", { hasText: "(E2E) Practice skin, shading drills" }).first();
+  await pending.getByRole("button", { name: "Verify" }).click();
+  await expect(o.page.locator("tr", { hasText: "(E2E) Practice skin, shading drills" }).first().locator(".badge", { hasText: "Verified" })).toBeVisible();
+  const row = o.page.locator("li", { hasText: "Skin stretch" }).first();
+  await row.getByPlaceholder("mentor note").fill("(E2E) Observed on three clients");
+  await row.getByRole("button", { name: "Sign off" }).click();
+  await expect(o.page.locator("li", { hasText: "Skin stretch" }).first().locator(".badge", { hasText: "Competent" })).toBeVisible();
+  await expect(o.page.getByRole("button", { name: "Sign off as junior artist" })).toBeDisabled();
+  await expect(o.page.getByText(/Not yet eligible/)).toBeVisible();
+  await o.page.screenshot({ path: path.join(SHOTS, `${info.project.name}-21-owner-apprentice-review.png`), fullPage: true });
+  await o.context.close();
+});

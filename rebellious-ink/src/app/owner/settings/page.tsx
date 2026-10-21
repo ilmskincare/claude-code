@@ -14,6 +14,7 @@ export const SETTING_DEFS = [
   { key: "booking.cancellationNoticeHours", label: "Free reschedule notice (hours)", hint: "Default 48; shown in quote terms.", def: 48 },
   { key: "quote.requiresOwnerApproval", label: "Artist quotes need owner approval", hint: "true/false", def: false },
   { key: "piercing.minimumAge", label: "Piercing minimum age (public setting)", hint: "18 until the reviewed under-18 policy is approved.", def: 18 },
+  { key: "academy.minimumHours", label: "Apprentice minimum verified hours for junior sign-off", hint: "Studio policy, not a national standard. Default 500.", def: 500 },
   { key: "studio.vatRegistered", label: "Studio is VAT registered", hint: "true/false. Accountant to confirm.", def: false },
 ] as const;
 
