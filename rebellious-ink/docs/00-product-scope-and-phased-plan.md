@@ -131,3 +131,9 @@ UK compliance: every feature is mapped to its UK legal basis in `docs/12-uk-comp
 - **Share card** (1080×1920) without the price. **Owner page** (`/owner/gumball`): capsules, recent spins, restock alerts and 30-day first-party counts (viewed, age gate, spins, results, deposits). Every price and limit is a setting.
 - **Not gambling.** Nothing is paid to play and nothing is won; the spin only decides which fixed-price design the client may book. Recorded in the compliance register.
 
+## Flash sizing and placements; desk client capture (21 October 2026, night)
+
+- **No second size.** Flash is one price. The client picks a size in centimetres from a short list (default 4 to 8 cm, all the same price). Bigger is a custom price from the desk.
+- **Flat, easy areas only.** The fixed price applies to outer upper arm, outer and inner forearm, top of the shoulder, outer thigh and calf. "Somewhere else" on the booking form routes to a prefilled enquiry for a custom price. Both lists are settings.
+- **Clients at the desk** (`/owner/clients`): reception adds or updates a client (name, email, phone, date of birth, how they found us, voluntary access needs), reads a fixed marketing-consent script and records yes, no or not asked. The answer is stored as a versioned preference with the staff member, date and script version, and feeds the marketing audience. The client list shows the latest answer and never shows health data. The privacy notice and the opt-in wording now say details are never shared or sold to third parties.
+

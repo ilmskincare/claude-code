@@ -46,7 +46,7 @@ export function GumballReveal({ playId, title, artistName, artistSlug, imageUrl,
           <form action={action} className="space-y-3 mt-4">
             {state?.error && <Alert tone="danger">{state.error}</Alert>}
             <input type="hidden" name="playId" value={playId} />
-            <div><label className="field" htmlFor="placement">Placement</label><select id="placement" name="placement" className="select">{placements.map((x) => <option key={x} value={x}>{x}</option>)}</select><p className="hint">Hands, fingers, neck and face are not available for gumball tattoos.</p></div>
+            <div><label className="field" htmlFor="placement">Placement</label><select id="placement" name="placement" className="select">{placements.map((x) => <option key={x} value={x}>{x}</option>)}</select><p className="hint">Gumball tattoos go on flat, easy areas only: outer upper arm, forearm, top of the shoulder, outer thigh or calf.</p></div>
             <label className="flex items-start gap-2 text-sm"><input type="checkbox" name="declaredOver18" required className="mt-1" /> I confirm I am 18 or over and will bring photographic ID.</label>
             <button className="btn btn-primary w-full justify-center" disabled={pending || phase !== "shown"}>{pending ? "Setting up your booking…" : signedIn ? "Keep it: choose a time" : "Sign in to keep it"}</button>
             <p className="hint">What you get is what you get: there are no swaps. Your artist confirms the exact size and placement in your private thread. Free touch-up included.</p>

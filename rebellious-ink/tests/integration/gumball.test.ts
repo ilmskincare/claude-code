@@ -56,15 +56,15 @@ describe("gumball machine", () => {
     expect(await playFor(play.id, "v5", null)).not.toBeNull();
     expect(await playFor(play.id, "someone-else", null)).toBeNull();
     expect(await playFor(play.id, null, s.c2.id)).toBeNull();
-    await expect(bookFromPlay(client1, "someone-else", { playId: play.id, placement: "forearm", declaredOver18: true })).rejects.toThrow(/permission/i);
-    await expect(bookFromPlay(client1, "v5", { playId: play.id, placement: "hands", declaredOver18: true })).rejects.toThrow(/quoted individually/);
-    const r = await bookFromPlay(client1, "v5", { playId: play.id, placement: "forearm", declaredOver18: true });
+    await expect(bookFromPlay(client1, "someone-else", { playId: play.id, placement: "forearm (outer)", declaredOver18: true })).rejects.toThrow(/permission/i);
+    await expect(bookFromPlay(client1, "v5", { playId: play.id, placement: "hands", declaredOver18: true })).rejects.toThrow(/custom price/);
+    const r = await bookFromPlay(client1, "v5", { playId: play.id, placement: "forearm (outer)", declaredOver18: true });
     const settings = await gumballSettings();
     const quote = await testDb.quote.findFirstOrThrow({ where: { requestId: r.id } });
     expect(quote).toMatchObject({ amountPence: settings.pricePence, depositPence: settings.depositPence, status: "ACCEPTED" });
     expect(r.description).toContain("Gumball machine");
     expect((await testDb.play.findUniqueOrThrow({ where: { id: play.id } })).status).toBe("BOOKED");
-    await expect(bookFromPlay(client1, "v5", { playId: play.id, placement: "forearm", declaredOver18: true })).rejects.toThrow(/already booked/);
+    await expect(bookFromPlay(client1, "v5", { playId: play.id, placement: "forearm (outer)", declaredOver18: true })).rejects.toThrow(/already booked/);
     // Gumball designs cannot be booked through the catalogue route
     const { designById } = await import("@/lib/flash");
     expect(await designById(play.designId!)).toBeNull();

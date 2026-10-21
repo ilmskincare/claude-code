@@ -17,10 +17,12 @@ import { formatPence } from "./money";
 export const FLASH_DEFAULTS = {
   smallPence: 6000, palmPence: 11000, apprenticeSmallPence: 4000, apprenticePalmPence: 7000,
   depositSmallPence: 2000, depositPalmPence: 3000, apprenticeDepositPence: 1500,
-  smallMaxCm: 6, palmMaxCm: 12, minutesSmall: 60, minutesPalm: 120, designHoldMinutes: 15,
+  smallMaxCm: 8, palmMaxCm: 12, minutesSmall: 60, minutesPalm: 120, designHoldMinutes: 15,
   palmEnabled: false, // the studio sells one flash size; the second size stays in the data model but is hidden until switched on
+  // Flash prices only apply to flat, easy areas. Anywhere else, or a bigger size, is a custom price from the desk.
   quotePlacements: ["hands", "fingers", "neck", "face"],
-  fixedPlacements: ["upper arm", "forearm", "shoulder", "thigh", "calf", "shin", "back", "chest", "ribs", "hip", "ankle", "wrist (outer)"],
+  fixedPlacements: ["upper arm (outer)", "forearm (outer)", "forearm (inner)", "shoulder (top)", "thigh (outer)", "calf"],
+  sizeOptionsCm: [4, 5, 6, 7, 8], // the client picks a size; all the same price; the last one is the maximum
 };
 export type FlashSettings = typeof FLASH_DEFAULTS;
 
@@ -29,12 +31,13 @@ export async function flashSettings(client: Tx | typeof db = db): Promise<FlashS
   const v = Object.fromEntries(rows.map((r) => [r.key.replace("flash.", ""), r.value]));
   const num = (k: keyof FlashSettings) => (typeof v[k] === "number" ? (v[k] as number) : (FLASH_DEFAULTS[k] as number));
   const list = (k: "quotePlacements" | "fixedPlacements") => (Array.isArray(v[k]) ? (v[k] as string[]).map(String) : FLASH_DEFAULTS[k]);
+  const sizes = Array.isArray(v.sizeOptionsCm) && (v.sizeOptionsCm as unknown[]).every((x) => typeof x === "number") ? (v.sizeOptionsCm as number[]) : FLASH_DEFAULTS.sizeOptionsCm;
   const bool = (k: "palmEnabled") => (typeof v[k] === "boolean" ? (v[k] as boolean) : FLASH_DEFAULTS[k]);
   return {
     smallPence: num("smallPence"), palmPence: num("palmPence"), apprenticeSmallPence: num("apprenticeSmallPence"), apprenticePalmPence: num("apprenticePalmPence"),
     depositSmallPence: num("depositSmallPence"), depositPalmPence: num("depositPalmPence"), apprenticeDepositPence: num("apprenticeDepositPence"),
     smallMaxCm: num("smallMaxCm"), palmMaxCm: num("palmMaxCm"), minutesSmall: num("minutesSmall"), minutesPalm: num("minutesPalm"), designHoldMinutes: num("designHoldMinutes"),
-    quotePlacements: list("quotePlacements"), fixedPlacements: list("fixedPlacements"), palmEnabled: bool("palmEnabled"),
+    quotePlacements: list("quotePlacements"), fixedPlacements: list("fixedPlacements"), palmEnabled: bool("palmEnabled"), sizeOptionsCm: sizes,
   };
 }
 
@@ -226,6 +229,7 @@ export const bookDesignSchema = z.object({
   tier: z.enum(TIERS).default("artist"),
   apprenticeId: z.string().optional().or(z.literal("")),
   placement: z.string().trim().min(2).max(60),
+  sizeCm: z.coerce.number().int().min(1).max(30).optional(),
   declaredOver18: z.coerce.boolean(),
 });
 export type PricingOverride = { totalPence: number; depositPence: number; estimatedMinutes: number; label: string; playId: string };
@@ -238,13 +242,14 @@ export type PricingOverride = { totalPence: number; depositPence: number; estima
 export async function bookDesign(p: Principal, input: z.infer<typeof bookDesignSchema>, override?: PricingOverride) {
   if (!input.declaredOver18) throw new ValidationError("You must be 18 or over to book a tattoo.");
   const s = await flashSettings();
-  if (placementNeedsQuote(input.placement, s)) throw new ValidationError("That placement is quoted individually. Please send an enquiry instead.");
-  if (!s.fixedPlacements.map((x) => x.toLowerCase()).includes(input.placement.toLowerCase())) throw new ValidationError("Choose a placement from the list.");
+  if (!s.fixedPlacements.map((x) => x.toLowerCase()).includes(input.placement.toLowerCase())) throw new ValidationError("Flash prices only apply to the listed flat areas. For anywhere else, contact the desk for a custom price.");
+  if (input.sizeCm != null && !s.sizeOptionsCm.includes(input.sizeCm)) throw new ValidationError("Choose a size from the list. For a bigger piece, contact the desk for a custom price.");
   const design = await db.design.findUnique({ where: { id: input.designId }, include: { artist: { include: { supervisees: { where: { isPublished: true, acceptsEnquiries: true } } } } } });
   if (!design || design.status === "RETIRED") throw new NotFoundError("Design not found");
   if (design.collection !== "CATALOGUE" && !override) throw new ValidationError("This design is only available through its game.");
-  const price = override ? { totalPence: override.totalPence, depositPence: override.depositPence, estimatedMinutes: override.estimatedMinutes, maxCm: s.smallMaxCm } : priceFor(design, input.size, input.tier, s);
-  if (!price) throw new ValidationError("That option is not offered for this design.");
+  const basePrice = override ? { totalPence: override.totalPence, depositPence: override.depositPence, estimatedMinutes: override.estimatedMinutes, maxCm: s.smallMaxCm } : priceFor(design, input.size, input.tier, s);
+  if (!basePrice) throw new ValidationError("That option is not offered for this design.");
+  const price = { ...basePrice, maxCm: input.sizeCm ?? basePrice.maxCm };
   let artistId = design.artistId;
   if (input.tier === "apprentice") {
     const apprentices = design.artist.supervisees.filter((a) => a.kind === "APPRENTICE");

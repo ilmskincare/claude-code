@@ -13,7 +13,7 @@ export function SizeGuide({ smallCm, palmCm, chosen }: { smallCm: number; palmCm
         {palmCm && <rect x={150} y={94 - (palm * 0.6) / 2} width={palm} height={palm * 0.6} rx="4" fill={chosen === "palm" ? "var(--acid)" : "none"} fillOpacity={chosen === "palm" ? ".9" : "1"} stroke="var(--acid)" strokeWidth="2" strokeDasharray={chosen === "palm" ? "0" : "4 3"} />}
         {palmCm && <text x={150 + palm / 2} y={94 + (palm * 0.6) / 2 + 12} fontSize="9" textAnchor="middle" fill="currentColor">Palm {palmCm} cm</text>}
       </svg>
-      <figcaption className="hint mt-1">Sizes are the longest edge. Your artist confirms the final size at the appointment.</figcaption>
+      <figcaption className="hint mt-1">Size is the longest edge, drawn to scale on a forearm. Your artist confirms the final size at the appointment.</figcaption>
     </figure>
   );
 }

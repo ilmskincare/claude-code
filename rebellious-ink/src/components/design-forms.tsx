@@ -93,7 +93,7 @@ export function BulkPriceForm() {
       <h3 className="font-bold">Bulk adjust overrides</h3>
       {state?.error && <Alert tone={state.ok ? "success" : "danger"}>{state.error}</Alert>}
       <div className="flex flex-wrap gap-2 items-end">
-        <div><label className="field" htmlFor="bsize">Size</label><select id="bsize" name="size" className="select"><option value="small">Standard</option><option value="palm">Palm (if enabled)</option></select></div>
+        <input type="hidden" name="size" value="small" />
         <div><label className="field" htmlFor="delta">Change (£, negative to lower)</label><input id="delta" name="deltaPounds" type="number" step="1" className="input" placeholder="10" required /></div>
         <button className="btn btn-secondary" disabled={pending}>Apply</button>
       </div>

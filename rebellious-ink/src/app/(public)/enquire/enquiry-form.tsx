@@ -60,7 +60,7 @@ export function EnquiryForm({ artists, preselected, referralCode, initialDescrip
       <fieldset className="card p-6 space-y-3">
         <legend className="text-xl font-bold px-2">Privacy</legend>
         <label className="flex gap-3 items-start"><input type="checkbox" name="privacyAccepted" className="mt-1 size-5" required /><span>I have read the <a href="/privacy" className="underline" target="_blank">privacy notice</a> and understand my enquiry, references and messages are used to plan and provide my tattoo or piercing.</span></label>
-        <label className="flex gap-3 items-start"><input type="checkbox" name="marketingOptIn" className="mt-1 size-5" /><span>Email me studio news, flash days and offers (optional, unsubscribe any time).</span></label>
+        <label className="flex gap-3 items-start"><input type="checkbox" name="marketingOptIn" className="mt-1 size-5" /><span>Email me studio news, flash days and offers. Optional, one-click unsubscribe, and we never share or sell your details with anyone else.</span></label>
         <p className="hint">Photography and social media use are separate choices made at your appointment. Nothing is ticked for you.</p>
         <div><label className="field" htmlFor="referralCode">Referral code (optional)</label><input id="referralCode" name="referralCode" className="input uppercase" defaultValue={referralCode ?? ""} placeholder="e.g. CASE-3F2A" maxLength={20} /><p className="hint">Got a code from a friend? You both get studio credit once your first appointment is complete.</p></div>
       </fieldset>

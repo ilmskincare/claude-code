@@ -485,10 +485,11 @@ test("16. flash catalogue: total price up front, size guide, book a design strai
   await pub.waitForURL(/\/flash\/[a-z0-9]+$/);
   await expect(pub.getByText("Total price, nothing added later")).toBeVisible();
   await expect(pub.getByText("£70.00").first()).toBeVisible();                       // design override
-  await pub.getByLabel("Placement").selectOption("hands");
-  await expect(pub.getByRole("link", { name: "Request a quote" })).toBeVisible();
+  await pub.getByLabel(/Placement/).selectOption("__custom__");
+  await expect(pub.getByRole("link", { name: "Ask the desk for a custom price" })).toHaveCount(2);
   await expect(pub.getByRole("button", { name: /book this/i })).toHaveCount(0);
-  await pub.getByLabel("Placement").selectOption("forearm");
+  await pub.getByLabel(/Placement/).selectOption("forearm (outer)");
+  await pub.getByRole("radio", { name: "7 cm" }).check();
   await pub.getByRole("radio", { name: /Apprentice, supervised by/ }).check();
   await expect(pub.getByText("£40.00").first()).toBeVisible();
   await expect(pub.getByText("£15.00 deposit online today")).toBeVisible();
@@ -499,7 +500,7 @@ test("16. flash catalogue: total price up front, size guide, book a design strai
   const c = await newSignedInPage(browser, "client-one@test.rebelliousink.local");
   await c.page.goto(designUrl);
   await c.page.waitForLoadState("networkidle");
-  await c.page.getByLabel("Placement").selectOption("calf");
+  await c.page.getByLabel(/Placement/).selectOption("calf");
   await c.page.getByLabel(/I confirm I am 18 or over/).check();
   await c.page.getByRole("button", { name: "Book this: choose a time" }).click();
   await c.page.waitForURL(/\/my\/enquiries\/[a-z0-9]+\/book$/);
@@ -508,7 +509,7 @@ test("16. flash catalogue: total price up front, size guide, book a design strai
   await c.page.screenshot({ path: path.join(SHOTS, `${info.project.name}-32-flash-slot-picker.png`), fullPage: true });
   await c.page.goto(c.page.url().replace(/\/book$/, ""));
   await expect(c.page.getByText("Heart and shield (archive)").first()).toBeVisible();
-  await expect(c.page.getByText(/Small · artist tier/)).toBeVisible();
+  await expect(c.page.getByText(/artist tier/).first()).toBeVisible();
   await c.context.close();
 });
 
@@ -589,4 +590,27 @@ test("18. gumball machine: age gate, free spin, reveal, keep it and book at the 
   await expect(c.page.getByText(/Gumball machine/).first()).toBeVisible();
   await c.page.screenshot({ path: path.join(SHOTS, `${info.project.name}-36-gumball-booked.png`), fullPage: true });
   await c.context.close();
+});
+
+test("19. desk adds a walk-in client with a recorded marketing yes; they appear in the client list and the marketing audience", async ({ browser }, info) => {
+  const email = `desk-walkin-${unique}-${info.project.name}@test.rebelliousink.local`;
+  const d = await newSignedInPage(browser, "desk@test.rebelliousink.local");
+  await d.page.goto("/owner/clients");
+  await expect(d.page.getByRole("heading", { name: "Clients" })).toBeVisible();
+  await expect(d.page.getByText(/never share or sell your details/)).toBeVisible();
+  await d.page.getByLabel("Full name").fill("Walk-in Wendy");
+  await d.page.getByLabel("Email").fill(email);
+  await d.page.getByLabel("Phone").fill("07700 900123");
+  await d.page.getByLabel("How they found us").fill("Walk-in");
+  await d.page.getByRole("radio", { name: "Yes, they agreed" }).check();
+  await d.page.getByLabel(/Note \(optional/).fill("asked at the desk");
+  await d.page.getByRole("button", { name: "Save client" }).click();
+  await expect(d.page.getByText("Saved. Their marketing answer is recorded against your name.")).toBeVisible();
+  await d.page.goto(`/owner/clients?q=${encodeURIComponent(email)}`);
+  const row = d.page.locator("tr").filter({ hasText: email });
+  await expect(row).toContainText("Walk-in Wendy");
+  await expect(row).toContainText("yes");
+  await expect(row).toContainText("at the desk");
+  await d.page.screenshot({ path: path.join(SHOTS, `${info.project.name}-37-desk-clients.png`), fullPage: true });
+  await d.context.close();
 });

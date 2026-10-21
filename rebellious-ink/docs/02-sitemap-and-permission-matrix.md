@@ -116,6 +116,7 @@ Notes
 | A booking page is visible to its client, its artist, or `bookings.view_all`. | `/my/bookings/[id]` |
 | Artist dashboards, diaries, earnings and portfolio query by the principal's own `artistProfileId`. | `/studio/*`, `artistDashboard` |
 | Manual deposit verification needs `finance.verify_manual_payment` and records `verifiedById`. | `verifyManualDeposit` in `src/lib/owner.ts` |
+| Desk client capture needs `enquiries.create_desk`; the client list needs `clients.view_all`; marketing answers are versioned preferences with the recording staff member in `source`. | `upsertClientAtDesk`, `clientList` in `src/lib/clients.ts` |
 | A gumball play is readable only by the browser (visitor cookie) or account that made it; booking it needs a signed-in client and the play's own design; gumball designs are never bookable through the catalogue. | `playFor`, `bookFromPlay` in `src/lib/gumball.ts`, `designById` |
 | A flash design or sheet is created, edited or retired by its own artist or `roster.manage`; bulk price changes need `roster.manage`; only `AVAILABLE`/`HELD` designs of published artists are public. | `assertCanManageDesigns`, `catalogue` in `src/lib/flash.ts` |
 | Booking a design needs a signed-in client who declares 18+, a fixed-price placement, and an offered tier; one-off designs are claimed under `SELECT ... FOR UPDATE`. | `bookDesign`, `holdDesignForRequest` |

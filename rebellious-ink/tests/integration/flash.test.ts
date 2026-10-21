@@ -29,7 +29,7 @@ describe("flash catalogue pricing", () => {
     const first = await catalogue(); let items = first.items; const settings = first.settings;
     expect(items.find((i) => i.id === d1.id)!.prices).toMatchObject({ small: 6000, palm: 11000, apprenticeSmall: null });
     expect(items.find((i) => i.id === d2.id)!.prices.small).toBe(7500);
-    expect(priceFor(d1, "small", "artist", settings)).toMatchObject({ totalPence: 6000, depositPence: 2000, estimatedMinutes: 60, maxCm: 6 });
+    expect(priceFor(d1, "small", "artist", settings)).toMatchObject({ totalPence: 6000, depositPence: 2000, estimatedMinutes: 60, maxCm: 8 });
     expect(priceFor(d1, "small", "apprentice", settings)).toBeNull();
     expect(priceFor(d1, "palm", "artist", { ...settings, palmEnabled: false })).toBeNull();   // second size hidden unless switched on
     await testDb.studioSetting.create({ data: { studioId: s.studio.id, key: "flash.smallPence", value: 6500 } });
@@ -53,15 +53,17 @@ describe("flash catalogue pricing", () => {
 describe("booking a design (fixed price, straight to the slot picker)", () => {
   it("creates an accepted-quote enquiry, refuses quoted placements, and holds then books a one-off exactly once", async () => {
     const one = await createDesign(artistA, { ...base, title: "Crown", repeatable: false, artistId: s.artist.id }, png());
-    await expect(bookDesign(client1, { designId: one.id, size: "small", tier: "artist", placement: "hands", declaredOver18: true })).rejects.toThrow(/quoted individually/);
+    await expect(bookDesign(client1, { designId: one.id, size: "small", tier: "artist", placement: "hands", declaredOver18: true })).rejects.toThrow(/custom price/);
+    await expect(bookDesign(client1, { designId: one.id, size: "small", tier: "artist", placement: "calf", sizeCm: 12, declaredOver18: true })).rejects.toThrow(/bigger piece/);
     await expect(bookDesign(client1, { designId: one.id, size: "small", tier: "artist", placement: "forearm", declaredOver18: false })).rejects.toThrow(/18 or over/);
-    const r1 = await bookDesign(client1, { designId: one.id, size: "palm", tier: "artist", placement: "forearm", declaredOver18: true });
+    const r1 = await bookDesign(client1, { designId: one.id, size: "palm", tier: "artist", placement: "forearm (outer)", sizeCm: 7, declaredOver18: true });
     expect(r1.status).toBe("AWAITING_DEPOSIT"); expect(r1.category).toBe("FLASH"); expect(r1.reference).toMatch(/^ENQ-/);
     const quote = await testDb.quote.findFirstOrThrow({ where: { requestId: r1.id } });
     expect(quote).toMatchObject({ status: "ACCEPTED", amountPence: 11000, depositPence: 3000, estimatedMinutes: 120, priceBasis: "fixed" });
+    expect(r1.sizeCm).toBe(7);
     expect((await testDb.design.findUniqueOrThrow({ where: { id: one.id } })).status).toBe("HELD");
     // Second client cannot take the held one-off
-    await expect(bookDesign(client2, { designId: one.id, size: "small", tier: "artist", placement: "forearm", declaredOver18: true })).rejects.toThrow(/booking this one-off design right now/);
+    await expect(bookDesign(client2, { designId: one.id, size: "small", tier: "artist", placement: "forearm (outer)", declaredOver18: true })).rejects.toThrow(/booking this one-off design right now/);
     // Client 1 picks a slot and pays: design is BOOKED and the catalogue shows it as gone
     const slots = await availableSlots(s.artist.id, new Date(), new Date(Date.now() + 14 * 86400000), 150);
     const { hold } = await createHold({ requestId: r1.id, clientId: s.c1.id, startsAt: slots[0].startsAt });
@@ -70,7 +72,7 @@ describe("booking a design (fixed price, straight to the slot picker)", () => {
     const booked = await testDb.design.findUniqueOrThrow({ where: { id: one.id } });
     expect(booked.status).toBe("BOOKED"); expect(booked.bookedRequestId).toBe(r1.id);
     expect((await catalogue()).items.find((i) => i.id === one.id)!.isBooked).toBe(true);
-    await expect(bookDesign(client2, { designId: one.id, size: "small", tier: "artist", placement: "forearm", declaredOver18: true })).rejects.toThrow(/just been booked/);
+    await expect(bookDesign(client2, { designId: one.id, size: "small", tier: "artist", placement: "forearm (outer)", declaredOver18: true })).rejects.toThrow(/just been booked/);
     // A repeatable design can be booked by two people
     const rep = await createDesign(artistA, { ...base, title: "Fern", artistId: s.artist.id }, png());
     await bookDesign(client1, { designId: rep.id, size: "small", tier: "artist", placement: "calf", declaredOver18: true });
@@ -80,7 +82,7 @@ describe("booking a design (fixed price, straight to the slot picker)", () => {
 
   it("an abandoned one-off hold returns to the pool; 50 simultaneous claims produce exactly one hold", async () => {
     const one = await createDesign(artistA, { ...base, title: "Lantern", repeatable: false, artistId: s.artist.id }, png());
-    const r = await bookDesign(client1, { designId: one.id, size: "small", tier: "artist", placement: "forearm", declaredOver18: true });
+    const r = await bookDesign(client1, { designId: one.id, size: "small", tier: "artist", placement: "forearm (outer)", declaredOver18: true });
     await testDb.design.update({ where: { id: one.id }, data: { heldUntil: new Date(Date.now() - 1000) } });
     expect(await releaseLapsedDesignHolds()).toBe(1);
     expect((await testDb.design.findUniqueOrThrow({ where: { id: one.id } })).status).toBe("AVAILABLE");
@@ -105,7 +107,7 @@ describe("apprentice tier (supervised)", () => {
     const d = await createDesign(artistA, { ...base, title: "Swallow", apprenticeAvailable: true, artistId: s.artist.id }, png());
     const settings = await flashSettings();
     expect(priceFor(d, "small", "apprentice", settings)).toMatchObject({ totalPence: 4000, depositPence: 1500 });
-    const r = await bookDesign(client1, { designId: d.id, size: "small", tier: "apprentice", placement: "thigh", declaredOver18: true });
+    const r = await bookDesign(client1, { designId: d.id, size: "small", tier: "apprentice", placement: "thigh (outer)", declaredOver18: true });
     expect(r.artistId).toBe(apprentice.id); expect(r.designTier).toBe("apprentice");
     expect((await testDb.quote.findFirstOrThrow({ where: { requestId: r.id } })).amountPence).toBe(4000);
     // Supervisor leave next Monday 09:00-18:00 removes the apprentice's Monday slots
@@ -121,6 +123,6 @@ describe("apprentice tier (supervised)", () => {
     await expect(createHold({ requestId: r.id, clientId: s.c1.id, startsAt: slots.find((x) => new Date(x.startsAt).getUTCHours() < 11)!.startsAt })).rejects.toThrow(/no longer available/);
     // Tier not offered on another design
     const plain = await createDesign(artistB, { ...base, title: "Plain", artistId: s.artistB.id }, png());
-    await expect(bookDesign(client1, { designId: plain.id, size: "small", tier: "apprentice", placement: "thigh", declaredOver18: true })).rejects.toThrow(/not offered/);
+    await expect(bookDesign(client1, { designId: plain.id, size: "small", tier: "apprentice", placement: "thigh (outer)", declaredOver18: true })).rejects.toThrow(/not offered/);
   });
 });

@@ -170,3 +170,8 @@ Note: during one full local test run the marketing integration test failed once 
 - Migration `artist_avatar` applied (nine migrations): `avatarKey` on `ArtistProfile`, shown on the artist's page, card and home tile; artists upload their own logo or portrait from Profile & rates.
 - Elle Evaa created as a published tattoo artist (sign-in elle-evaa@test.rebelliousink.local, resident artist role, Tuesday to Saturday hours with Saturday walk-ins, station 1) with her logo and two portfolio photos supplied by the owner, publication permission recorded against each image. Idempotent SQL run twice with the same result; images in the Blob store.
 
+## Staging update, 21 October 2026, night: flash sizing, flat placements, desk client capture
+
+- No migration needed. Flash defaults are code: sizes 4 to 8 cm, fixed placements outer upper arm, outer and inner forearm, top of shoulder, outer thigh and calf; the Palm size is gone from every form and the settings page (`flash.sizeOptionsCm` and `flash.fixedPlacements` are editable by the owner).
+- Design page: size radios, placement list with "Somewhere else (custom price)" which replaces the Book button with a link to the desk (`staging-flash-sizing.png`).
+- Desk client capture at `/owner/clients`: consent script read to the client, yes / no / not asked, recorded with the desk member's name, the date and the wording version; list with search, enquiry and booking counts and the latest marketing answer (`staging-desk-clients.png`). Privacy notice gained a "Marketing and third parties" section: nothing shared or sold, processors only, one-click unsubscribe.

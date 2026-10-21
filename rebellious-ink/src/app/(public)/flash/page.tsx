@@ -22,7 +22,7 @@ export default async function FlashPage({ searchParams }: { searchParams: Promis
   const q = (over: Partial<SP>) => { const u = new URLSearchParams(); for (const [k, v] of Object.entries({ ...sp, ...over })) if (v) u.set(k, String(v)); return `/flash?${u.toString()}`; };
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
-      <PageHeader title="Flash" intro={settings.palmEnabled ? `Ready-drawn designs at fixed prices: Small (up to ${settings.smallMaxCm} cm) ${gbp(settings.smallPence)}, Palm (up to ${settings.palmMaxCm} cm) ${gbp(settings.palmPence)}. Supervised apprentice pieces from ${gbp(settings.apprenticeSmallPence)}. The price you see is the price you pay; the deposit comes off it.` : `Ready-drawn designs at a fixed price: ${gbp(settings.smallPence)} for up to ${settings.smallMaxCm} cm, unless the design says otherwise. Supervised apprentice pieces from ${gbp(settings.apprenticeSmallPence)}. The price you see is the price you pay; the deposit comes off it.`} />
+      <PageHeader title="Flash" intro={settings.palmEnabled ? `Ready-drawn designs at fixed prices: Small (up to ${settings.smallMaxCm} cm) ${gbp(settings.smallPence)}, Palm (up to ${settings.palmMaxCm} cm) ${gbp(settings.palmPence)}. Supervised apprentice pieces from ${gbp(settings.apprenticeSmallPence)}. The price you see is the price you pay; the deposit comes off it.` : `Ready-drawn designs at a fixed price: ${gbp(settings.smallPence)} for up to ${settings.sizeOptionsCm[settings.sizeOptionsCm.length - 1]} cm on flat, easy areas, unless the design says otherwise. Supervised apprentice pieces from ${gbp(settings.apprenticeSmallPence)}. The price you see is the price you pay; the deposit comes off it.`} />
       <div className="flex flex-wrap items-center gap-2 mb-4" role="tablist" aria-label="View">
         <Link role="tab" aria-selected={view === "designs"} href={q({ view: "designs" })} className={`btn ${view === "designs" ? "btn-primary" : "btn-secondary"}`}>Designs</Link>
         <Link role="tab" aria-selected={view === "sheets"} href={q({ view: "sheets" })} className={`btn ${view === "sheets" ? "btn-primary" : "btn-secondary"}`}>Sheets</Link>
@@ -49,7 +49,7 @@ export default async function FlashPage({ searchParams }: { searchParams: Promis
           </li>
         ))}</ul>
       )}
-      <p className="hint mt-8">Hands, fingers, neck and face are quoted individually. Our apprentices are trained and supervised: lower price, same hygiene standards, same aftercare and free touch-up.</p>
+      <p className="hint mt-8">Flash prices apply to small sizes (up to {settings.sizeOptionsCm[settings.sizeOptionsCm.length - 1]} cm) on flat, easy areas: outer upper arm, forearm, top of the shoulder, outer thigh and calf. A different size or place is a custom price: ask the desk. Our apprentices are trained and supervised: lower price, same hygiene standards, same aftercare and free touch-up.</p>
     </div>
   );
 }
