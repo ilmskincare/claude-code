@@ -229,3 +229,9 @@ Note: during one full local test run the marketing integration test failed once 
 
 - Migration `20261021202500_staff_usernames` applied to staging and production. The sign-in page has two tabs: clients by email link, staff by username and password. Owner, Artists & arrangements now has "The team": sign-in details with "Give a username and password" or "Reset password" (one-time password shown once), an access dropdown with Save, and Suspend / Reactivate.
 
+
+## Mailboxes, 21 October 2026, night: Zoho Mail on rebelliousink.tattoo
+
+- Zoho Mail (UK datacentre, Mail Lite, three licences) hosts thedesk@, elleevaa@ and charlie@. DNS in Vercel: Zoho verification TXT, MX mx.zoho.uk 10 / mx2.zoho.uk 20 / mx3.zoho.uk 50 (the .eu hosts were wrong for the UK datacentre and were replaced), SPF `v=spf1 include:zohomail.uk ~all`, DKIM selector `zmail`, DMARC `p=none` reporting to thedesk@. Resend keeps its own `send` subdomain for the website's mail, so the two do not clash.
+- Verified: test emails from the website delivered into all three mailboxes; MX, SPF and DKIM verified in Zoho.
+- Site accounts: owner Nikki is `elleevaa` with elleevaa@rebelliousink.tattoo; owner Charlie (previously entered as Sean) is `charlie` with charlie@rebelliousink.tattoo. Owner copies and the morning digest go to both. System mail is sent from thedesk@ with replies to the same.
