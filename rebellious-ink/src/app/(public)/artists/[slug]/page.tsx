@@ -17,7 +17,7 @@ export default async function ArtistPage({ params }: { params: Promise<{ slug: s
       <BackLink href="/artists">All artists</BackLink>
       <div className="grid md:grid-cols-[1fr_320px] gap-8">
         <div>
-          <h1 className="text-4xl font-bold">{a.displayName}</h1>
+          <div className="flex items-center gap-4">{a.avatarKey && <img src={signedUrl(a.avatarKey, 3600)} alt={`${a.displayName} logo`} className="w-24 h-24 rounded-full object-cover bg-bone shrink-0" />}<h1 className="text-4xl font-bold">{a.displayName}</h1></div>
           <p className="hint mt-1">{a.kind === "APPRENTICE" ? `Apprentice · all procedures supervised by ${a.supervisor?.displayName}` : a.kind.replace("_", " ").toLowerCase()}{a.instagramHandle ? ` · @${a.instagramHandle}` : ""}</p>
           <p className="mt-4 text-lg opacity-85">{a.bio}</p>
           <p className="mt-3">{a.styles.map((s) => <span key={s} className="badge badge-outline mr-1">{s}</span>)}</p>

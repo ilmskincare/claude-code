@@ -2,6 +2,7 @@ import { z } from "zod";
 import { db } from "./db";
 import { audit } from "./audit";
 import { can, type Principal, ForbiddenError, NotFoundError } from "./rbac";
+import { assertAllowedUpload, newStorageKey, putObject } from "./storage";
 
 const list = z.string().transform((s) => s.split(/[\n,]/).map((x) => x.trim()).filter(Boolean).slice(0, 40));
 const pounds = z.string().transform((s) => (s.trim() === "" ? null : Math.round(Number(s) * 100))).pipe(z.number().int().min(0).nullable());
@@ -41,10 +42,17 @@ export function assertCanEditProfile(p: Principal, artistId: string) {
   throw new ForbiddenError();
 }
 
-export async function updateRateCard(p: Principal, artistId: string, input: z.infer<typeof rateCardSchema>) {
+export async function updateRateCard(p: Principal, artistId: string, input: z.infer<typeof rateCardSchema>, avatar?: File | null) {
   assertCanEditProfile(p, artistId);
   const before = await db.artistProfile.findUnique({ where: { id: artistId } });
   if (!before) throw new NotFoundError();
+  let avatarKey: string | undefined;
+  if (avatar && avatar.size > 0) {
+    assertAllowedUpload(avatar.type, avatar.size);
+    if (avatar.type === "application/pdf") throw new Error("The logo or portrait must be an image.");
+    avatarKey = newStorageKey(`portfolio/${before.slug}/avatar`, avatar.name);
+    await putObject(avatarKey, new Uint8Array(await avatar.arrayBuffer()), avatar.type);
+  }
   if (input.hourlyRateMin != null && input.hourlyRateMax != null && input.hourlyRateMax < input.hourlyRateMin) throw new Error("Hourly rate maximum must be at least the minimum.");
   const data = {
     displayName: input.displayName, bio: input.bio || null, instagramHandle: input.instagramHandle?.replace(/^@/, "") || null,
@@ -54,6 +62,7 @@ export async function updateRateCard(p: Principal, artistId: string, input: z.in
     piercingsOffered: input.piercingsOffered, piercingsNotOffered: input.piercingsNotOffered,
     receptionNotes: input.receptionNotes || null,
     ...(input.acceptsEnquiries === undefined ? {} : { acceptsEnquiries: input.acceptsEnquiries }),
+    ...(avatarKey ? { avatarKey } : {}),
   };
   const after = await db.artistProfile.update({ where: { id: artistId }, data });
   await audit({ actorId: p.userId, actorLabel: p.name ?? p.email, action: "profile.rate_card_updated", entityType: "ArtistProfile", entityId: artistId, before: { hourlyRateMinPence: before.hourlyRateMinPence, hourlyRateMaxPence: before.hourlyRateMaxPence, dayRatePence: before.dayRatePence, styles: before.styles, wontDo: before.wontDo }, after: { hourlyRateMinPence: after.hourlyRateMinPence, hourlyRateMaxPence: after.hourlyRateMaxPence, dayRatePence: after.dayRatePence, styles: after.styles, wontDo: after.wontDo } });

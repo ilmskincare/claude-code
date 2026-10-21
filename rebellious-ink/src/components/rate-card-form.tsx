@@ -16,6 +16,7 @@ export function RateCardForm({ profile, canToggleBooks }: { profile: Profile; ca
       {state?.error && <Alert tone="danger">{state.error}</Alert>}{state?.ok && <Alert tone="success">Saved. The desk and your public profile are updated.</Alert>}
       <input type="hidden" name="artistId" value={profile.id} />
       <div className="grid sm:grid-cols-2 gap-3">
+        <div className="sm:col-span-2"><label className="field" htmlFor="avatar">Logo or portrait (shown on your public page and card)</label><input id="avatar" name="avatar" type="file" accept="image/jpeg,image/png,image/webp" className="input" /></div>
         <div><label className="field" htmlFor="displayName">Display name</label><input id="displayName" name="displayName" className="input" defaultValue={profile.displayName} required /></div>
         <div><label className="field" htmlFor="instagramHandle">Instagram</label><input id="instagramHandle" name="instagramHandle" className="input" defaultValue={profile.instagramHandle ?? ""} placeholder="handle without @" /></div>
       </div>

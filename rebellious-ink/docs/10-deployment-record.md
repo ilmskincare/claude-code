@@ -165,3 +165,8 @@ Note: during one full local test run the marketing integration test failed once 
 - Verified in a real browser: landing page with the live "6 capsules in the machine" count (`staging-gumball-landing.png`); date-of-birth gate; free spin; reveal announced as "You got Swallow and anchor by Mo Blackwork" (`staging-gumball-result.png`); share card returns a PNG; "Keep it" lands on the slot picker with the £10.00 deposit and 406 free slots (`staging-gumball-slots.png`); a second spin the same day is refused; owner page shows capsules, the spin and the first-party counts (`staging-owner-gumball.png`).
 - The catalogue now shows one price per design; the Palm size is hidden behind `flash.palmEnabled`.
 
+## Staging update, 21 October 2026, night: Elle Evaa added as an artist
+
+- Migration `artist_avatar` applied (nine migrations): `avatarKey` on `ArtistProfile`, shown on the artist's page, card and home tile; artists upload their own logo or portrait from Profile & rates.
+- Elle Evaa created as a published tattoo artist (sign-in elle-evaa@test.rebelliousink.local, resident artist role, Tuesday to Saturday hours with Saturday walk-ins, station 1) with her logo and two portfolio photos supplied by the owner, publication permission recorded against each image. Idempotent SQL run twice with the same result; images in the Blob store.
+

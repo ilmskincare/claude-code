@@ -36,7 +36,7 @@ export default async function HomePage() {
                   <div className="aspect-[4/3] bg-steel relative">
                     {a.portfolioItems[0] ? <img src={signedUrl(a.portfolioItems[0].asset.storageKey, 3600)} alt={a.portfolioItems[0].caption ?? `Work by ${a.displayName}`} className="w-full h-full object-cover" /> : <div className="absolute inset-0 grid place-items-center text-bone/50">Portfolio coming soon</div>}
                   </div>
-                  <div className="p-4"><h3 className="text-xl font-bold">{a.displayName}</h3><p className="hint mt-1">{a.styles.join(" · ") || a.kind.replace("_", " ").toLowerCase()}</p></div>
+                  <div className="p-4 flex items-center gap-3">{a.avatarKey && <img src={signedUrl(a.avatarKey, 3600)} alt="" className="w-12 h-12 rounded-full object-cover bg-bone shrink-0" />}<div><h3 className="text-xl font-bold">{a.displayName}</h3><p className="hint mt-1">{a.styles.join(" · ") || a.kind.replace("_", " ").toLowerCase()}</p></div></div>
                 </Link>
               </li>
             ))}

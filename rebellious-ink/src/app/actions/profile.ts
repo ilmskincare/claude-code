@@ -14,7 +14,7 @@ export async function saveRateCardAction(_prev: ActionState, formData: FormData)
   const raw = Object.fromEntries(formData.entries()) as Record<string, string>;
   const parsed = rateCardSchema.safeParse({ ...raw, acceptsEnquiries: formData.has("acceptsEnquiriesPresent") ? raw.acceptsEnquiries === "on" : undefined });
   if (!parsed.success) return { error: `${parsed.error.issues[0].path.join(".")}: ${parsed.error.issues[0].message}` };
-  try { await updateRateCard(p, artistId, parsed.data); } catch (e) { return { error: msg(e) }; }
+  try { await updateRateCard(p, artistId, parsed.data, (() => { const f = formData.get("avatar"); return f instanceof File ? f : null; })()); } catch (e) { return { error: msg(e) }; }
   await refresh(artistId);
   return { ok: true };
 }
