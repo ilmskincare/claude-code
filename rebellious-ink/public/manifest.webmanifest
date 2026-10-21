@@ -1,0 +1,9 @@
+{
+  "name": "Rebellious Ink",
+  "short_name": "Rebellious Ink",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#070807",
+  "theme_color": "#8cb000",
+  "icons": [{ "src": "/brand/rebellious-ink-logo.jpg", "sizes": "1536x1536", "type": "image/jpeg" }]
+}
