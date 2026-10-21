@@ -9,6 +9,8 @@ const schema = z.object({
   /** Deployment tier. "staging" keeps NODE_ENV=production builds but permits the dev outbox behind deployment protection. */
   APP_ENV: z.enum(["development", "test", "staging", "production"]).optional(),
   DATABASE_URL: z.string().min(1),
+  /** PEM root certificate used to verify the database server (Supabase CA). */
+  DATABASE_SSL_CA: z.string().optional(),
   AUTH_SECRET: z.string().min(16),
   APP_BASE_URL: z.string().url().default("http://localhost:3000"),
   STUDIO_TIMEZONE: z.string().default("Europe/London"),
