@@ -557,7 +557,10 @@ test("18. gumball machine: age gate, free spin, reveal, keep it and book at the 
   // Under-18 is refused; the cookie is only set for an adult date.
   await pub.getByLabel("Date of birth").fill(new Date(Date.now() - 17 * 365.25 * 86400000).toISOString().slice(0, 10));
   await pub.getByRole("button", { name: "Continue" }).dispatchEvent("click");
-  await expect(pub.getByText(/must be 18 or over/)).toBeVisible();
+  await expect(pub.getByText(/must be 18 or over to play/)).toContainText(/must be 18 or over to play/);
+  // The crank and flap are locked until the age check: pressing them points at the date of birth box.
+  await pub.getByLabel("Push, locked until you confirm your age").dispatchEvent("click");
+  await expect(pub.getByRole("status")).toContainText("Pop your date of birth in first");
   await pub.getByLabel("Date of birth").fill("1990-05-05");
   await pub.getByRole("button", { name: "Continue" }).dispatchEvent("click");
   await expect(pub.getByRole("button", { name: "Turn the crank (free)" })).toBeVisible();
@@ -570,7 +573,8 @@ test("18. gumball machine: age gate, free spin, reveal, keep it and book at the 
   expect(share.status()).toBe(200); expect(share.headers()["content-type"]).toContain("image/png");
   // Second spin today is refused
   await pub.goto("/play/gumball");
-  await expect(pub.getByRole("button", { name: "That is your spin for today" })).toBeDisabled();
+  await expect(pub.getByText("That is your spin for today. Come back tomorrow for another free go.").first()).toBeVisible();
+  await expect(pub.getByRole("button", { name: "Turn the crank (free)" })).toHaveCount(0);
   await pub.close();
 
   // A fresh account per project and run (the limit is one spin per person per day) spins and books: slot picker, £10 deposit.
