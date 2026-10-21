@@ -50,3 +50,26 @@ Health check: `GET /api/health` reports database, email, payments and storage st
 | Date | Environment | URL | Commit | Outcome |
 |---|---|---|---|---|
 | — | none | — | — | No deployment has been performed. |
+
+
+## Staging attempt, 21 October 2026 (afternoon)
+
+Requested: a staging environment on Vercel and Supabase. Outcome so far: **not deployed**, blocked on two account-level permissions that only the owner can change. Everything the code needs for a serverless staging tier is now in place and tested.
+
+| Step | Result |
+|---|---|
+| Supabase `create_project` (org "Nikkis Ai ADHD Team", region eu-west-2 London) | Refused: the organisation is at the free-tier limit of two active projects. Owner chose to upgrade the organisation first. |
+| Vercel `create_project` / `create_deployment` in team "Lush Labs' projects" | Refused with HTTP 403 "You don't have permission to create a project". The connected Vercel integration can list the team's projects but not create one. |
+| Direct Postgres from this container (port 5432) | Blocked by the container network policy, so migrations will be applied through the Supabase management API and recorded in `_prisma_migrations` manually. |
+
+### Code prepared for staging (committed on this branch)
+- `APP_ENV=staging` tier: production guards (`RESEND_API_KEY`, Stripe keys, non-local storage) apply only when `APP_ENV` is `production`; staging keeps the development outbox so sign-in works without an email provider. **Staging must sit behind Vercel Authentication (deployment protection) because the check-email page shows the magic link when no email provider is configured.**
+- `STORAGE_DRIVER=blob`: private Vercel Blob storage for reference images and PDFs, still served only through the HMAC-signed `/api/files` route.
+- `export const dynamic = "force-dynamic"` on the root layout so no page is prerendered at build time against an empty database.
+- `/api/jobs/expire-holds` protected by `CRON_SECRET`, scheduled every 10 minutes in `vercel.json`.
+- `scripts/export-seed-sql.sh` (data-only SQL dump of the fictional seed for loading through the Supabase API) and `scripts/upload-seed-assets.ts` (placeholder portfolio images into the Blob store).
+
+### Owner actions required before staging can exist
+1. **Supabase**: upgrade the organisation (or pause one existing project), then say so; a `rebellious-ink-staging` project will be created in eu-west-2 (London).
+2. **Vercel**: either grant the connected Claude integration permission to create projects in "Lush Labs' projects", or create an empty project named `rebellious-ink-staging` (framework Next.js, root directory `rebellious-ink`) and turn on Vercel Authentication for all deployments.
+3. Nothing else: secrets (`AUTH_SECRET`, `STORAGE_SIGNING_SECRET`, `CRON_SECRET`) will be generated and set as environment variables at deployment time and never committed.

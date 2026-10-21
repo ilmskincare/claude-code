@@ -6,6 +6,8 @@ import { z } from "zod";
  */
 const schema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+  /** Deployment tier. "staging" keeps NODE_ENV=production builds but permits the dev outbox behind deployment protection. */
+  APP_ENV: z.enum(["development", "test", "staging", "production"]).optional(),
   DATABASE_URL: z.string().min(1),
   AUTH_SECRET: z.string().min(16),
   APP_BASE_URL: z.string().url().default("http://localhost:3000"),
@@ -15,7 +17,9 @@ const schema = z.object({
   STRIPE_SECRET_KEY: z.string().optional(),
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().optional(),
-  STORAGE_DRIVER: z.enum(["local", "s3"]).default("local"),
+  STORAGE_DRIVER: z.enum(["local", "blob", "s3"]).default("local"),
+  BLOB_READ_WRITE_TOKEN: z.string().optional(),
+  CRON_SECRET: z.string().optional(),
   STORAGE_LOCAL_DIR: z.string().default("./storage"),
   STORAGE_SIGNING_SECRET: z.string().min(8).default("dev-only-storage-signing-secret"),
   HEALTH_DATA_KEY: z.string().optional(),
@@ -32,12 +36,12 @@ export function env(): Env {
     throw new Error("Invalid environment: " + JSON.stringify(parsed.error.flatten().fieldErrors));
   }
   const e = parsed.data;
-  if (e.NODE_ENV === "production") {
+  if (appEnv(e) === "production") {
     const missing: string[] = [];
     if (!e.RESEND_API_KEY) missing.push("RESEND_API_KEY");
     if (!e.STRIPE_SECRET_KEY) missing.push("STRIPE_SECRET_KEY");
     if (!e.STRIPE_WEBHOOK_SECRET) missing.push("STRIPE_WEBHOOK_SECRET");
-    if (e.STORAGE_DRIVER === "local") missing.push("STORAGE_DRIVER=s3");
+    if (e.STORAGE_DRIVER === "local") missing.push("STORAGE_DRIVER=blob|s3");
     if (missing.length) {
       throw new Error(`Production refuses to start without: ${missing.join(", ")}`);
     }
@@ -46,6 +50,12 @@ export function env(): Env {
   return e;
 }
 
-export const isProduction = () => env().NODE_ENV === "production";
+function appEnv(e: Env) {
+  return e.APP_ENV ?? e.NODE_ENV;
+}
+
+/** True only for the real production tier. Staging deliberately returns false so test-only conveniences stay available behind deployment protection. */
+export const isProduction = () => appEnv(env()) === "production";
+export const isStaging = () => appEnv(env()) === "staging";
 export const emailProviderConfigured = () => Boolean(env().RESEND_API_KEY);
 export const stripeConfigured = () => Boolean(env().STRIPE_SECRET_KEY && env().STRIPE_WEBHOOK_SECRET);

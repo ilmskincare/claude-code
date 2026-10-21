@@ -2,6 +2,7 @@ import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { env } from "./env";
+import { put as blobPut, get as blobGet } from "@vercel/blob";
 
 /**
  * Private object storage with short-lived signed links. The local driver is
@@ -25,15 +26,31 @@ export function newStorageKey(prefix: string, originalName: string) {
   return `${prefix}/${new Date().toISOString().slice(0, 10)}/${randomUUID()}${ext}`;
 }
 
-export async function putObject(key: string, bytes: Uint8Array) {
-  if (env().STORAGE_DRIVER !== "local") throw new Error("S3 driver not yet configured (P1-12)");
+export async function putObject(key: string, bytes: Uint8Array, contentType = "application/octet-stream") {
+  const driver = env().STORAGE_DRIVER;
+  if (driver === "blob") {
+    // Vercel Blob, private access: objects are only readable server-side with the store token,
+    // and are served to browsers through the HMAC-signed /api/files route.
+    await blobPut(key, Buffer.from(bytes), { access: "private", addRandomSuffix: false, contentType, token: env().BLOB_READ_WRITE_TOKEN });
+    return;
+  }
+  if (driver !== "local") throw new Error("S3 driver not yet configured (P1-12)");
   const full = path.join(baseDir(), key);
   await mkdir(path.dirname(full), { recursive: true });
   await writeFile(full, bytes);
 }
 
 export async function getObject(key: string): Promise<Buffer> {
-  if (env().STORAGE_DRIVER !== "local") throw new Error("S3 driver not yet configured (P1-12)");
+  const driver = env().STORAGE_DRIVER;
+  if (driver === "blob") {
+    const result = await blobGet(key, { access: "private", token: env().BLOB_READ_WRITE_TOKEN });
+    if (!result || !result.stream) throw new Error("Not found");
+    const chunks: Uint8Array[] = [];
+    const reader = result.stream.getReader();
+    for (;;) { const { done, value } = await reader.read(); if (done) break; chunks.push(value); }
+    return Buffer.concat(chunks);
+  }
+  if (driver !== "local") throw new Error("S3 driver not yet configured (P1-12)");
   const full = path.join(baseDir(), key);
   if (!full.startsWith(baseDir())) throw new Error("Invalid key");
   return readFile(full);

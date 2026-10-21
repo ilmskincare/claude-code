@@ -103,7 +103,7 @@ export async function createEnquiry(input: EnquiryInput, files: File[], opts: { 
     await tx.privacyPreference.create({ data: { userId: client.id, purpose: "MARKETING_EMAIL", granted: false, source: "portal" } }).catch(() => undefined);
     for (const f of files) {
       const key = newStorageKey(`enquiries/${request.id}`, f.name);
-      await putObject(key, new Uint8Array(await f.arrayBuffer()));
+      await putObject(key, new Uint8Array(await f.arrayBuffer()), f.type);
       await tx.imageAsset.create({ data: { uploadedById: client.id, requestId: request.id, storageKey: key, originalName: f.name.slice(0, 200), mimeType: f.type, sizeBytes: f.size, visibility: "PRIVATE_REFERENCE", scanStatus: "PENDING" } });
     }
     await audit({ actorId: opts.createdBy?.userId ?? client.id, actorLabel: opts.createdBy ? "Desk" : "Client", action: "enquiry.created", entityType: "BookingRequest", entityId: request.id, after: { reference, category: input.category, artistId: artist?.id ?? null }, ip: opts.ip }, tx);

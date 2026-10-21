@@ -11,6 +11,9 @@ export const metadata: Metadata = {
   manifest: "/manifest.webmanifest",
 };
 
+/** Every route reads live studio data; nothing is prerendered at build time. */
+export const dynamic = "force-dynamic";
+
 export const viewport: Viewport = { themeColor: "#070807", width: "device-width", initialScale: 1 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
