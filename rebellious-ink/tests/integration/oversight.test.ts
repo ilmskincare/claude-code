@@ -46,7 +46,7 @@ describe("owner oversight", () => {
     await postMessage(artistA, r.id, "Hi, can you do Thursday at 2pm?");
     const copy = await testDb.notification.findFirstOrThrow({ where: { templateKey: "oversight.message_copy", to: "owner@test.local" }, orderBy: { createdAt: "desc" } });
     expect(copy.subject).toBe("Copy: message on ENQ-OV-1 from Artist Artist A");
-    expect(await testDb.devMailbox.findFirst({ where: { subject: copy.subject } })).toMatchObject({ text: expect.stringContaining("Thursday at 2pm") });
+    expect(await testDb.devMailbox.findFirst({ where: { subject: copy.subject ?? "" } })).toMatchObject({ text: expect.stringContaining("Thursday at 2pm") });
     await postMessage(client1, r.id, "Thursday works, see you then.");
     expect((await testDb.notification.findFirstOrThrow({ where: { templateKey: "oversight.message_copy", subject: { contains: "from Client" } } })).subject).toContain("Client One");
     await postMessage(artistA, r.id, "Note to self: bring the stencil.", "INTERNAL_ONLY");

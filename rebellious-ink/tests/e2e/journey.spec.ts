@@ -673,3 +673,46 @@ test("21. owner adds an apprentice from the Artists page; they appear in the lis
   await expect(a.page.getByRole("heading", { level: 1 })).not.toHaveText("Not found");
   await a.context.close();
 });
+
+test("22. staff chat: owner posts in the studio channel and the management channel; the artist sees the studio message but cannot open management; the owner runs a report and downloads a CSV", async ({ browser }, info) => {
+  const line = `Kettle is on ${unique} ${info.project.name}`;
+  const o = await newSignedInPage(browser, "owner@test.rebelliousink.local");
+  await o.page.goto("/studio/chat");
+  await o.page.waitForURL(/\/studio\/chat\/[a-z0-9]+$/);
+  await o.page.getByRole("link", { name: /# Studio/ }).click();
+  await expect(o.page.getByRole("heading", { name: "Studio", level: 2 })).toBeVisible();
+  await o.page.getByRole("textbox", { name: "Message" }).fill(line);
+  await o.page.getByRole("button", { name: "Send" }).dispatchEvent("click");
+  await expect(o.page.getByText(line, { exact: true })).toBeVisible();
+  const mgmtLink = o.page.getByRole("link", { name: /Management/ });
+  await expect(mgmtLink).toBeVisible();
+  const studioUrl = o.page.url();
+  await mgmtLink.click();
+  await o.page.waitForURL((u) => u.toString() !== studioUrl && /\/studio\/chat\/[a-z0-9]+$/.test(u.toString()));
+  await expect(o.page.getByRole("heading", { name: "Management", level: 2 })).toBeVisible();
+  const mgmtUrl = o.page.url();
+  await o.page.getByRole("textbox", { name: "Message" }).fill(`Owners only ${unique}`);
+  await o.page.getByRole("button", { name: "Send" }).dispatchEvent("click");
+  await expect(o.page.getByText(`Owners only ${unique}`, { exact: true })).toBeVisible();
+  await o.page.screenshot({ path: path.join(SHOTS, `${info.project.name}-41-staff-chat.png`), fullPage: true });
+  await o.page.goto("/owner/reports?preset=this_month");
+  await expect(o.page.getByRole("heading", { name: "Reports" })).toBeVisible();
+  await expect(o.page.getByRole("heading", { name: "Enquiries by artist" })).toBeVisible();
+  const csv = await o.page.request.get("/owner/reports/export?report=enquiries_by_artist&preset=this_month");
+  expect(csv.status()).toBe(200);
+  expect(csv.headers()["content-type"]).toContain("text/csv");
+  expect((await csv.text()).split("\n")[0]).toBe("Artist,Enquiries,Booked,Conversion,Completed,Lost");
+  await o.page.screenshot({ path: path.join(SHOTS, `${info.project.name}-42-owner-reports.png`), fullPage: true });
+  await o.context.close();
+
+  const a = await newSignedInPage(browser, "artist-a@test.rebelliousink.local");
+  await a.page.goto("/studio/chat");
+  await a.page.waitForURL(/\/studio\/chat\/[a-z0-9]+$/);
+  await expect(a.page.getByText(line, { exact: true })).toBeVisible();
+  await expect(a.page.getByRole("link", { name: /Management/ })).toHaveCount(0);
+  await a.page.goto(mgmtUrl);
+  await expect(a.page.getByRole("heading", { name: "Not found" })).toBeVisible();
+  const forbidden = await a.page.request.get("/owner/reports/export?report=enquiries_by_artist");
+  expect(forbidden.status()).toBe(403);
+  await a.context.close();
+});

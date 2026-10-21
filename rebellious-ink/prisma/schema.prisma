@@ -113,6 +113,8 @@ model User {
   plays           Play[]
 
   @@schema("public")
+  chatMemberships ChatMember[]
+  chatMessages    ChatMessage[]
 }
 
 // Auth.js adapter tables
@@ -2155,5 +2157,50 @@ model AIActionApproval {
   result       Json?
   createdAt    DateTime  @default(now()) @db.Timestamptz(3)
 
+  @@schema("public")
+}
+
+/// Staff chat: a studio-wide channel for everyone on the team, a management channel for owners and managers, and direct messages.
+enum ChatChannelKind {
+  STUDIO
+  MANAGEMENT
+  DIRECT
+
+  @@schema("public")
+}
+
+model ChatChannel {
+  id        String          @id @default(cuid())
+  kind      ChatChannelKind
+  name      String
+  createdAt DateTime        @default(now()) @db.Timestamptz(3)
+  members   ChatMember[]
+  messages  ChatMessage[]
+
+  @@schema("public")
+}
+
+model ChatMember {
+  id         String      @id @default(cuid())
+  channelId  String
+  channel    ChatChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lastReadAt DateTime?   @db.Timestamptz(3)
+
+  @@unique([channelId, userId])
+  @@schema("public")
+}
+
+model ChatMessage {
+  id        String      @id @default(cuid())
+  channelId String
+  channel   ChatChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  senderId  String
+  sender    User        @relation(fields: [senderId], references: [id])
+  body      String
+  createdAt DateTime    @default(now()) @db.Timestamptz(3)
+
+  @@index([channelId, createdAt])
   @@schema("public")
 }

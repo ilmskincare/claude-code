@@ -219,3 +219,9 @@ Note: during one full local test run the marketing integration test failed once 
 - System email now comes from thedesk@rebelliousink.tattoo with replies to the same address; the mailbox itself still needs creating (Zoho free or forwarding), until then replies bounce.
 - Privacy notice now says thread messages are visible to the artist, the desk and the owners for quality checks (legitimate interests).
 
+## Live update, 21 October 2026, late evening: staff chat and reports
+
+- Migration `20261021200739_staff_chat` (three tables) applied to staging and production through the management API and recorded.
+- Staff chat at Chat in the artist and owner navigation: Studio channel, Management channel (owners and managers), direct messages; WhatsApp-style bubbles, unread counts, six-second refresh; owners can read everything and the header says so.
+- Reports at Owner, Reports: period picker, nine reports (enquiries by artist/source/service, response times, bookings, payments by purpose and method, retail, games, marketing list and campaigns, stock needing attention, apprentices, clients) with CSV downloads, audited.
+
