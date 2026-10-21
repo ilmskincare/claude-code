@@ -46,7 +46,7 @@ export default async function HomePage() {
       <section className="mx-auto max-w-6xl px-4 pb-14">
         <div className="card p-6 md:p-8 grid md:grid-cols-[1fr_auto] gap-6 items-center border-2 border-acid">
           <div><p className="text-acid-deep uppercase tracking-[.3em] text-sm mb-2">Get what you get</p><h2 className="text-3xl font-bold">The gumball machine, online</h2><p className="mt-2 opacity-85 max-w-2xl">Turn the crank, the machine picks one small design from our artists, you book it at one fixed price. Free to spin, no swaps, 18+ only.</p></div>
-          <Link href="/play/gumball" className="btn btn-primary text-lg">Turn the crank</Link>
+          <div className="flex flex-col gap-2"><Link href="/play/gumball" className="btn btn-primary text-lg">Turn the crank</Link><Link href="/play/trio" className="btn btn-secondary">Or try the three machines</Link></div>
         </div>
       </section>
       <section className="mx-auto max-w-6xl px-4 pb-14 grid gap-6 md:grid-cols-3">

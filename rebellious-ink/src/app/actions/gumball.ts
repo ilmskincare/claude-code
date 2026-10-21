@@ -21,7 +21,7 @@ export async function ageGateAction(_prev: ActionState, formData: FormData): Pro
   const p = await getPrincipal();
   if (p) await db.clientProfile.updateMany({ where: { userId: p.userId, dateOfBirth: null }, data: { dateOfBirth: dob } });
   await track("age_gate_passed", { game: "gumball", visitorId, userId: p?.userId ?? null });
-  revalidatePath("/play/gumball");
+  revalidatePath("/play/gumball"); revalidatePath("/play/trio");
   return { ok: true };
 }
 

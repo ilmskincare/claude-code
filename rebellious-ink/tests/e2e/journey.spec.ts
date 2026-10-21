@@ -618,3 +618,32 @@ test("19. desk adds a walk-in client with a recorded marketing yes; they appear 
   await d.page.screenshot({ path: path.join(SHOTS, `${info.project.name}-37-desk-clients.png`), fullPage: true });
   await d.context.close();
 });
+
+test("20. three machines: age gate, one free pull decides ink, style and subject; keep it with a chosen artist and book at the fixed price", async ({ browser }, info) => {
+  const c = await newSignedInPage(browser, `trio-${unique}-${info.project.name}@test.rebelliousink.local`);
+  await c.page.goto("/play/trio");
+  await c.page.waitForLoadState("networkidle");
+  await expect(c.page.getByRole("heading", { name: "Ink. Style. Subject." })).toBeVisible();
+  await expect(c.page.getByText("£40").first()).toBeVisible();
+  if (await c.page.getByLabel("Date of birth").count()) {
+    await expect(c.page.getByText("Step 1 of 2: confirm your age")).toBeVisible();
+    await c.page.getByLabel("Date of birth").fill("1990-05-05"); await c.page.getByRole("button", { name: "Continue" }).dispatchEvent("click");
+  }
+  await expect(c.page.getByRole("button", { name: "Step 2 of 2: pull all three (free)" })).toBeVisible();
+  await c.page.screenshot({ path: path.join(SHOTS, `${info.project.name}-38-trio-landing.png`), fullPage: true });
+  await c.page.getByRole("button", { name: "Step 2 of 2: pull all three (free)" }).dispatchEvent("click");
+  await c.page.waitForURL(/\/play\/trio\/[a-z0-9]+$/);
+  await expect(c.page.getByRole("status")).toContainText(/You got: (Black and grey|Colour) /, { timeout: 15000 });
+  await c.page.screenshot({ path: path.join(SHOTS, `${info.project.name}-39-trio-result.png`), fullPage: true });
+  await c.page.getByLabel("Who draws and tattoos it").selectOption({ label: "Mo Blackwork (TEST)" });
+  await c.page.getByLabel("Placement").selectOption("forearm (outer)");
+  await c.page.getByLabel(/I confirm I am 18 or over/).check();
+  await c.page.getByRole("button", { name: "Keep it: choose a time" }).dispatchEvent("click");
+  await c.page.waitForURL(/\/my\/enquiries\/[a-z0-9]+\/book$/);
+  await expect(c.page.getByText(/pay the £10.00 deposit/)).toBeVisible();
+  await c.page.goto(c.page.url().replace(/\/book$/, ""));
+  await expect(c.page.getByText(/Three machines:/).first()).toBeVisible();
+  await c.page.goto("/play/trio");
+  await expect(c.page.getByText("That is your go for today. Come back tomorrow for another free one.").first()).toBeVisible();
+  await c.context.close();
+});

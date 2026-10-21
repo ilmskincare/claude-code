@@ -138,5 +138,9 @@ table.data th { font-size: .78rem; text-transform: uppercase; letter-spacing: .0
 .capsule-pop { animation: capsule-pop .5s ease-in forwards; }
 @keyframes attention { 0%, 100% { box-shadow: 0 0 0 0 rgba(140,176,0,0); } 30% { box-shadow: 0 0 0 6px rgba(140,176,0,.55); } }
 .attention { animation: attention 1.2s ease-out 2; }
+@keyframes reel-flicker { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
+.reel-flicker { animation: reel-flicker .35s linear infinite; }
+@keyframes flap-glow { 0%, 100% { filter: drop-shadow(0 0 0 rgba(166,209,24,0)); } 50% { filter: drop-shadow(0 0 10px rgba(166,209,24,1)); } }
+.flap-glow { animation: flap-glow 1.4s ease-in-out infinite; }
 .reveal-in { animation: reveal-in .6s ease-out forwards; }
-@media (prefers-reduced-motion: reduce) { .gumball-globe, .gumball-crank.spinning, .capsule-drop, .capsule-pop, .reveal-in, .attention { animation: none !important; } }
+@media (prefers-reduced-motion: reduce) { .gumball-globe, .gumball-crank.spinning, .capsule-drop, .capsule-pop, .reveal-in, .attention, .reel-flicker, .flap-glow { animation: none !important; } }

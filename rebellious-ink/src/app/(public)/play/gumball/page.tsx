@@ -19,15 +19,17 @@ export default async function GumballPage() {
           <p className="text-acid-deep uppercase tracking-[.3em] text-sm mb-2">The tattoo studio for the people</p>
           <h1 className="text-5xl font-bold">Get what you get.</h1>
           <p className="mt-3 text-lg opacity-85 max-w-xl">Turn the crank and the machine picks one design from the capsules inside. No choosing, no swaps, one fixed price. Just like the machine on the studio counter, only you can do it from the sofa.</p>
+          {mode === "locked" && <div className="mt-6"><AgeGate /></div>}
           <div className="mt-6"><GumballMachine key={mode} mode={mode} capsules={m.available} spinsLeft={m.spinsLeft} /></div>
         </div>
         <aside className="space-y-4 md:sticky md:top-4">
           <PricePanel pricePence={m.settings.pricePence} depositPence={m.settings.depositPence} maxCm={m.maxCm} available={m.available} />
           {!m.settings.enabled ? <div className="card p-5"><p className="font-bold">The machine is switched off at the moment.</p><p className="text-sm opacity-80 mt-1">Have a look at the <Link href="/flash" className="underline">flash catalogue</Link> instead.</p></div>
             : m.restocking ? <RestockAlert />
-            : !adult ? <AgeGate />
+            : !adult ? <div className="card p-5"><p className="font-bold">Two steps.</p><p className="text-sm opacity-80 mt-1">1. Enter your date of birth (the box under the heading). 2. Turn the crank. Spinning is free.</p></div>
             : <div className="card p-5"><p className="font-bold">Age check done.</p><p className="text-sm opacity-80 mt-1">{m.spinsLeft > 0 ? "Turn the crank on the machine, or press PUSH." : "That is your spin for today. Come back tomorrow for another free go."}</p></div>}
           <p className="hint">Every capsule is a real design by one of our artists, drawn to be tattooed small. Nothing is won or lost and nothing is charged to spin. 18+ only. Hands, fingers, neck and face are not available for gumball tattoos.</p>
+          <p className="hint">Prefer a brief to a drawing? Try the <Link href="/play/trio" className="underline">three machines</Link>: ink, style and subject.</p>
         </aside>
       </div>
       <ol className="mt-8 grid sm:grid-cols-3 gap-3 text-sm">

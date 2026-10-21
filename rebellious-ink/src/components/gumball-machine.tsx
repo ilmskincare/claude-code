@@ -23,7 +23,7 @@ function capsulePile(count: number) {
 }
 
 /** The machine drawn in brand style: black body, acid-green globe, crown on top, RI shield on the coin slot, capsules piled inside. The crank and flap are real controls. */
-export function MachineArt({ spinning, capsules = 14, locked = false, onCrank }: { spinning: boolean; capsules?: number; locked?: boolean; onCrank?: () => void }) {
+export function MachineArt({ spinning, capsules = 14, locked = false, glow = false, onCrank }: { spinning: boolean; capsules?: number; locked?: boolean; glow?: boolean; onCrank?: () => void }) {
   const pile = capsulePile(capsules);
   const handle = onCrank ? { role: "button" as const, tabIndex: 0, onClick: onCrank, onKeyDown: (e: React.KeyboardEvent) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onCrank(); } }, style: { cursor: "pointer" } } : {};
   return (
@@ -56,8 +56,8 @@ export function MachineArt({ spinning, capsules = 14, locked = false, onCrank }:
       </g>
       {/* flap */}
       <g aria-label={locked ? "Push, locked until you confirm your age" : "Push to turn the crank"} {...handle}>
-        <rect x="140" y="420" width="80" height="50" rx="8" fill="#070807" stroke="#8cb000" strokeWidth="3" />
-        <text x="180" y="450" textAnchor="middle" fontSize="12" fill="#8cb000" letterSpacing="2">{locked ? "LOCKED" : "PUSH"}</text>
+        <rect x="140" y="420" width="80" height="50" rx="8" fill={glow ? "#8cb000" : "#070807"} stroke={glow ? "#e9ecdc" : "#8cb000"} strokeWidth="3" className={glow ? "flap-glow" : undefined} />
+        <text x="180" y="450" textAnchor="middle" fontSize="13" fontWeight="700" fill={glow ? "#070807" : "#8cb000"} letterSpacing="2">{locked ? "LOCKED" : "PUSH"}</text>
       </g>
       {/* stars */}
       {[[60, 90], [300, 90], [60, 290], [300, 290]].map(([x, y], i) => <path key={i} d={`M${x} ${y - 8} L${x + 2} ${y - 2} L${x + 8} ${y} L${x + 2} ${y + 2} L${x} ${y + 8} L${x - 2} ${y + 2} L${x - 8} ${y} L${x - 2} ${y - 2} Z`} fill="#8cb000" opacity=".8" />)}
@@ -87,16 +87,19 @@ export function GumballMachine({ mode, capsules, spinsLeft }: { mode: MachineMod
     }
     setNote(mode === "spent" || mode === "ready" ? "That is your spin for today. Come back tomorrow." : mode === "restocking" ? "The machine is being restocked. Leave your email and we will tell you when it is full." : "The machine is switched off at the moment.");
   };
+  const stepButton = ready
+    ? <button className="btn btn-primary w-full justify-center text-lg py-4" disabled={pending} aria-describedby="spin-help">{pending ? "Turning the crank…" : "Step 2 of 2: turn the crank (free)"}</button>
+    : null;
   return (
     <form ref={formRef} action={action} className="space-y-3">
-      <MachineArt spinning={pending} capsules={capsules} locked={mode === "locked"} onCrank={onCrank} />
+      {stepButton}
+      {pending && <p role="status" aria-live="assertive" className="text-center font-semibold text-acid-deep">Turning the crank… the capsule is on its way. This takes a few seconds.</p>}
       {state?.error && <Alert tone="danger">{state.error}</Alert>}
-      {note && <p className="text-center text-sm font-semibold text-acid-deep" role="status">{note}</p>}
-      {ready ? <>
-        <button className="btn btn-primary w-full justify-center text-lg" disabled={pending} aria-describedby="spin-help">{pending ? "Turning the crank…" : "Turn the crank (free)"}</button>
-        <p id="spin-help" className="hint text-center">One free spin per person per day. The machine decides; what you get is what you get. Nothing is charged to spin.</p>
-      </> : mode === "ready" || mode === "spent" ? <p className="hint text-center">That is your spin for today. Come back tomorrow for another free go.</p>
-        : mode === "locked" ? <p className="hint text-center">The crank unlocks once you have entered your date of birth.</p> : null}
+      {note && !pending && <p className="text-center text-sm font-semibold text-acid-deep" role="status">{note}</p>}
+      <MachineArt spinning={pending} capsules={capsules} locked={mode === "locked"} glow={ready && !pending} onCrank={onCrank} />
+      {ready ? <p id="spin-help" className="hint text-center">Tap the glowing PUSH, the crank, or the button above. One free spin per person per day. The machine decides; what you get is what you get. Nothing is charged to spin.</p>
+        : mode === "ready" || mode === "spent" ? <p className="hint text-center">That is your spin for today. Come back tomorrow for another free go.</p>
+        : mode === "locked" ? <p className="hint text-center">The crank is locked until you have entered your date of birth above.</p> : null}
     </form>
   );
 }
@@ -109,7 +112,7 @@ export function AgeGate() {
       const dob = (e.currentTarget.elements.namedItem("dateOfBirth") as HTMLInputElement | null)?.value ?? "";
       if (!dob) { e.preventDefault(); setLocalError("Tap the date box and pick your date of birth, then press Continue."); } else setLocalError(null);
     }}>
-      <h2 className="text-xl font-bold">First, your age</h2>
+      <h2 className="text-xl font-bold">Step 1 of 2: confirm your age</h2>
       <p className="text-sm opacity-80">You must be 18 or over to be tattooed in the UK. We check photographic ID in the studio too.</p>
       {(localError || state?.error) && <Alert tone="danger">{localError ?? state?.error}</Alert>}
       <div><label className="field" htmlFor="dateOfBirth">Date of birth</label><input id="dateOfBirth" name="dateOfBirth" type="date" className="input" required aria-describedby="dob-help" max={new Date().toISOString().slice(0, 10)} /><p id="dob-help" className="hint">Tap the box to pick the day, month and year.</p></div>

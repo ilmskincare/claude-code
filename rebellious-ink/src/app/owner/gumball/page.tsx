@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireCapability } from "@/lib/session";
 import { ownerDashboard } from "@/lib/gumball";
+import { trioOwnerSummary } from "@/lib/trio";
 import { eventCounts } from "@/lib/analytics";
 import { PageHeader, Stat } from "@/components/ui";
 import { DesignImage } from "@/components/design-image";
@@ -13,6 +14,8 @@ export default async function OwnerGumball() {
   await requireCapability("roster.manage");
   const d = await ownerDashboard();
   const ev = await eventCounts("gumball", d.since);
+  const trio = await trioOwnerSummary();
+  const tev = await eventCounts("trio", d.since);
   return (<>
     <PageHeader title="Gumball machine" intro={`Free to spin, ${formatPence(d.settings.pricePence)} total when they book, ${formatPence(d.settings.depositPence)} deposit. ${d.settings.spinsPerDay} spin per person per day. The machine hides itself below ${d.settings.minStock} available designs. Change any of these under Settings.`} actions={<><Link href="/owner/flash/new" className="btn btn-primary">Add a capsule design</Link><Link href="/owner/settings" className="btn btn-secondary">Settings</Link></>} />
     <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6"><Stat label="Capsules available" value={d.available} hint={d.available < d.settings.minStock ? "Below minimum: machine shows as restocking" : undefined} /><Stat label="Spins, last 7 days" value={d.playsWeek} /><Stat label="Booked, last 7 days" value={d.bookedWeek} /><Stat label="Waiting for restock" value={d.alerts} /></div>
@@ -25,5 +28,9 @@ export default async function OwnerGumball() {
         <table className="data"><thead><tr><th>When</th><th>Design</th><th>Who</th><th>Status</th></tr></thead><tbody>{d.plays.map((pl) => <tr key={pl.id}><td>{formatStudio(pl.createdAt, "dd/MM HH:mm")}</td><td>{pl.design?.title ?? "—"}</td><td className="text-xs">{pl.user?.name ?? pl.user?.email ?? `visitor ${pl.visitorId.slice(0, 6)}`}</td><td><span className={`badge ${pl.status === "BOOKED" ? "badge-acid" : "badge-muted"}`}>{pl.status.replace("_", " ").toLowerCase()}</span></td></tr>)}{d.plays.length === 0 && <tr><td colSpan={4} className="opacity-60">No spins yet.</td></tr>}</tbody></table>
       </section>
     </div>
+    <section className="card p-4 mt-6"><h2 className="text-xl font-bold mb-1">Three machines</h2><p className="hint mb-3">Ink, style and subject pulled at random, {formatPence(trio.settings.pricePence)} total when they book, {formatPence(trio.settings.depositPence)} deposit, {trio.settings.spinsPerDay} go per person per day. {trio.settings.inks.length} inks, {trio.settings.styles.length} styles, {trio.settings.subjects.length} subjects; edit the lists under Settings.</p>
+      <div className="grid sm:grid-cols-3 gap-4 mb-4"><Stat label="Goes, last 7 days" value={trio.playsWeek} /><Stat label="Booked, last 7 days" value={trio.bookedWeek} /><Stat label="Page views, 30 days" value={tev.game_viewed ?? 0} hint={`${tev.play_started ?? 0} goes`} /></div>
+      <table className="data"><thead><tr><th>When</th><th>Brief</th><th>Who</th><th>Status</th></tr></thead><tbody>{trio.plays.map((pl) => <tr key={pl.id}><td>{formatStudio(pl.createdAt, "dd/MM HH:mm")}</td><td className="capitalize">{pl.brief}</td><td className="text-xs">{pl.user?.name ?? pl.user?.email ?? `visitor ${pl.visitorId.slice(0, 6)}`}</td><td><span className={`badge ${pl.status === "BOOKED" ? "badge-acid" : "badge-muted"}`}>{pl.status.replace("_", " ").toLowerCase()}</span></td></tr>)}{trio.plays.length === 0 && <tr><td colSpan={4} className="opacity-60">No goes yet.</td></tr>}</tbody></table>
+    </section>
   </>);
 }

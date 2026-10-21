@@ -186,3 +186,9 @@ Note: during one full local test run the marketing integration test failed once 
 - Reported from an iPad: "the gumball isn't working". The live build was replayed in WebKit (Safari's engine) as an iPad and passed end to end, and the analytics showed the iPad's visits with no completed age check. The cause: on an iPad the empty date box shows no prompt, and tapping Continue with it empty shows nothing in Safari.
 - Fix: the age form shows "Tap the date box and pick your date of birth" if Continue is pressed with no date; the box carries a "Tap the box to pick the day, month and year" hint; pressing the locked crank scrolls to the age card and pulses its border. Verified in WebKit as an iPad on staging after deploy.
 - WebKit is now installed in the session for Safari-engine checks (`npx playwright install webkit` plus its system libraries).
+
+## Staging update, 21 October 2026, evening: two-step layout and the three machines
+
+- Reported from an iPad: "doing nothing and it isn't obvious where to press". The age card now sits directly above the machine as "Step 1 of 2", a big "Step 2 of 2" button sits above the machine once the age check is done, the PUSH flap glows, and a "turning the crank…" message shows while the server picks. Replayed in WebKit as an iPad on staging.
+- New game at `/play/trio`: three machines (ink, style, subject), £40 total, £10 deposit, one free go a day, artist chosen at booking. No migration (plays use the existing `Play.result` JSON). Settings `trio.*` editable by the owner; counts and recent goes on the owner Gumball page.
+
