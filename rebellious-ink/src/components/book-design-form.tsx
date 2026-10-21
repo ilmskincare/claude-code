@@ -6,7 +6,7 @@ import { Alert } from "./ui";
 import { SizeGuide } from "./size-guide";
 
 type Prices = { small: number; palm: number; apprenticeSmall: number | null; apprenticePalm: number | null };
-type Props = { designId: string; title: string; artistName: string; prices: Prices; deposits: { small: number; palm: number; apprentice: number }; sizes: { smallMaxCm: number; palmMaxCm: number }; apprentices: { id: string; displayName: string }[]; fixedPlacements: string[]; quotePlacements: string[]; signedIn: boolean; isOneOff: boolean; unavailable: boolean };
+type Props = { designId: string; title: string; artistName: string; palmEnabled: boolean; prices: Prices; deposits: { small: number; palm: number; apprentice: number }; sizes: { smallMaxCm: number; palmMaxCm: number }; apprentices: { id: string; displayName: string }[]; fixedPlacements: string[]; quotePlacements: string[]; signedIn: boolean; isOneOff: boolean; unavailable: boolean };
 
 const gbp = (p: number) => `£${(p / 100).toFixed(2)}`;
 
@@ -24,11 +24,11 @@ export function BookDesignForm(props: Props) {
       {state?.error && <Alert tone="danger">{state.error}</Alert>}
       <input type="hidden" name="designId" value={props.designId} />
       <fieldset><legend className="field">Size</legend>
-        <div className="grid grid-cols-2 gap-2">
-          {(["small", "palm"] as const).map((s) => <label key={s} className={`card p-3 cursor-pointer ${size === s ? "border-acid border-2" : ""}`}><input type="radio" name="size" value={s} checked={size === s} onChange={() => setSize(s)} className="mr-2" />{s === "small" ? `Small, up to ${props.sizes.smallMaxCm} cm` : `Palm, up to ${props.sizes.palmMaxCm} cm`}<span className="block text-sm opacity-80">{gbp(tier === "apprentice" ? (s === "small" ? props.prices.apprenticeSmall ?? 0 : props.prices.apprenticePalm ?? 0) : s === "small" ? props.prices.small : props.prices.palm)}</span></label>)}
+        <div className={`grid ${props.palmEnabled ? "grid-cols-2" : "grid-cols-1"} gap-2`}>
+          {(props.palmEnabled ? (["small", "palm"] as const) : (["small"] as const)).map((s) => <label key={s} className={`card p-3 cursor-pointer ${size === s ? "border-acid border-2" : ""}`}><input type="radio" name="size" value={s} checked={size === s} onChange={() => setSize(s)} className="mr-2" />{s === "small" ? `${props.palmEnabled ? "Small, " : ""}up to ${props.sizes.smallMaxCm} cm` : `Palm, up to ${props.sizes.palmMaxCm} cm`}<span className="block text-sm opacity-80">{gbp(tier === "apprentice" ? (s === "small" ? props.prices.apprenticeSmall ?? 0 : props.prices.apprenticePalm ?? 0) : s === "small" ? props.prices.small : props.prices.palm)}</span></label>)}
         </div>
       </fieldset>
-      <SizeGuide smallCm={props.sizes.smallMaxCm} palmCm={props.sizes.palmMaxCm} chosen={size} />
+      <SizeGuide smallCm={props.sizes.smallMaxCm} palmCm={props.palmEnabled ? props.sizes.palmMaxCm : null} chosen={size} />
       <fieldset><legend className="field">Who tattoos it</legend>
         <div className="grid gap-2">
           <label className={`card p-3 cursor-pointer ${tier === "artist" ? "border-acid border-2" : ""}`}><input type="radio" name="tier" value="artist" checked={tier === "artist"} onChange={() => setTier("artist")} className="mr-2" />{props.artistName}</label>

@@ -5,7 +5,7 @@ import { signedUrl } from "@/lib/storage";
 const gbp = (p: number) => `£${(p / 100).toFixed(0)}`;
 export type TileDesign = { id: string; title: string; imageKey: string; theme: string | null; repeatable: boolean; isBooked: boolean; isHeld: boolean; colourMode: string; hotspotX: number | null; hotspotY: number | null; hotspotW: number | null; hotspotH: number | null; artist: { displayName: string; slug: string }; prices: { small: number; palm: number; apprenticeSmall: number | null; apprenticePalm: number | null } };
 
-export function FlashTile({ d }: { d: TileDesign }) {
+export function FlashTile({ d, palmEnabled = false }: { d: TileDesign; palmEnabled?: boolean }) {
   return (
     <li className="card overflow-hidden relative flex flex-col">
       <Link href={`/flash/${d.id}`} className="block">
@@ -14,7 +14,7 @@ export function FlashTile({ d }: { d: TileDesign }) {
       <div className="p-3 text-sm flex-1 flex flex-col gap-1">
         <div className="flex items-start justify-between gap-2"><Link href={`/flash/${d.id}`} className="font-bold hover:underline">{d.title}</Link>{d.isBooked ? <span className="badge badge-muted">Booked</span> : d.repeatable ? <span className="badge badge-outline">Repeatable</span> : <span className="badge badge-acid">One-off</span>}</div>
         <p className="opacity-75"><Link href={`/artists/${d.artist.slug}`} className="hover:underline">{d.artist.displayName}</Link>{d.theme ? ` · ${d.theme}` : ""}{d.colourMode === "COLOUR" ? " · colour" : ""}</p>
-        <p className="mt-auto"><span className="badge badge-outline mr-1">Small {gbp(d.prices.small)}</span><span className="badge badge-outline">Palm {gbp(d.prices.palm)}</span>{d.prices.apprenticeSmall != null && <span className="badge badge-acid ml-1">Apprentice from {gbp(d.prices.apprenticeSmall)}</span>}</p>
+        <p className="mt-auto"><span className="badge badge-outline mr-1">{palmEnabled ? "Small " : ""}{gbp(d.prices.small)}</span>{palmEnabled && <span className="badge badge-outline">Palm {gbp(d.prices.palm)}</span>}{d.prices.apprenticeSmall != null && <span className="badge badge-acid ml-1">Apprentice from {gbp(d.prices.apprenticeSmall)}</span>}</p>
       </div>
     </li>
   );

@@ -118,3 +118,16 @@ table.data th { font-size: .78rem; text-transform: uppercase; letter-spacing: .0
 /* Promotions: corner ribbon on artist cards, banner across public pages. */
 .ribbon { position: absolute; top: .9rem; right: -2.4rem; transform: rotate(45deg); background: var(--acid); color: var(--ink); font-weight: 800; font-size: .68rem; letter-spacing: .06em; text-transform: uppercase; padding: .25rem 2.4rem; box-shadow: 0 2px 8px rgba(0,0,0,.35); white-space: nowrap; max-width: 15rem; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
 .promo-banner { background: var(--acid); color: var(--ink); }
+
+/* Gumball machine: the browser only animates a result the server already chose. */
+@keyframes crank-turn { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes capsule-drop { 0% { transform: translateY(-140px) scale(.9); opacity: 0; } 55% { transform: translateY(8px) scale(1.02); opacity: 1; } 75% { transform: translateY(-10px); } 100% { transform: translateY(0); } }
+@keyframes capsule-pop { 0% { transform: scale(1); } 60% { transform: scale(1.15); } 100% { transform: scale(0); opacity: 0; } }
+@keyframes reveal-in { from { transform: scale(.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes glow { 0%, 100% { filter: drop-shadow(0 0 18px rgba(140,176,0,.35)); } 50% { filter: drop-shadow(0 0 34px rgba(140,176,0,.7)); } }
+.gumball-globe { animation: glow 3s ease-in-out infinite; }
+.gumball-crank.spinning { transform-origin: 50% 50%; animation: crank-turn 1s linear infinite; }
+.capsule-drop { animation: capsule-drop .9s cubic-bezier(.3,.8,.4,1) forwards; }
+.capsule-pop { animation: capsule-pop .5s ease-in forwards; }
+.reveal-in { animation: reveal-in .6s ease-out forwards; }
+@media (prefers-reduced-motion: reduce) { .gumball-globe, .gumball-crank.spinning, .capsule-drop, .capsule-pop, .reveal-in { animation: none !important; } }

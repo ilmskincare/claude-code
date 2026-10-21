@@ -85,7 +85,7 @@ export async function updateSettingAction(_prev: ActionState, formData: FormData
   const before = await db.studioSetting.findUnique({ where: { studioId_key: { studioId: studio.id, key } } });
   await db.studioSetting.upsert({ where: { studioId_key: { studioId: studio.id, key } }, create: { studioId: studio.id, key, value: value as object, updatedBy: p.userId }, update: { value: value as object, updatedBy: p.userId } });
   await audit({ actorId: p.userId, actorLabel: `Owner: ${p.name ?? p.email}`, action: "setting.updated", entityType: "StudioSetting", entityId: key, before: before?.value, after: value });
-  revalidatePath("/owner/settings"); revalidatePath("/flash"); revalidatePath("/owner/flash");
+  revalidatePath("/owner/settings"); revalidatePath("/flash"); revalidatePath("/owner/flash"); revalidatePath("/play/gumball"); revalidatePath("/owner/gumball");
   return { ok: true };
 }
 

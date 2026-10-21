@@ -26,7 +26,7 @@ export default async function DesignPage({ params }: { params: Promise<{ id: str
         </div>
         <aside className="card p-5 h-fit md:sticky md:top-4">
           <h2 className="text-xl font-bold mb-3">Book this design</h2>
-          <BookDesignForm designId={d.id} title={d.title} artistName={d.artist.displayName} prices={prices} deposits={{ small: settings.depositSmallPence, palm: settings.depositPalmPence, apprentice: settings.apprenticeDepositPence }} sizes={{ smallMaxCm: settings.smallMaxCm, palmMaxCm: settings.palmMaxCm }} apprentices={apprentices} fixedPlacements={settings.fixedPlacements} quotePlacements={settings.quotePlacements} signedIn={Boolean(p)} isOneOff={!d.repeatable} unavailable={d.status === "BOOKED"} />
+          <BookDesignForm designId={d.id} title={d.title} artistName={d.artist.displayName} palmEnabled={settings.palmEnabled} prices={prices} deposits={{ small: settings.depositSmallPence, palm: settings.depositPalmPence, apprentice: settings.apprenticeDepositPence }} sizes={{ smallMaxCm: settings.smallMaxCm, palmMaxCm: settings.palmMaxCm }} apprentices={apprentices} fixedPlacements={settings.fixedPlacements} quotePlacements={settings.quotePlacements} signedIn={Boolean(p)} isOneOff={!d.repeatable} unavailable={d.status === "BOOKED"} />
         </aside>
       </div>
     </div>

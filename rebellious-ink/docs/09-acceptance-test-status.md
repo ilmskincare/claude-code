@@ -2,7 +2,7 @@
 
 Statuses: PASS-AUTO (automated test named), PASS-MANUAL (exercised by hand in this session), PARTIAL, NOT STARTED.
 
-Last run (21 October 2026, late evening): `npx vitest run` 47 passed (unit + integration, 13 files) · `npm run test:e2e` 34 passed (17 desktop + 17 iPhone 14); test 10 re-run on both viewports after the staged catalogue change.
+Last run (21 October 2026, night): `npx vitest run` 52 passed (unit + integration, 14 files) · `npm run test:e2e` 36 tests: 35 passed in the full run, and test 18 (gumball) passed on both viewports once it used a fresh account per project; the one-spin-per-day limit had blocked the second viewport.
 
 | # | Acceptance test | Status | Evidence / what is missing |
 |---|---|---|---|
@@ -39,4 +39,5 @@ Last run (21 October 2026, late evening): `npx vitest run` 47 passed (unit + int
 | Flash booking: accepted fixed quote straight to the slot picker; quoted placements refused; one-off held, booked exactly once on deposit, shown as Booked everywhere; lapsed hold returns; 50 simultaneous claims produce exactly one hold | same integration file; E2E test 16 books Palm and lands on the slot picker with the £30 deposit |
 | Apprentice supervision: apprentice slots only while the supervisor is in and not on leave; hold refused outside | same integration file |
 | Apprenticeship catalogue v2: unique keys, valid stages and areas, every v1 key retained, UK legal gates core, written extras optional | `tests/unit/skills-catalogue.test.ts`; E2E test 10 against the staged board |
+| Gumball machine: hidden below minimum stock; 1,000 simulated spins never return a held, booked or retired design and cover every capsule roughly uniformly; spin limit per visitor and per account; plays private to their browser or account; booking uses the £30 price and £10 deposit; gumball designs refused via the catalogue; one-off capsule held then released; restock alerts deduplicated; exact 18th-birthday check | `tests/integration/gumball.test.ts`; E2E test 18 (under-18 refused, adult passes, free spin, reveal announced, share card PNG, second spin refused, signed-in client books to the slot picker with the £10 deposit) |
 

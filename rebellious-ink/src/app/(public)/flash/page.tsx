@@ -22,7 +22,7 @@ export default async function FlashPage({ searchParams }: { searchParams: Promis
   const q = (over: Partial<SP>) => { const u = new URLSearchParams(); for (const [k, v] of Object.entries({ ...sp, ...over })) if (v) u.set(k, String(v)); return `/flash?${u.toString()}`; };
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
-      <PageHeader title="Flash" intro={`Ready-drawn designs at fixed prices: Small (up to ${settings.smallMaxCm} cm) ${gbp(settings.smallPence)}, Palm (up to ${settings.palmMaxCm} cm) ${gbp(settings.palmPence)}. Supervised apprentice pieces from ${gbp(settings.apprenticeSmallPence)}. The price you see is the price you pay; the deposit comes off it.`} />
+      <PageHeader title="Flash" intro={settings.palmEnabled ? `Ready-drawn designs at fixed prices: Small (up to ${settings.smallMaxCm} cm) ${gbp(settings.smallPence)}, Palm (up to ${settings.palmMaxCm} cm) ${gbp(settings.palmPence)}. Supervised apprentice pieces from ${gbp(settings.apprenticeSmallPence)}. The price you see is the price you pay; the deposit comes off it.` : `Ready-drawn designs at a fixed price: ${gbp(settings.smallPence)} for up to ${settings.smallMaxCm} cm, unless the design says otherwise. Supervised apprentice pieces from ${gbp(settings.apprenticeSmallPence)}. The price you see is the price you pay; the deposit comes off it.`} />
       <div className="flex flex-wrap items-center gap-2 mb-4" role="tablist" aria-label="View">
         <Link role="tab" aria-selected={view === "designs"} href={q({ view: "designs" })} className={`btn ${view === "designs" ? "btn-primary" : "btn-secondary"}`}>Designs</Link>
         <Link role="tab" aria-selected={view === "sheets"} href={q({ view: "sheets" })} className={`btn ${view === "sheets" ? "btn-primary" : "btn-secondary"}`}>Sheets</Link>
@@ -31,13 +31,13 @@ export default async function FlashPage({ searchParams }: { searchParams: Promis
         <input type="hidden" name="view" value={view} />
         <div><label className="field" htmlFor="theme">Theme</label><select id="theme" name="theme" className="select" defaultValue={sp.theme ?? ""}><option value="">Any</option>{themes.map((t) => <option key={t} value={t}>{t}</option>)}</select></div>
         <div><label className="field" htmlFor="artist">Artist</label><select id="artist" name="artist" className="select" defaultValue={sp.artist ?? ""}><option value="">Any</option>{artists.map((a) => <option key={a.slug} value={a.slug}>{a.displayName}</option>)}</select></div>
-        <div><label className="field" htmlFor="size">Price shown for</label><select id="size" name="size" className="select" defaultValue={size}><option value="small">Small</option><option value="palm">Palm</option></select></div>
+        {settings.palmEnabled ? <div><label className="field" htmlFor="size">Price shown for</label><select id="size" name="size" className="select" defaultValue={size}><option value="small">Small</option><option value="palm">Palm</option></select></div> : <input type="hidden" name="size" value="small" />}
         <div className="grid grid-cols-2 gap-1"><div><label className="field" htmlFor="min">Min £</label><input id="min" name="min" type="number" min={0} className="input" defaultValue={sp.min ?? ""} /></div><div><label className="field" htmlFor="max">Max £</label><input id="max" name="max" type="number" min={0} className="input" defaultValue={sp.max ?? ""} /></div></div>
         <div><label className="field" htmlFor="colour">Colour</label><select id="colour" name="colour" className="select" defaultValue={sp.colour ?? ""}><option value="">Any</option><option value="BLACK">Black</option><option value="COLOUR">Colour</option></select></div>
         <div className="flex flex-col gap-1 text-sm"><label className="flex items-center gap-2"><input type="checkbox" name="apprentice" value="1" defaultChecked={sp.apprentice === "1"} /> Apprentice available</label><label className="flex items-center gap-2"><input type="checkbox" name="oneoff" value="1" defaultChecked={sp.oneoff === "1"} /> One-off only</label><button className="btn btn-secondary mt-1">Filter</button></div>
       </form>
       {view === "designs" ? (
-        items.length === 0 ? <p className="opacity-70">No designs match. Try fewer filters.</p> : <ul className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">{items.map((d) => <FlashTile key={d.id} d={d} />)}</ul>
+        items.length === 0 ? <p className="opacity-70">No designs match. Try fewer filters.</p> : <ul className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">{items.map((d) => <FlashTile key={d.id} d={d} palmEnabled={settings.palmEnabled} />)}</ul>
       ) : (
         sheets.length === 0 ? <p className="opacity-70">No sheets posted yet. Switch to Designs.</p> : <ul className="space-y-8">{sheets.map((s) => (
           <li key={s.id} className="card p-4">

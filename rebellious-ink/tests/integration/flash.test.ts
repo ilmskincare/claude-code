@@ -17,6 +17,7 @@ beforeAll(async () => {
   artistB = principal(s.artistBUser.id, ["RESIDENT_ARTIST"], s.artistB.id);
   client1 = principal(s.c1.id, ["CLIENT"]); client2 = principal(s.c2.id, ["CLIENT"]);
   await testDb.clientProfile.createMany({ data: [{ userId: s.c1.id }, { userId: s.c2.id }] });
+  await testDb.studioSetting.create({ data: { studioId: s.studio.id, key: "flash.palmEnabled", value: true } });
 });
 afterAll(async () => { await testDb.$disconnect(); });
 
@@ -30,6 +31,7 @@ describe("flash catalogue pricing", () => {
     expect(items.find((i) => i.id === d2.id)!.prices.small).toBe(7500);
     expect(priceFor(d1, "small", "artist", settings)).toMatchObject({ totalPence: 6000, depositPence: 2000, estimatedMinutes: 60, maxCm: 6 });
     expect(priceFor(d1, "small", "apprentice", settings)).toBeNull();
+    expect(priceFor(d1, "palm", "artist", { ...settings, palmEnabled: false })).toBeNull();   // second size hidden unless switched on
     await testDb.studioSetting.create({ data: { studioId: s.studio.id, key: "flash.smallPence", value: 6500 } });
     ({ items } = await catalogue());
     expect(items.find((i) => i.id === d1.id)!.prices.small).toBe(6500);     // default moved

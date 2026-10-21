@@ -158,3 +158,10 @@ Note: during one full local test run the marketing integration test failed once 
 - Eleven JPEGs uploaded to the Blob store; design and sheet rows updated on staging by title (12 designs now on archive images, no TEST-titled designs left); the Sheets view shows the whole sheet with two hotspots (`staging-flash-archive.png`, `staging-flash-sheet.png`).
 - No deploy was needed for the images (database and storage only). A small follow-up fixed the signed file route to send the right image content type for files that have no ImageAsset row.
 
+## Staging update, 21 October 2026, night: gumball machine and one-size catalogue
+
+- Migration `20261021152854_novelty_games` applied and recorded (eight migrations): `Play`, `PlayAlert`, `AnalyticsEvent`.
+- Six repeatable gumball capsules seeded (archive artwork, run twice, same count); images uploaded to the Blob store.
+- Verified in a real browser: landing page with the live "6 capsules in the machine" count (`staging-gumball-landing.png`); date-of-birth gate; free spin; reveal announced as "You got Swallow and anchor by Mo Blackwork" (`staging-gumball-result.png`); share card returns a PNG; "Keep it" lands on the slot picker with the £10.00 deposit and 406 free slots (`staging-gumball-slots.png`); a second spin the same day is refused; owner page shows capsules, the spin and the first-party counts (`staging-owner-gumball.png`).
+- The catalogue now shows one price per design; the Palm size is hidden behind `flash.palmEnabled`.
+

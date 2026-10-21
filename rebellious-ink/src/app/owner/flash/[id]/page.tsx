@@ -10,5 +10,5 @@ export default async function EditDesign({ params }: { params: Promise<{ id: str
   const { id } = await params;
   const [d, artists, s] = await Promise.all([db.design.findUnique({ where: { id } }), db.artistProfile.findMany({ where: { kind: { not: "APPRENTICE" } }, orderBy: { displayName: "asc" }, select: { id: true, displayName: true } }), flashSettings()]);
   if (!d) notFound();
-  return (<><BackLink href="/owner/flash">Flash catalogue</BackLink><PageHeader title={d.title} intro={`Status: ${d.status.toLowerCase()}`} /><DesignForm artists={artists} design={{ ...d, imageUrl: signedUrl(d.imageKey, 3600) }} defaults={{ small: s.smallPence, palm: s.palmPence, apprenticeSmall: s.apprenticeSmallPence, apprenticePalm: s.apprenticePalmPence }} /></>);
+  return (<><BackLink href="/owner/flash">Flash catalogue</BackLink><PageHeader title={d.title} intro={`Status: ${d.status.toLowerCase()}`} /><DesignForm artists={artists} design={{ ...d, imageUrl: signedUrl(d.imageKey, 3600) }} defaults={{ small: s.smallPence, palm: s.palmPence, apprenticeSmall: s.apprenticeSmallPence, apprenticePalm: s.apprenticePalmPence }} palmEnabled={s.palmEnabled} /></>);
 }

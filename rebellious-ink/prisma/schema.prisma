@@ -110,6 +110,7 @@ model User {
   juniorSignoff   JuniorArtistSignoff? @relation("JuniorSignoff")
   juniorSignoffsGiven JuniorArtistSignoff[] @relation("JuniorSignoffBy")
   loyalty         LoyaltyAccount?
+  plays           Play[]
 
   @@schema("public")
 }
@@ -2027,9 +2028,66 @@ model Design {
   updatedAt            DateTime         @updatedAt @db.Timestamptz(3)
 
   requests             BookingRequest[]
+  plays                Play[]
 
   @@index([collection, status])
   @@index([artistId, status])
+  @@schema("public")
+}
+
+// ─── Novelty games (free to play; every play leads to a fixed-price booking) ──
+
+enum PlayStatus {
+  RESULT_SHOWN
+  BOOKED
+  EXPIRED
+
+  @@schema("public")
+}
+
+/// One spin of a game. The server chose the design; the browser only animates it.
+model Play {
+  id          String     @id @default(cuid())
+  game        String     // gumball | wheel | tarot | slots | claw
+  visitorId   String     // anonymous cookie id, so spin limits work before sign-in
+  userId      String?
+  user        User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  designId    String?
+  design      Design?    @relation(fields: [designId], references: [id], onDelete: SetNull)
+  result      Json?      // game-specific payload (wheel segment, slot reels)
+  status      PlayStatus @default(RESULT_SHOWN)
+  requestId   String?    // the booking it turned into
+  createdAt   DateTime   @default(now()) @db.Timestamptz(3)
+
+  @@index([game, visitorId, createdAt])
+  @@index([game, userId, createdAt])
+  @@schema("public")
+}
+
+/// "Tell me when the machine is restocked" sign-ups.
+model PlayAlert {
+  id        String   @id @default(cuid())
+  game      String
+  email     String
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  notifiedAt DateTime? @db.Timestamptz(3)
+
+  @@unique([game, email])
+  @@schema("public")
+}
+
+/// First-party analytics events: no third-party tracker, nothing leaves the site.
+model AnalyticsEvent {
+  id        String   @id @default(cuid())
+  name      String   // game_viewed | play_started | result_shown | deposit_paid | replay_bought
+  game      String?
+  visitorId String?
+  userId    String?
+  designId  String?
+  playId    String?
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+
+  @@index([name, createdAt])
   @@schema("public")
 }
 

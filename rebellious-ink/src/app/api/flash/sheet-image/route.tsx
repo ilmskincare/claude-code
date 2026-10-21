@@ -24,8 +24,8 @@ export async function GET(req: Request) {
             <div style={{ display: "flex", fontSize: 52, fontWeight: 700, marginTop: 6 }}>{data.artist.displayName.replace(" (TEST)", "")}</div>
           </div>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", fontSize: 24 }}>
-            <div style={{ display: "flex" }}>Small ≤{s.smallMaxCm} cm <span style={{ color: "#8cb000", marginLeft: 8 }}>{gbp(s.smallPence)}</span></div>
-            <div style={{ display: "flex" }}>Palm ≤{s.palmMaxCm} cm <span style={{ color: "#8cb000", marginLeft: 8 }}>{gbp(s.palmPence)}</span></div>
+            <div style={{ display: "flex" }}>{s.palmEnabled ? "Small " : ""}up to {s.smallMaxCm} cm <span style={{ color: "#8cb000", marginLeft: 8 }}>{gbp(s.smallPence)}</span></div>
+            {s.palmEnabled && <div style={{ display: "flex" }}>Palm up to {s.palmMaxCm} cm <span style={{ color: "#8cb000", marginLeft: 8 }}>{gbp(s.palmPence)}</span></div>}
             <div style={{ display: "flex", fontSize: 20, opacity: 0.8 }}>Apprentice from {gbp(s.apprenticeSmallPence)} · deposit {gbp(s.depositSmallPence)}</div>
           </div>
         </div>
@@ -41,8 +41,8 @@ export async function GET(req: Request) {
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 12px" }}>
                 <div style={{ display: "flex", flexDirection: "column" }}>
                   <div style={{ display: "flex", fontSize: 22, fontWeight: 700 }}>{d.title.slice(0, 22)}</div>
-                  <div style={{ display: "flex", fontSize: 19, color: "#8cb000" }}>Small {gbp(d.prices.small)} / Palm {gbp(d.prices.palm)}</div>
-                  {d.prices.apprenticeSmall != null && <div style={{ display: "flex", fontSize: 16, opacity: 0.85 }}>Apprentice {gbp(d.prices.apprenticeSmall)} / {gbp(d.prices.apprenticePalm ?? 0)}</div>}
+                  <div style={{ display: "flex", fontSize: 19, color: "#8cb000" }}>{s.palmEnabled ? `Small ${gbp(d.prices.small)} / Palm ${gbp(d.prices.palm)}` : gbp(d.prices.small)}</div>
+                  {d.prices.apprenticeSmall != null && <div style={{ display: "flex", fontSize: 16, opacity: 0.85 }}>Apprentice {gbp(d.prices.apprenticeSmall)}{s.palmEnabled ? ` / ${gbp(d.prices.apprenticePalm ?? 0)}` : ""}</div>}
                 </div>
                 {/* eslint-disable-next-line @next/next/no-img-element -- QR code */}
                 <img src={d.qr} alt="" width={64} height={64} />

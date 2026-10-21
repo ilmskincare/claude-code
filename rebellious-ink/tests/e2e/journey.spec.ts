@@ -476,7 +476,7 @@ test("16. flash catalogue: total price up front, size guide, book a design strai
   const pub = await browser.newPage();
   await pub.goto("/flash");
   await expect(pub.getByRole("heading", { name: "Flash" })).toBeVisible();
-  await expect(pub.getByText("Small £60").first()).toBeVisible();
+  await expect(pub.getByText("£60", { exact: true }).first()).toBeVisible();
   await pub.screenshot({ path: path.join(SHOTS, `${info.project.name}-30-flash-catalogue.png`), fullPage: true });
   await pub.getByRole("tab", { name: "Sheets" }).click();
   await expect(pub.getByRole("link", { name: /1: Butterfly \(archive\)/ })).toBeVisible();
@@ -499,17 +499,16 @@ test("16. flash catalogue: total price up front, size guide, book a design strai
   const c = await newSignedInPage(browser, "client-one@test.rebelliousink.local");
   await c.page.goto(designUrl);
   await c.page.waitForLoadState("networkidle");
-  await c.page.getByRole("radio", { name: /Palm, up to/ }).check();
   await c.page.getByLabel("Placement").selectOption("calf");
   await c.page.getByLabel(/I confirm I am 18 or over/).check();
   await c.page.getByRole("button", { name: "Book this: choose a time" }).click();
   await c.page.waitForURL(/\/my\/enquiries\/[a-z0-9]+\/book$/);
   await expect(c.page.getByRole("heading", { name: "Choose your time" })).toBeVisible();
-  await expect(c.page.getByText(/pay the £30.00 deposit/)).toBeVisible();
+  await expect(c.page.getByText(/pay the £20.00 deposit/)).toBeVisible();
   await c.page.screenshot({ path: path.join(SHOTS, `${info.project.name}-32-flash-slot-picker.png`), fullPage: true });
   await c.page.goto(c.page.url().replace(/\/book$/, ""));
   await expect(c.page.getByText("Heart and shield (archive)").first()).toBeVisible();
-  await expect(c.page.getByText(/Palm · artist tier/)).toBeVisible();
+  await expect(c.page.getByText(/Small · artist tier/)).toBeVisible();
   await c.context.close();
 });
 
@@ -520,7 +519,6 @@ test("17. artist adds a one-off design; it appears in the catalogue and on the g
   const title = `(E2E) Dice ${unique}`;
   await a.page.getByLabel("Title").fill(title);
   await a.page.getByLabel("Theme").fill("luck");
-  await a.page.getByLabel(/Palm price/).fill("95");
   await a.page.getByLabel(/Repeatable/).uncheck();
   const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==", "base64");
   await a.page.getByLabel("Design image").setInputFiles({ name: "dice.png", mimeType: "image/png", buffer: png });
@@ -528,7 +526,7 @@ test("17. artist adds a one-off design; it appears in the catalogue and on the g
   await expect(a.page.getByText("Saved.", { exact: true })).toBeVisible();
   await a.page.goto("/studio/flash");
   const row = a.page.locator("tr", { hasText: title }).first();
-  await expect(row).toContainText("£60.00 / £95.00");
+  await expect(row).toContainText("£60.00");
   await expect(row).toContainText("one-off");
   await a.page.screenshot({ path: path.join(SHOTS, `${info.project.name}-33-artist-flash.png`), fullPage: true });
   const img = await a.page.request.get("/api/flash/sheet-image?artist=jay-colour&format=feed");
@@ -546,4 +544,49 @@ test("17. artist adds a one-off design; it appears in the catalogue and on the g
   await expect(pub2.getByRole("link", { name: title })).toHaveCount(0);
   await pub2.close();
   await a.context.close();
+});
+
+test("18. gumball machine: age gate, free spin, reveal, keep it and book at the fixed price; share card has no price", async ({ browser }, info) => {
+  const pub = await browser.newPage();
+  await pub.goto("/play/gumball");
+  await pub.waitForLoadState("networkidle");
+  await expect(pub.getByRole("heading", { name: "Get what you get." })).toBeVisible();
+  await expect(pub.getByText("£30").first()).toBeVisible();
+  await pub.screenshot({ path: path.join(SHOTS, `${info.project.name}-34-gumball-landing.png`), fullPage: true });
+  // Under-18 is refused; the cookie is only set for an adult date.
+  await pub.getByLabel("Date of birth").fill(new Date(Date.now() - 17 * 365.25 * 86400000).toISOString().slice(0, 10));
+  await pub.getByRole("button", { name: "Continue" }).dispatchEvent("click");
+  await expect(pub.getByText(/must be 18 or over/)).toBeVisible();
+  await pub.getByLabel("Date of birth").fill("1990-05-05");
+  await pub.getByRole("button", { name: "Continue" }).dispatchEvent("click");
+  await expect(pub.getByRole("button", { name: "Turn the crank (free)" })).toBeVisible();
+  await pub.getByRole("button", { name: "Turn the crank (free)" }).dispatchEvent("click");
+  await pub.waitForURL(/\/play\/gumball\/[a-z0-9]+$/);
+  await expect(pub.getByRole("status")).toContainText(/You got .* by/, { timeout: 15000 });
+  await expect(pub.getByText("Total price, nothing added later")).toBeVisible();
+  await pub.screenshot({ path: path.join(SHOTS, `${info.project.name}-35-gumball-result.png`), fullPage: true });
+  const share = await pub.request.get(await pub.locator("a", { hasText: "Share card" }).getAttribute("href") as string);
+  expect(share.status()).toBe(200); expect(share.headers()["content-type"]).toContain("image/png");
+  // Second spin today is refused
+  await pub.goto("/play/gumball");
+  await expect(pub.getByRole("button", { name: "That is your spin for today" })).toBeDisabled();
+  await pub.close();
+
+  // A fresh account per project and run (the limit is one spin per person per day) spins and books: slot picker, £10 deposit.
+  const c = await newSignedInPage(browser, `gumball-${unique}-${info.project.name}@test.rebelliousink.local`);
+  await c.page.goto("/play/gumball");
+  await c.page.waitForLoadState("networkidle");
+  if (await c.page.getByLabel("Date of birth").count()) { await c.page.getByLabel("Date of birth").fill("1990-05-05"); await c.page.getByRole("button", { name: "Continue" }).dispatchEvent("click"); }
+  await c.page.getByRole("button", { name: "Turn the crank (free)" }).dispatchEvent("click");
+  await c.page.waitForURL(/\/play\/gumball\/[a-z0-9]+$/);
+  await expect(c.page.getByRole("status")).toContainText(/You got/, { timeout: 15000 });
+  await c.page.getByLabel("Placement").selectOption("calf");
+  await c.page.getByLabel(/I confirm I am 18 or over/).check();
+  await c.page.getByRole("button", { name: "Keep it: choose a time" }).dispatchEvent("click");
+  await c.page.waitForURL(/\/my\/enquiries\/[a-z0-9]+\/book$/);
+  await expect(c.page.getByText(/pay the £10.00 deposit/)).toBeVisible();
+  await c.page.goto(c.page.url().replace(/\/book$/, ""));
+  await expect(c.page.getByText(/Gumball machine/).first()).toBeVisible();
+  await c.page.screenshot({ path: path.join(SHOTS, `${info.project.name}-36-gumball-booked.png`), fullPage: true });
+  await c.context.close();
 });

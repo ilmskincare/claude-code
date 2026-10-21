@@ -26,7 +26,7 @@ export async function GET(req: Request) {
       <Page size="A4" style={st.page}>
         <View style={st.header}>
           <View><Text style={st.brand}>REBELLIOUS INK · FLASH</Text><Text style={st.title}>{data.artist.displayName.replace(" (TEST)", "")}</Text></View>
-          <View style={{ alignItems: "flex-end" }}><Text style={{ fontSize: 10 }}>Small up to {s.smallMaxCm} cm {gbp(s.smallPence)} · Palm up to {s.palmMaxCm} cm {gbp(s.palmPence)}</Text><Text style={{ fontSize: 8, opacity: 0.8 }}>Apprentice from {gbp(s.apprenticeSmallPence)} · deposit from {gbp(s.apprenticeDepositPence)}</Text></View>
+          <View style={{ alignItems: "flex-end" }}><Text style={{ fontSize: 10 }}>{s.palmEnabled ? `Small up to ${s.smallMaxCm} cm ${gbp(s.smallPence)} · Palm up to ${s.palmMaxCm} cm ${gbp(s.palmPence)}` : `Up to ${s.smallMaxCm} cm ${gbp(s.smallPence)}`}</Text><Text style={{ fontSize: 8, opacity: 0.8 }}>Apprentice from {gbp(s.apprenticeSmallPence)} · deposit from {gbp(s.apprenticeDepositPence)}</Text></View>
         </View>
         <View style={st.grid}>
           {data.items.map((d) => (
@@ -34,7 +34,7 @@ export async function GET(req: Request) {
               <Image src={d.image} style={st.img} />
               <Text style={st.n}>{d.n}</Text>
               <View style={st.meta}>
-                <View><Text style={{ fontSize: 9, fontFamily: "Helvetica-Bold" }}>{d.title}{d.repeatable ? "" : " (one-off)"}</Text><Text style={{ fontSize: 8, color: "#8cb000" }}>Small {gbp(d.prices.small)} / Palm {gbp(d.prices.palm)}</Text>{d.prices.apprenticeSmall != null && <Text style={{ fontSize: 7, opacity: 0.85 }}>Apprentice {gbp(d.prices.apprenticeSmall)} / {gbp(d.prices.apprenticePalm ?? 0)}</Text>}</View>
+                <View><Text style={{ fontSize: 9, fontFamily: "Helvetica-Bold" }}>{d.title}{d.repeatable ? "" : " (one-off)"}</Text><Text style={{ fontSize: 8, color: "#8cb000" }}>{s.palmEnabled ? `Small ${gbp(d.prices.small)} / Palm ${gbp(d.prices.palm)}` : gbp(d.prices.small)}</Text>{d.prices.apprenticeSmall != null && <Text style={{ fontSize: 7, opacity: 0.85 }}>Apprentice {gbp(d.prices.apprenticeSmall)}{s.palmEnabled ? ` / ${gbp(d.prices.apprenticePalm ?? 0)}` : ""}</Text>}</View>
                 <Image src={d.qr} style={{ width: 28, height: 28 }} />
               </View>
             </View>

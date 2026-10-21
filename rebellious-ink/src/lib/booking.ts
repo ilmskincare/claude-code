@@ -2,6 +2,7 @@ import { Prisma } from "@/generated/prisma/client";
 import { db, type Tx } from "./db";
 import { allocateReference } from "./references";
 import { holdDesignForRequest, markDesignBooked, flashSettings } from "./flash";
+import { track } from "./analytics";
 import { generateSlots, type Slot } from "./slots";
 import { DateTime } from "luxon";
 import { STUDIO_TZ } from "./time";
@@ -256,6 +257,8 @@ export async function confirmAppointmentWithDeposit(tx: Tx, input: {
     assertTransition(appt.request.status, "CONFIRMED");
     await tx.bookingRequest.update({ where: { id: appt.request.id }, data: { status: "CONFIRMED" } });
     await markDesignBooked(tx, appt.request.id);
+    const play = await tx.play.findFirst({ where: { requestId: appt.request.id } });
+    if (play) await track("deposit_paid", { game: play.game, visitorId: play.visitorId, userId: play.userId, designId: play.designId, playId: play.id });
     await tx.enquiryStatusEvent.create({ data: { requestId: appt.request.id, fromStatus: "AWAITING_DEPOSIT", toStatus: "CONFIRMED", actorLabel: input.actorLabel, note: `Deposit ${input.method === "CARD_STRIPE" ? "card payment confirmed by Stripe" : "verified manually"}` } });
   }
   await audit({ actorId: input.verifiedById ?? null, actorLabel: input.actorLabel, action: "appointment.confirmed", entityType: "Appointment", entityId: appt.id, before: { status: appt.status }, after: { status: "CONFIRMED", paymentId: payment.id } }, tx);

@@ -178,6 +178,21 @@ async function main() {
       await copyFile(path.join(assets, file), path.join(storageDir, key));
       await db.design.create({ data: { title: `${title} (archive)`, artistId: profile.id, imageKey: key, theme, colourMode: colourMode as "BLACK" | "COLOUR", apprenticeAvailable, repeatable, priceSmallPence: priceSmall, sortOrder: n++ } });
     }
+  }
+  if ((await db.design.count({ where: { collection: "GUMBALL" } })) === 0) {
+    const assets = path.resolve(process.cwd(), "prisma/seed-assets/flash");
+    let n = await db.design.count();
+    // Gumball collection: repeatable archive designs, so the machine never runs dry in testing.
+    const gumball: [typeof a, string, string, string][] = [[a, "Butterfly in stars", "gumball-butterfly.jpg", "animals"], [a, "Swallow and anchor", "gumball-swallow-and-anchor.jpg", "nautical"], [a, "Little butterfly", "gumball-small-butterfly.jpg", "animals"], [b, "Eagle and banner", "gumball-eagle.jpg", "old-school"], [b, "Lady in profile", "gumball-lady-profile.jpg", "old-school"], [b, "Horse", "gumball-horse.jpg", "animals"]];
+    for (const [profile, title, file, theme] of gumball) {
+      const key = `flash/archive/${file}`;
+      await copyFile(path.join(assets, file), path.join(storageDir, key));
+      await db.design.create({ data: { title: `${title} (archive)`, artistId: profile.id, imageKey: key, theme, colourMode: "COLOUR", collection: "GUMBALL", repeatable: true, sortOrder: n++ } });
+    }
+  }
+  if ((await db.flashSheet.count()) === 0) {
+    const assets = path.resolve(process.cwd(), "prisma/seed-assets/flash");
+    let n = await db.design.count();
     // One whole sheet for Mo with two marked hotspots.
     const sheetKey = "flash/archive/sheet-c.jpg";
     await copyFile(path.join(assets, "sheet-c.jpg"), path.join(storageDir, sheetKey));

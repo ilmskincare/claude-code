@@ -9,7 +9,7 @@ type D = { id?: string; title?: string; theme?: string | null; colourMode?: stri
 const COLLECTIONS = ["CATALOGUE", "GUMBALL", "TAROT", "CLAW", "DROP", "ADVENT", "NEEDLE_TOWN"];
 const pounds = (p?: number | null) => (p != null ? (p / 100).toFixed(2) : "");
 
-export function DesignForm({ artists, fixedArtistId, design, defaults }: { artists: Artist[]; fixedArtistId?: string; design?: D; defaults: { small: number; palm: number; apprenticeSmall: number; apprenticePalm: number } }) {
+export function DesignForm({ artists, fixedArtistId, design, defaults, palmEnabled = false }: { artists: Artist[]; fixedArtistId?: string; design?: D; defaults: { small: number; palm: number; apprenticeSmall: number; apprenticePalm: number }; palmEnabled?: boolean }) {
   const [state, action, pending] = useActionState(saveDesignAction, undefined);
   const v = design ?? {};
   return (
@@ -22,12 +22,12 @@ export function DesignForm({ artists, fixedArtistId, design, defaults }: { artis
         <div><label className="field" htmlFor="theme">Theme</label><input id="theme" name="theme" className="input" defaultValue={v.theme ?? ""} placeholder="e.g. botanical, celestial, blackwork" list="themes" /></div>
         <div><label className="field" htmlFor="colourMode">Colour</label><select id="colourMode" name="colourMode" className="select" defaultValue={v.colourMode ?? "BLACK"}><option value="BLACK">Black</option><option value="COLOUR">Colour</option></select></div>
         <div><label className="field" htmlFor="collection">Collection</label><select id="collection" name="collection" className="select" defaultValue={v.collection ?? "CATALOGUE"}>{COLLECTIONS.map((c) => <option key={c} value={c}>{c.replace("_", " ").toLowerCase()}</option>)}</select></div>
-        <div><label className="field" htmlFor="priceSmall">Small price (£, blank = default £{(defaults.small / 100).toFixed(0)})</label><input id="priceSmall" name="priceSmall" type="number" step="0.01" min={0} className="input" defaultValue={pounds(v.priceSmallPence)} /></div>
-        <div><label className="field" htmlFor="pricePalm">Palm price (£, blank = default £{(defaults.palm / 100).toFixed(0)})</label><input id="pricePalm" name="pricePalm" type="number" step="0.01" min={0} className="input" defaultValue={pounds(v.pricePalmPence)} /></div>
+        <div><label className="field" htmlFor="priceSmall">{palmEnabled ? "Small price" : "Price"} (£, blank = default £{(defaults.small / 100).toFixed(0)})</label><input id="priceSmall" name="priceSmall" type="number" step="0.01" min={0} className="input" defaultValue={pounds(v.priceSmallPence)} /></div>
+        {palmEnabled ? <div><label className="field" htmlFor="pricePalm">Palm price (£, blank = default £{(defaults.palm / 100).toFixed(0)})</label><input id="pricePalm" name="pricePalm" type="number" step="0.01" min={0} className="input" defaultValue={pounds(v.pricePalmPence)} /></div> : <input type="hidden" name="pricePalm" value={pounds(v.pricePalmPence)} />}
         <div className="sm:col-span-2 grid sm:grid-cols-3 gap-3 card p-3 bg-surface-muted">
           <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="apprenticeAvailable" defaultChecked={v.apprenticeAvailable ?? false} /> Offer at apprentice tier (supervised)</label>
-          <div><label className="field" htmlFor="apprenticeSmall">Apprentice small (£, blank = £{(defaults.apprenticeSmall / 100).toFixed(0)})</label><input id="apprenticeSmall" name="apprenticeSmall" type="number" step="0.01" min={0} className="input" defaultValue={pounds(v.apprenticeSmallPence)} /></div>
-          <div><label className="field" htmlFor="apprenticePalm">Apprentice palm (£, blank = £{(defaults.apprenticePalm / 100).toFixed(0)})</label><input id="apprenticePalm" name="apprenticePalm" type="number" step="0.01" min={0} className="input" defaultValue={pounds(v.apprenticePalmPence)} /></div>
+          <div><label className="field" htmlFor="apprenticeSmall">Apprentice {palmEnabled ? "small " : ""}price (£, blank = £{(defaults.apprenticeSmall / 100).toFixed(0)})</label><input id="apprenticeSmall" name="apprenticeSmall" type="number" step="0.01" min={0} className="input" defaultValue={pounds(v.apprenticeSmallPence)} /></div>
+          {palmEnabled ? <div><label className="field" htmlFor="apprenticePalm">Apprentice palm (£, blank = £{(defaults.apprenticePalm / 100).toFixed(0)})</label><input id="apprenticePalm" name="apprenticePalm" type="number" step="0.01" min={0} className="input" defaultValue={pounds(v.apprenticePalmPence)} /></div> : <input type="hidden" name="apprenticePalm" value={pounds(v.apprenticePalmPence)} />}
         </div>
         <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="repeatable" defaultChecked={v.repeatable ?? true} /> Repeatable (untick for a one-off that retires once booked)</label>
         <div><label className="field" htmlFor="editionSize">Edition size (Needle Town, optional)</label><input id="editionSize" name="editionSize" type="number" min={1} className="input" defaultValue={v.editionSize ?? ""} /></div>
@@ -93,7 +93,7 @@ export function BulkPriceForm() {
       <h3 className="font-bold">Bulk adjust overrides</h3>
       {state?.error && <Alert tone={state.ok ? "success" : "danger"}>{state.error}</Alert>}
       <div className="flex flex-wrap gap-2 items-end">
-        <div><label className="field" htmlFor="bsize">Size</label><select id="bsize" name="size" className="select"><option value="small">Small</option><option value="palm">Palm</option></select></div>
+        <div><label className="field" htmlFor="bsize">Size</label><select id="bsize" name="size" className="select"><option value="small">Standard</option><option value="palm">Palm (if enabled)</option></select></div>
         <div><label className="field" htmlFor="delta">Change (£, negative to lower)</label><input id="delta" name="deltaPounds" type="number" step="1" className="input" placeholder="10" required /></div>
         <button className="btn btn-secondary" disabled={pending}>Apply</button>
       </div>

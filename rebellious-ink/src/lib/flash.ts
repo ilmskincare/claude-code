@@ -18,6 +18,7 @@ export const FLASH_DEFAULTS = {
   smallPence: 6000, palmPence: 11000, apprenticeSmallPence: 4000, apprenticePalmPence: 7000,
   depositSmallPence: 2000, depositPalmPence: 3000, apprenticeDepositPence: 1500,
   smallMaxCm: 6, palmMaxCm: 12, minutesSmall: 60, minutesPalm: 120, designHoldMinutes: 15,
+  palmEnabled: false, // the studio sells one flash size; the second size stays in the data model but is hidden until switched on
   quotePlacements: ["hands", "fingers", "neck", "face"],
   fixedPlacements: ["upper arm", "forearm", "shoulder", "thigh", "calf", "shin", "back", "chest", "ribs", "hip", "ankle", "wrist (outer)"],
 };
@@ -28,11 +29,12 @@ export async function flashSettings(client: Tx | typeof db = db): Promise<FlashS
   const v = Object.fromEntries(rows.map((r) => [r.key.replace("flash.", ""), r.value]));
   const num = (k: keyof FlashSettings) => (typeof v[k] === "number" ? (v[k] as number) : (FLASH_DEFAULTS[k] as number));
   const list = (k: "quotePlacements" | "fixedPlacements") => (Array.isArray(v[k]) ? (v[k] as string[]).map(String) : FLASH_DEFAULTS[k]);
+  const bool = (k: "palmEnabled") => (typeof v[k] === "boolean" ? (v[k] as boolean) : FLASH_DEFAULTS[k]);
   return {
     smallPence: num("smallPence"), palmPence: num("palmPence"), apprenticeSmallPence: num("apprenticeSmallPence"), apprenticePalmPence: num("apprenticePalmPence"),
     depositSmallPence: num("depositSmallPence"), depositPalmPence: num("depositPalmPence"), apprenticeDepositPence: num("apprenticeDepositPence"),
     smallMaxCm: num("smallMaxCm"), palmMaxCm: num("palmMaxCm"), minutesSmall: num("minutesSmall"), minutesPalm: num("minutesPalm"), designHoldMinutes: num("designHoldMinutes"),
-    quotePlacements: list("quotePlacements"), fixedPlacements: list("fixedPlacements"),
+    quotePlacements: list("quotePlacements"), fixedPlacements: list("fixedPlacements"), palmEnabled: bool("palmEnabled"),
   };
 }
 
@@ -171,6 +173,7 @@ export function effectivePrices(d: PricedDesign, s: FlashSettings) {
 
 /** Total, deposit and diary time for one choice. Null when that tier is not offered. */
 export function priceFor(d: PricedDesign, size: Size, tier: Tier, s: FlashSettings) {
+  if (size === "palm" && !s.palmEnabled) return null;
   const e = effectivePrices(d, s);
   const total = tier === "apprentice" ? (size === "small" ? e.apprenticeSmall : e.apprenticePalm) : size === "small" ? e.small : e.palm;
   if (total == null) return null;
@@ -192,14 +195,14 @@ export async function releaseLapsedDesignHolds(client: Tx | typeof db = db, now 
 }
 
 /** Row-locked claim of a one-off design for a booking request. Repeatable designs are never held. */
-export async function holdDesignForRequest(tx: Tx, designId: string, requestId: string, minutes: number, now = new Date()) {
+export async function holdDesignForRequest(tx: Tx, designId: string, requestId: string, minutes: number, now = new Date(), transferFrom?: string) {
   const rows = await tx.$queryRaw<{ id: string; status: string; repeatable: boolean; heldRequestId: string | null; heldUntil: Date | null }[]>`SELECT id, status, repeatable, "heldRequestId", "heldUntil" FROM "Design" WHERE id = ${designId} FOR UPDATE`;
   const d = rows[0];
   if (!d) throw new NotFoundError("Design not found");
   if (d.status === "RETIRED") throw new ValidationError("This design is no longer available.");
   if (d.repeatable) return d;
   const lapsed = d.status === "HELD" && d.heldUntil && d.heldUntil < now;
-  const mine = d.status === "HELD" && d.heldRequestId === requestId;
+  const mine = d.status === "HELD" && (d.heldRequestId === requestId || d.heldRequestId === transferFrom);
   if (d.status === "BOOKED") throw new ValidationError("Sorry, this one-off design has just been booked by someone else.");
   if (d.status === "HELD" && !mine && !lapsed) throw new ValidationError("Someone else is booking this one-off design right now. Try again in a few minutes.");
   await tx.design.update({ where: { id: designId }, data: { status: "HELD", heldRequestId: requestId, heldUntil: new Date(now.getTime() + minutes * 60000) } });
@@ -219,26 +222,28 @@ export async function markDesignBooked(tx: Tx, requestId: string) {
 
 export const bookDesignSchema = z.object({
   designId: z.string(),
-  size: z.enum(SIZES),
+  size: z.enum(SIZES).default("small"),
   tier: z.enum(TIERS).default("artist"),
   apprenticeId: z.string().optional().or(z.literal("")),
   placement: z.string().trim().min(2).max(60),
   declaredOver18: z.coerce.boolean(),
 });
+export type PricingOverride = { totalPence: number; depositPence: number; estimatedMinutes: number; label: string; playId: string };
 
 /**
  * "Book this": creates an enquiry that is already quoted and accepted at the fixed price,
  * so the client goes straight to choosing a slot and paying the deposit. One-off designs
  * are held for the client while they do so.
  */
-export async function bookDesign(p: Principal, input: z.infer<typeof bookDesignSchema>) {
+export async function bookDesign(p: Principal, input: z.infer<typeof bookDesignSchema>, override?: PricingOverride) {
   if (!input.declaredOver18) throw new ValidationError("You must be 18 or over to book a tattoo.");
   const s = await flashSettings();
   if (placementNeedsQuote(input.placement, s)) throw new ValidationError("That placement is quoted individually. Please send an enquiry instead.");
   if (!s.fixedPlacements.map((x) => x.toLowerCase()).includes(input.placement.toLowerCase())) throw new ValidationError("Choose a placement from the list.");
   const design = await db.design.findUnique({ where: { id: input.designId }, include: { artist: { include: { supervisees: { where: { isPublished: true, acceptsEnquiries: true } } } } } });
   if (!design || design.status === "RETIRED") throw new NotFoundError("Design not found");
-  const price = priceFor(design, input.size, input.tier, s);
+  if (design.collection !== "CATALOGUE" && !override) throw new ValidationError("This design is only available through its game.");
+  const price = override ? { totalPence: override.totalPence, depositPence: override.depositPence, estimatedMinutes: override.estimatedMinutes, maxCm: s.smallMaxCm } : priceFor(design, input.size, input.tier, s);
   if (!price) throw new ValidationError("That option is not offered for this design.");
   let artistId = design.artistId;
   if (input.tier === "apprentice") {
@@ -255,13 +260,13 @@ export async function bookDesign(p: Principal, input: z.infer<typeof bookDesignS
     const r = await tx.bookingRequest.create({ data: {
       reference, studioId: studio.id, clientId: p.userId, artistId, category: "FLASH", source: "WEBSITE", status: "AWAITING_DEPOSIT",
       placement: input.placement, style: design.theme ?? "flash", sizeCm: price.maxCm, colour: design.colourMode === "COLOUR" ? "colour" : "black_and_grey",
-      description: `Flash design "${design.title}" by ${design.artist.displayName}, ${input.size} (up to ${price.maxCm} cm), ${input.tier === "apprentice" ? "apprentice (supervised)" : "artist"} tier. Fixed price ${formatPence(price.totalPence)}, deposit ${formatPence(price.depositPence)}.`,
+      description: override ? `${override.label}: "${design.title}" by ${design.artist.displayName}, up to ${price.maxCm} cm. Fixed price ${formatPence(price.totalPence)}, deposit ${formatPence(price.depositPence)}. Play ${override.playId}.` : `Flash design "${design.title}" by ${design.artist.displayName}, ${input.size} (up to ${price.maxCm} cm), ${input.tier === "apprentice" ? "apprentice (supervised)" : "artist"} tier. Fixed price ${formatPence(price.totalPence)}, deposit ${formatPence(price.depositPence)}.`,
       declaredOver18: true, designId: design.id, designSize: input.size, designTier: input.tier, expiresAt: new Date(Date.now() + 60 * 86400000),
       conversation: { create: {} },
-      statusEvents: { create: [{ toStatus: "NEW", actorLabel: "Client", note: "Booked from the flash catalogue" }, { fromStatus: "NEW", toStatus: "AWAITING_DEPOSIT", actorLabel: "System: fixed-price flash", note: "Fixed catalogue price accepted" }] },
-      quotes: { create: { artistId, issuedById: p.userId, version: 1, status: "ACCEPTED", scope: `${design.title} (${input.size}, up to ${price.maxCm} cm) on ${input.placement}`, priceBasis: "fixed", amountPence: price.totalPence, depositPence: price.depositPence, estimatedMinutes: price.estimatedMinutes, termsVersion: DEFAULT_TERMS_VERSION, termsText: DEFAULT_TERMS, sentAt: new Date(), respondedAt: new Date() } },
+      statusEvents: { create: [{ toStatus: "NEW", actorLabel: "Client", note: override ? `Booked from the ${override.label.toLowerCase()}` : "Booked from the flash catalogue" }, { fromStatus: "NEW", toStatus: "AWAITING_DEPOSIT", actorLabel: "System: fixed-price flash", note: "Fixed price accepted" }] },
+      quotes: { create: { artistId, issuedById: p.userId, version: 1, status: "ACCEPTED", scope: `${design.title} (${override ? override.label : input.size}, up to ${price.maxCm} cm) on ${input.placement}`, priceBasis: "fixed", amountPence: price.totalPence, depositPence: price.depositPence, estimatedMinutes: price.estimatedMinutes, termsVersion: DEFAULT_TERMS_VERSION, termsText: DEFAULT_TERMS, sentAt: new Date(), respondedAt: new Date() } },
     } });
-    await holdDesignForRequest(tx, design.id, r.id, s.designHoldMinutes);
+    await holdDesignForRequest(tx, design.id, r.id, s.designHoldMinutes, new Date(), override?.playId);
     await audit({ actorId: p.userId, actorLabel: `Client: ${client.name ?? client.email}`, action: "flash.booked", entityType: "BookingRequest", entityId: r.id, after: { designId: design.id, size: input.size, tier: input.tier, totalPence: price.totalPence } }, tx);
     return r;
   }, { isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted });
@@ -291,7 +296,7 @@ export async function designById(id: string) {
   await releaseLapsedDesignHolds();
   const s = await flashSettings();
   const d = await db.design.findUnique({ where: { id }, include: { artist: { include: { supervisees: { where: { kind: "APPRENTICE", isPublished: true, acceptsEnquiries: true }, include: { supervisor: { select: { displayName: true } } } } } }, sheet: true } });
-  if (!d || d.status === "RETIRED" || !d.artist.isPublished) return null;
+  if (!d || d.status === "RETIRED" || d.collection !== "CATALOGUE" || !d.artist.isPublished) return null;
   return { design: d, prices: effectivePrices(d, s), settings: s };
 }
 

@@ -121,3 +121,13 @@ Decisions taken with the owner before building: every game is free to play and o
 The apprentice portal's skills catalogue was cross-checked against the owner's comprehensive syllabus and rebuilt as prerequisites plus five stages, 118 items, adapted to UK practice (council registration, UK infection-control training, NHS hepatitis B, COSHH). Every v1 item and all recorded progress is kept. See `docs/11-apprenticeship-cross-check.md`.
 
 UK compliance: every feature is mapped to its UK legal basis in `docs/12-uk-compliance-register.md`, with the items that still need the owner's or an adviser's confirmation.
+
+## Novelty booking, step 2: the gumball machine (21 October 2026, night)
+
+- **One size.** The owner does not sell a second "Palm" size, so the catalogue now shows one fixed price per design. The larger size stays in the data model behind `flash.palmEnabled` (default off) in case it is ever wanted.
+- **Get what you get** (`/play/gumball`): an illustrated machine in brand style. Date-of-birth gate (18+, ID checked in studio), then one free turn of the crank per person per day. The server picks uniformly at random (crypto.randomInt) among available designs in the Gumball collection inside a row-locked transaction; the browser only animates the capsule for the design already chosen. Reduced motion and a "Skip to the result" button go straight to the result, which is announced to screen readers.
+- **Fixed price, shown first.** £30 total for a small tattoo, £10 deposit when they book, nothing to play. "Keep it" creates the usual accepted fixed-price enquiry and sends them to the slot picker. No swaps or re-spins; one-off capsules are held for the player and return to the pool if they walk away.
+- **Honest stock.** The capsule count is the real number of available designs. Below the minimum (default 5) the machine shows "being restocked" with an email alert sign-up, and the owner can email everyone waiting once it is refilled.
+- **Share card** (1080×1920) without the price. **Owner page** (`/owner/gumball`): capsules, recent spins, restock alerts and 30-day first-party counts (viewed, age gate, spins, results, deposits). Every price and limit is a setting.
+- **Not gambling.** Nothing is paid to play and nothing is won; the spin only decides which fixed-price design the client may book. Recorded in the compliance register.
+

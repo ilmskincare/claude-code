@@ -13,6 +13,7 @@ export function PublicShell({ children, banner }: { children: React.ReactNode; b
           <nav aria-label="Main" className="flex items-center gap-1 text-sm">
             <Link className="nav-link" href="/artists">Artists</Link>
             <Link className="nav-link" href="/flash">Flash</Link>
+            <Link className="nav-link" href="/play/gumball">Gumball</Link>
             <Link className="nav-link" href="/guides">Guides</Link>
             <Link className="nav-link" href="/login">Sign in</Link>
             <Link className="btn btn-primary ml-2" href="/enquire">Enquire</Link>
