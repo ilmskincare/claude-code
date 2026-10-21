@@ -73,3 +73,25 @@ Requested: a staging environment on Vercel and Supabase. Outcome so far: **not d
 1. **Supabase**: upgrade the organisation (or pause one existing project), then say so; a `rebellious-ink-staging` project will be created in eu-west-2 (London).
 2. **Vercel**: either grant the connected Claude integration permission to create projects in "Lush Labs' projects", or create an empty project named `rebellious-ink-staging` (framework Next.js, root directory `rebellious-ink`) and turn on Vercel Authentication for all deployments.
 3. Nothing else: secrets (`AUTH_SECRET`, `STORAGE_SIGNING_SECRET`, `CRON_SECRET`) will be generated and set as environment variables at deployment time and never committed.
+
+
+## Staging is live, 21 October 2026, 12:40 BST
+
+| Item | Value |
+|---|---|
+| URL | https://rebellious-ink-staging.vercel.app (Vercel project `rebellious-ink-staging`, team "Lush Labs' projects", Hobby plan) |
+| Access | Vercel Authentication on every deployment URL: only members of the Vercel team can open it. A protection-bypass secret exists for automated checks. |
+| Database | Supabase project `rebellious-ink-staging` (ref `qfzzbyjeytfmhzhqskit`), region eu-west-2 London, Postgres 17, transaction pooler on port 6543, TLS verified against the Supabase root CA (`DATABASE_SSL_CA`). Connects as the project's default `postgres` role; a least-privilege application role is a pre-production ticket. |
+| Schema | `20261021095556_init` applied through the Supabase management API and recorded in `_prisma_migrations` with its checksum. 82 tables, 3 exclusion constraints, 4 immutability triggers verified. |
+| Data | Fictional TEST seed loaded from a data-only SQL export: 8 users, 4 practitioners, 8 guides, 2 enquiries, 1 appointment. Placeholder portfolio images uploaded to the private Blob store. |
+| Files | Vercel Blob store `rebellious-ink-staging-files`, private access, region lhr1, served through the HMAC-signed `/api/files` route. |
+| Email | None configured (`APP_ENV=staging`): the sign-in page shows the magic link itself, which is only acceptable because the site sits behind Vercel Authentication. |
+| Payments | Stripe not connected: bookings show bank-transfer instructions and the owner verifies deposits manually. |
+| Jobs | `/api/jobs/expire-holds` daily at 03:00 UTC (Hobby limit); lapsed holds are also released lazily when bookings are made. |
+| Deployment method | Vercel CLI from this branch (`vercel deploy --prod`), not Git-linked. Pushes do not deploy automatically yet. |
+
+Verified after deployment: `/api/health` reports database ok; home, artists, artist profile, guides, guide PDF, enquiry form and login return 200; a real browser signed in as `owner@test.rebelliousink.local`, loaded the Studio overview and the two seeded enquiries, and private portfolio images rendered through the signed route (screenshot `docs/screenshots/staging-owner-dashboard.png`).
+
+Problems met and fixed on the way: Hobby plan rejects sub-daily cron (schedule changed, lazy expiry added); build-time environment validation (Auth.js config made lazy); Supabase certificate chain rejected by node-postgres (root CA supplied and verified rather than disabling verification).
+
+Tokens used for this deployment were held only in the session's scratch space and should now be revoked by the owner (Vercel account tokens page; Supabase account tokens page).
