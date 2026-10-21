@@ -18,7 +18,7 @@ export function assertAllowedUpload(mime: string, size: number) {
 }
 
 function baseDir() {
-  return path.resolve(process.cwd(), env().STORAGE_LOCAL_DIR);
+  return path.resolve(/* turbopackIgnore: true */ process.cwd(), env().STORAGE_LOCAL_DIR);
 }
 
 export function newStorageKey(prefix: string, originalName: string) {
@@ -35,7 +35,7 @@ export async function putObject(key: string, bytes: Uint8Array, contentType = "a
     return;
   }
   if (driver !== "local") throw new Error("S3 driver not yet configured (P1-12)");
-  const full = path.join(baseDir(), key);
+  const full = path.join(/* turbopackIgnore: true */ baseDir(), key);
   await mkdir(path.dirname(full), { recursive: true });
   await writeFile(full, bytes);
 }
@@ -51,7 +51,7 @@ export async function getObject(key: string): Promise<Buffer> {
     return Buffer.concat(chunks);
   }
   if (driver !== "local") throw new Error("S3 driver not yet configured (P1-12)");
-  const full = path.join(baseDir(), key);
+  const full = path.join(/* turbopackIgnore: true */ baseDir(), key);
   if (!full.startsWith(baseDir())) throw new Error("Invalid key");
   return readFile(full);
 }

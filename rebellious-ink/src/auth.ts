@@ -9,7 +9,7 @@ import { env } from "@/lib/env";
  * Passwordless email sign-in for clients and staff. Privileged roles must
  * additionally enrol MFA (ticket P1-14) before production go-live.
  */
-export const { handlers, auth, signIn, signOut } = NextAuth({
+export const { handlers, auth, signIn, signOut } = NextAuth(() => ({
   adapter: PrismaAdapter(db),
   session: { strategy: "database", maxAge: 60 * 60 * 24 * 14 },
   pages: { signIn: "/login", verifyRequest: "/login/check-email", error: "/login" },
@@ -49,4 +49,4 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
     },
   },
-});
+}));
