@@ -119,3 +119,5 @@ Decisions taken with the owner before building: every game is free to play and o
 ## Apprenticeship catalogue v2 (21 October 2026)
 
 The apprentice portal's skills catalogue was cross-checked against the owner's comprehensive syllabus and rebuilt as prerequisites plus five stages, 118 items, adapted to UK practice (council registration, UK infection-control training, NHS hepatitis B, COSHH). Every v1 item and all recorded progress is kept. See `docs/11-apprenticeship-cross-check.md`.
+
+UK compliance: every feature is mapped to its UK legal basis in `docs/12-uk-compliance-register.md`, with the items that still need the owner's or an adviser's confirmation.

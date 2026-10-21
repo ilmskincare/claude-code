@@ -1,6 +1,6 @@
 /**
  * Apprentice skills catalogue v2: the studio's staged apprenticeship, cross-checked against a
- * comprehensive US studio syllabus (prerequisites and five stages) and adapted to UK practice
+ * comprehensive overseas studio syllabus (prerequisites and five stages) and adapted to UK practice
  * (council registration, UK infection-control training, NHS hepatitis B vaccination, 18+ law,
  * COSHH, the studio's own policies). Seeded as Skill rows by key; existing v1 keys are kept so
  * progress already recorded is not lost. The owner can edit titles and flags later.
@@ -55,12 +55,12 @@ export const SEED_SKILLS: SeedSkill[] = [
   // ── Prerequisites (stage 0) ──────────────────────────────────────────────
   S("pre-first-aid", "prereq_certs", 0, "First aid certificate", "Holds a current UK first aid certificate (Emergency First Aid at Work or equivalent). Renew before expiry.", { evidenceType: "certificate" }),
   S("pre-infection-control", "prereq_certs", 0, "Infection control training", "Completed a recognised infection prevention and control course for tattooing and piercing (Level 2 or equivalent), covering blood-borne viruses, decontamination and sharps.", { evidenceType: "certificate" }),
-  S("pre-bbv", "prereq_certs", 0, "Blood-borne viruses", "Can explain hepatitis B and C, HIV and MRSA: how they spread, how the studio prevents exposure, and what to do after an exposure.", { evidenceType: "written" }),
+  S("pre-bbv", "prereq_certs", 0, "Blood-borne viruses", "Can explain hepatitis B and C, HIV and MRSA: how they spread, how the studio prevents exposure, what to do after an exposure, and when an incident must be reported under RIDDOR.", { evidenceType: "written" }),
   S("pre-hep-b", "prereq_certs", 0, "Hepatitis B vaccination", "Hepatitis B vaccination course started with the GP or occupational health, with the record on file; an antibody (titre) check where advised.", { evidenceType: "certificate" }),
   S("pre-council", "prereq_certs", 0, "Council registration", "Registered as a tattooist with the local council before any work on a member of the public, with the certificate on file. Apprentices must not tattoo clients until this is done.", { evidenceType: "certificate" }),
   S("pre-cv-bio", "prereq_written", 0, "CV and biography", "A current CV and a short biography for the studio file and website.", { evidenceType: "written", isCore: false }),
   S("pre-statement", "prereq_written", 0, "Personal statement", "Two one-page statements: why you want to tattoo, and why you chose Rebellious Ink.", { evidenceType: "written" }),
-  S("pre-reading", "prereq_written", 0, "Reading list and responses", "Reads the studio reading list (tattoo history and the APP body-piercing manual) and writes a short response to each. Optional classics: Modern Primitives, Stoney Knows How, Color Outside the Lines.", { evidenceType: "written", isCore: false }),
+  S("pre-reading", "prereq_written", 0, "Reading list and responses", "Reads the studio reading list (British and world tattoo history, the UK Association of Professional Piercers guidance, and the local council's registration conditions and byelaws) and writes a short response to each.", { evidenceType: "written", isCore: false }),
   S("pre-ten-tattooers", "prereq_written", 0, "Ten favourite tattooers", "Researches and writes about ten tattooers whose work you admire and why.", { evidenceType: "written", isCore: false }),
   S("pre-portfolio", "prereq_portfolio", 0, "Presented art portfolio", "Presents a portfolio of your own drawings, sketches and artwork to the owner and mentor.", { evidenceType: "portfolio" }),
   S("pre-digital", "prereq_portfolio", 0, "Procreate or Photoshop basics", "Edits, resizes and labels images (name, 'in progress') and understands resolution for print and web.", { evidenceType: "practical", isCore: false }),
@@ -71,7 +71,7 @@ export const SEED_SKILLS: SeedSkill[] = [
   S("hyg-personal", "hygiene", 1, "Personal hygiene standards", "Short clean nails, hair tied back, lotion use, and covering cuts, hangnails and any non-intact skin with a waterproof dressing."),
   S("hyg-biohazard-areas", "hygiene", 1, "Biohazards and designated areas", "Can explain what a biohazard is and where the studio's dirty, clean and sterile areas are."),
   S("hyg-cross-contamination", "hygiene", 1, "Cross-contamination awareness", "Can explain and demonstrate the clean/dirty boundary throughout a session, including the one-handed technique and opening a clean field."),
-  S("hyg-standard-precautions", "hygiene", 1, "Universal and standard precautions", "Treats every client and every body fluid as potentially infectious and can explain what that means in practice.", { evidenceType: "written" }),
+  S("hyg-standard-precautions", "hygiene", 1, "Standard infection control precautions", "Applies the UK standard infection control precautions: treats every client and every body fluid as potentially infectious and can explain what that means at the station.", { evidenceType: "written" }),
   S("hyg-station-setup", "hygiene", 1, "Station set-up and barrier protection", "Sets up a clean station with barriers on all touch points before the client enters, for both coil and rotary set-ups."),
   S("hyg-clean-down", "hygiene", 1, "Clean-down and waste", "Breaks down a station safely, disposes of sharps and clinical waste correctly, disinfects to studio procedure."),
   S("hyg-sharps-incident", "hygiene", 1, "Sharps and exposure incident response", "Has read and initialled the exposure control plan and needle-stick procedure; knows the first-aid and reporting steps."),
@@ -92,7 +92,7 @@ export const SEED_SKILLS: SeedSkill[] = [
   S("cs-phone-chat", "client_service", 1, "Phone and messages", "Answers the phone and chat with the studio's FAQs, and knows when to pass a question to an artist."),
   S("cs-till", "client_service", 1, "Till and card machine", "Rings in, issues receipts, voids and takes card payments correctly; records deposits in the studio system."),
   S("cs-consultation", "client_service", 1, "Consultation", "Runs a structured consultation: idea, size, placement, style, budget, expectations, honest advice."),
-  S("cs-consent-id", "client_service", 1, "Consent and ID checks", "Completes consent paperwork correctly, checks photographic ID, knows the 18+ law and when to refuse."),
+  S("cs-consent-id", "client_service", 1, "Consent and ID checks", "Completes consent paperwork correctly, checks photographic ID, knows the Tattooing of Minors Act 1969 (no tattooing under 18, parental consent does not count) and the studio's piercing age policy, and when to refuse."),
   S("cs-release-forms", "client_service", 1, "Release forms and policies", "Can explain every client form, the deposit and cancellation terms and the free touch-up policy."),
   S("cs-common-questions", "client_service", 1, "Common tattoo questions", "Answers questions on white ink, hands and feet, size and detail, ageing, sun, placement and fit, and knows when to refer to an experienced artist."),
   S("cs-tours", "client_service", 1, "Studio tours", "Gives a studio tour that explains hygiene and what to expect.", { isCore: false }),
@@ -100,10 +100,10 @@ export const SEED_SKILLS: SeedSkill[] = [
 
   // ── Stage 1: documentation ───────────────────────────────────────────────
   S("doc-personal-file", "documentation", 1, "Personal studio file", "Starts a personal file holding certificates, signed policies, homework and notes.", { evidenceType: "written" }),
-  S("doc-read-policies", "documentation", 1, "Read and initial policies", "Reads and initials the council's registration conditions, the studio's policies and procedures, the exposure control plan and every equipment manual.", { evidenceType: "written" }),
+  S("doc-read-policies", "documentation", 1, "Read and initial policies", "Reads and initials the council's registration conditions and byelaws, the studio's health and safety policy, risk assessments, the exposure control plan, the data protection policy and every equipment manual.", { evidenceType: "written" }),
   S("doc-coshh", "documentation", 1, "Chemical safety sheets", "Reads the labels and safety data sheets for everything in the studio and records observations.", { evidenceType: "written" }),
   S("doc-journal", "documentation", 1, "Journal", "Keeps a journal of notes, observations and questions, reviewed with the mentor.", { evidenceType: "written", isCore: false }),
-  S("doc-promotion", "documentation", 1, "Promoting the studio", "Helps promote the studio (web, flyers, business cards, social media) within the studio's permissions rules.", { isCore: false }),
+  S("doc-promotion", "documentation", 1, "Promoting the studio", "Helps promote the studio (web, flyers, business cards, social media) within the studio's permissions rules and the UK advertising code (no misleading prices or fake urgency).", { isCore: false }),
   S("doc-side-reading", "documentation", 1, "Tattoo history reading", "Reads about the history of tattooing in Britain and worldwide and writes short responses.", { evidenceType: "written", isCore: false }),
 
   // ── Stage 1: drawing ─────────────────────────────────────────────────────
@@ -118,7 +118,7 @@ export const SEED_SKILLS: SeedSkill[] = [
   S("ster-fainting", "sterilisation", 2, "Fainting procedure", "Knows the studio's fainting and nausea procedure and helps keep it current."),
   S("ster-autoclave", "sterilisation", 2, "Steriliser use and logs", "Where the studio reuses equipment: operates, flushes and maintains the steriliser and keeps the logs. Not required in a fully disposable studio.", { isCore: false }),
   S("ster-sharps-change", "sterilisation", 2, "Sharps container changes", "Writes the step-by-step procedure for changing a sharps container and performs it under observation."),
-  S("ster-clinical-waste", "sterilisation", 2, "Clinical waste collection", "Knows the licensed clinical waste contractor, the collection schedule and the paperwork."),
+  S("ster-clinical-waste", "sterilisation", 2, "Clinical waste collection", "Knows the registered waste carrier, the collection schedule, the consignment notes and the duty-of-care paperwork the studio must keep."),
   S("ster-ppe", "sterilisation", 2, "PPE", "Uses aprons, sleeves, masks and eye protection correctly."),
   S("ster-chemicals", "sterilisation", 2, "Chemicals in use", "Knows the use, dilution and hazards of every chemical in the studio."),
   S("ster-detail-stations", "sterilisation", 2, "Detailing stations", "Deep-cleans a station and completes the daily tattooer checklist."),
@@ -160,7 +160,7 @@ export const SEED_SKILLS: SeedSkill[] = [
   S("col-theory", "colour", 3, "Colour theory", "Understands pigment behaviour on skin tones, healing shifts and contrast.", { isCore: false }),
   S("col-packing", "colour", 3, "Colour packing", "Saturates colour evenly on practice skin and supervised work."),
   S("fund-photos", "photography", 3, "Fresh and healed photos", "Photographs every tattoo and a healed photo wherever possible, with good lighting, and understands fresh versus healed and print versus online.", { evidenceType: "portfolio" }),
-  S("photo-ethics", "photography", 3, "Photography and permissions", "Only publishes with the client's recorded permission; knows the social media and portfolio consent rules."),
+  S("photo-ethics", "photography", 3, "Photography and permissions", "Only publishes with the client's recorded permission; knows the UK GDPR basis for client photos and the studio's social media and portfolio consent rules."),
   S("fund-review-each", "fundamentals", 3, "Review every tattoo with a tattooer", "Discusses each tattoo: fresh versus healed, blowouts, patchy colour, scarring, overworking, depth, body areas, skin types and tones, stretching, touch-ups and how to avoid them.", { evidenceType: "written" }),
   S("fund-notes", "fundamentals", 3, "Tattoo notes", "Keeps notes on every tattoo: thoughts, results, observations, problems.", { evidenceType: "written" }),
   S("fund-network", "fundamentals", 3, "Professional network", "Makes contact with other professional tattooers and trades technique and aftercare ideas.", { isCore: false }),

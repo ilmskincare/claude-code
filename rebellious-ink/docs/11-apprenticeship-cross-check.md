@@ -1,6 +1,6 @@
 # Apprenticeship cross-check (21 October 2026)
 
-The owner supplied a comprehensive US studio syllabus (prerequisites plus five stages). This note records how the portal's catalogue v1 (29 skills, 15 areas) was cross-checked against it and what catalogue v2 (118 items, 28 areas, prerequisites plus stages 1 to 5) now contains. Every v1 key is kept, so progress already recorded against it survives. Items no longer in the catalogue are retired (hidden), never deleted.
+The owner supplied a comprehensive overseas (US) studio syllabus (prerequisites plus five stages). This note records how the portal's catalogue v1 (29 skills, 15 areas) was cross-checked against it and what catalogue v2 (118 items, 28 areas, prerequisites plus stages 1 to 5) now contains. Every v1 key is kept, so progress already recorded against it survives. Items no longer in the catalogue are retired (hidden), never deleted.
 
 ## What changed
 
@@ -13,12 +13,17 @@ The owner supplied a comprehensive US studio syllabus (prerequisites plus five s
 
 ## Adapted for the UK
 
+Everything in the catalogue is written for UK law and UK terminology; nothing US-specific remains in the apprentice-facing text. The mapping below records what was changed and why.
+
 | Syllabus item | What the catalogue says instead | Why |
 |---|---|---|
 | CPR/First Aid certificate | UK first aid certificate (Emergency First Aid at Work or equivalent), renewed before expiry | UK-recognised course |
 | Blood Borne Pathogen certificate, Principles of Infection Control certificate | One recognised infection prevention and control course for tattooing and piercing (Level 2 or equivalent) covering blood-borne viruses, plus a written BBV item | That is the course UK councils look for; BBV is covered inside it |
 | Hep B shots and/or titre test | Hepatitis B course via GP or occupational health, record on file, titre where advised | NHS route |
 | (not in syllabus) | **Council registration before any work on the public** | Required under the Local Government (Miscellaneous Provisions) Act 1982; the single hard legal gate for an apprentice |
+| Read the APP (US piercers' association) manual, Modern Primitives and two US documentaries | Studio reading list: British and world tattoo history, UK Association of Professional Piercers guidance, the council's registration conditions and byelaws | UK sources; the owner curates the list |
+| Universal precautions | Standard infection control precautions | UK NHS and HSE terminology |
+| Licensed clinical waste contractor | Registered waste carrier with consignment notes and duty-of-care records | Environmental Protection Act 1990 duty of care and hazardous waste regulations |
 | "Why did you choose Evolved" | "Why did you choose Rebellious Ink" | Studio name |
 | Research and visit the Ohio Tattoo Museum | Visit or research a UK tattoo history collection and write it up | Location |
 | Half-price unobserved tattoos on friends (Stage 4) | Unobserved small tattoos at the discounted apprentice price the owner sets, only after council registration, still reviewed weekly | The portal already prices apprentice work (flash apprentice tier); registration must come first |
