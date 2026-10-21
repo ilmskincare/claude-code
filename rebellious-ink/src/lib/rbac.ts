@@ -86,6 +86,8 @@ export type Principal = {
   artistProfileId: string | null;
   membershipId: string | null;
   isSuspended: boolean;
+  /** Set when a staff member has a one-time password and must choose their own before using the app. */
+  mustChangePassword?: boolean;
 };
 
 export function capabilitiesFor(roles: RoleKey[], overrides: Record<string, boolean> = {}): Set<Capability> {

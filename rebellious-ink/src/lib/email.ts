@@ -2,6 +2,7 @@ import { Resend } from "resend";
 import { db } from "./db";
 import { env, emailProviderConfigured, isProduction } from "./env";
 import { COPY_TEMPLATES, copyRecipients, oversightSettings } from "./oversight";
+import { isPlaceholderEmail } from "./staff-auth";
 
 export type EmailInput = {
   to: string;
@@ -22,7 +23,12 @@ export type EmailInput = {
  * when a provider accepted the message.
  */
 export async function sendEmail(input: EmailInput) {
-  const bcc = [...new Set([...(input.bcc ?? []), ...(await ownerCopies(input))])].filter((a) => a.toLowerCase() !== input.to.toLowerCase());
+  // Staff who sign in by username have no real address; record the attempt and move on rather than fail the caller.
+  if (isPlaceholderEmail(input.to)) {
+    const n = await db.notification.create({ data: { userId: input.userId ?? null, channel: "email", templateKey: input.templateKey, to: input.to, subject: input.subject, payload: (input.payload ?? {}) as object, status: "FAILED", error: "No email on file (username sign-in)" } });
+    return { id: n.id, provider: "none" as const };
+  }
+  const bcc = [...new Set([...(input.bcc ?? []), ...(await ownerCopies(input))])].filter((a) => a.toLowerCase() !== input.to.toLowerCase() && !isPlaceholderEmail(a));
   const notification = await db.notification.create({
     data: {
       userId: input.userId ?? null,

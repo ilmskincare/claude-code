@@ -716,3 +716,59 @@ test("22. staff chat: owner posts in the studio channel and the management chann
   expect(forbidden.status()).toBe(403);
   await a.context.close();
 });
+
+test("23. owner adds a desk member with a username; they sign in with the one-time password, must set their own, reach the desk; the owner changes their access and suspends them", async ({ browser }, info) => {
+  const username = `desk${unique}${info.project.name === "iphone" ? "i" : "d"}`;
+  const o = await newSignedInPage(browser, "owner@test.rebelliousink.local");
+  await o.page.goto("/owner/artists");
+  await o.page.getByLabel("What they do").selectOption("RECEPTION");
+  await o.page.getByLabel("How they sign in").selectOption("password");
+  await o.page.getByLabel("Full name").fill("Sam Desk");
+  await o.page.getByLabel("Username").fill(username);
+  await o.page.getByRole("button", { name: "Add to the team" }).dispatchEvent("click");
+  const alert = o.page.getByText(/one-time password, then set their own/);
+  await expect(alert).toBeVisible();
+  const temp = (await o.page.locator("code.select-all").first().innerText()).trim();
+  expect(temp).toMatch(/^[a-z]+-[a-z]+-[a-z]+-\d\d$/);
+  await o.page.screenshot({ path: path.join(SHOTS, `${info.project.name}-43-owner-username.png`), fullPage: true });
+  await o.context.close();
+
+  const ctx = await browser.newContext();
+  const page = await ctx.newPage();
+  await page.goto("/login?staff=1");
+  await page.getByLabel("Username").fill(username);
+  await page.getByLabel("Password").fill("wrong-wrong-wrong");
+  await page.getByRole("button", { name: "Sign in" }).dispatchEvent("click");
+  await expect(page.getByText("Wrong username or password.")).toBeVisible();
+  await page.getByLabel("Password").fill(temp);
+  await page.getByRole("button", { name: "Sign in" }).dispatchEvent("click");
+  await page.waitForURL(/\/account\/password/);
+  await expect(page.getByRole("heading", { name: "Set your own password" })).toBeVisible();
+  await page.getByLabel("New password", { exact: true }).fill("sam-desk-own-pass-77");
+  await page.getByLabel("New password again").fill("sam-desk-own-pass-77");
+  await page.getByRole("button", { name: "Save password" }).dispatchEvent("click");
+  await page.waitForURL(/\/owner/);
+  await expect(page.getByRole("link", { name: "Enquiries" })).toBeVisible();
+  await page.screenshot({ path: path.join(SHOTS, `${info.project.name}-44-staff-signed-in.png`), fullPage: true });
+  await ctx.close();
+
+  const o2 = await newSignedInPage(browser, "owner@test.rebelliousink.local");
+  await o2.page.goto("/owner/artists");
+  const row = o2.page.locator("tr").filter({ hasText: username });
+  await row.getByLabel(/Access for/).selectOption("STUDIO_MANAGER");
+  await row.getByRole("button", { name: "Save" }).dispatchEvent("click");
+  await expect(row.getByText("Access updated")).toBeVisible();
+  o2.page.on("dialog", (d) => d.accept());
+  await row.getByRole("button", { name: "Suspend" }).dispatchEvent("click");
+  await expect(row.getByText("Suspended and signed out everywhere.")).toBeVisible();
+  await o2.context.close();
+
+  const ctx2 = await browser.newContext();
+  const p2 = await ctx2.newPage();
+  await p2.goto("/login?staff=1");
+  await p2.getByLabel("Username").fill(username);
+  await p2.getByLabel("Password").fill("sam-desk-own-pass-77");
+  await p2.getByRole("button", { name: "Sign in" }).dispatchEvent("click");
+  await expect(p2.getByText(/suspended/)).toBeVisible();
+  await ctx2.close();
+});

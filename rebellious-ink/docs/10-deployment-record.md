@@ -225,3 +225,7 @@ Note: during one full local test run the marketing integration test failed once 
 - Staff chat at Chat in the artist and owner navigation: Studio channel, Management channel (owners and managers), direct messages; WhatsApp-style bubbles, unread counts, six-second refresh; owners can read everything and the header says so.
 - Reports at Owner, Reports: period picker, nine reports (enquiries by artist/source/service, response times, bookings, payments by purpose and method, retail, games, marketing list and campaigns, stock needing attention, apprentices, clients) with CSV downloads, audited.
 
+## Live update, 21 October 2026, late evening: usernames and user management
+
+- Migration `20261021202500_staff_usernames` applied to staging and production. The sign-in page has two tabs: clients by email link, staff by username and password. Owner, Artists & arrangements now has "The team": sign-in details with "Give a username and password" or "Reset password" (one-time password shown once), an access dropdown with Save, and Suspend / Reactivate.
+

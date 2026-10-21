@@ -27,6 +27,7 @@ export const getPrincipal = cache(async (): Promise<Principal | null> => {
     artistProfileId: user.artistProfile?.id ?? null,
     membershipId: membership?.id ?? null,
     isSuspended: user.isSuspended || membership?.status === "SUSPENDED",
+    mustChangePassword: user.mustChangePassword,
   };
 });
 

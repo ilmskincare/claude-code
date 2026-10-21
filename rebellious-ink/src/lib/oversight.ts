@@ -1,4 +1,5 @@
 import { db } from "./db";
+import { isPlaceholderEmail } from "./staff-auth";
 
 /**
  * Owner oversight. The owners (or any addresses listed in oversight.copyTo) receive:
@@ -30,5 +31,5 @@ export async function copyRecipients(exclude: (string | null | undefined)[] = []
     list = owners.map((m) => m.user.email.toLowerCase());
   }
   const skip = new Set(exclude.filter((x): x is string => Boolean(x)).map((x) => x.toLowerCase()));
-  return [...new Set(list)].filter((e) => !skip.has(e));
+  return [...new Set(list)].filter((e) => !skip.has(e) && !isPlaceholderEmail(e));
 }

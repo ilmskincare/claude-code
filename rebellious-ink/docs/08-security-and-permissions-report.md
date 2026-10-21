@@ -59,3 +59,12 @@ Run: `npm test` (unit), `npm run test:integration` (needs the test database on p
 - Pen-test the three areas with the acceptance-test-2 approach (URL and parameter tampering).
 - Complete the DPIA, privacy notice and retention schedule.
 - Rehearse a database restore and a full export.
+
+## Update, 21 October 2026: staff passwords
+
+- Staff may sign in with a username and password instead of an email link. Passwords are hashed with scrypt (N=16384, r=8, p=1, 16-byte salt, 64-byte key) using Node's built-in implementation; verification is constant-time. One-time passwords are four dictionary words and a number, must be replaced on first sign-in, and are never stored in clear or logged. Chosen passwords need at least 10 characters and may not contain the username or obvious strings.
+- Five wrong passwords lock the account for fifteen minutes (audited). The error never says whether the username or the password was wrong.
+- A session created by password sign-in is the same database session the email link creates, so expiry, sign-out and suspension behave identically. Resets, role changes and suspensions delete every session for that person.
+- Staff without an email get a placeholder address on the reserved `staff.invalid` domain; the email sender refuses to send to it and records the attempt, and oversight copies skip it.
+- Remaining gap: no second factor for owners on password sign-in. Recommended before adding more owners: a six-digit code to the desk mailbox on new devices (ticket P1-14).
+
