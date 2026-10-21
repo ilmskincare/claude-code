@@ -8,7 +8,27 @@ import { ValidationError, NotFoundError } from "./rbac";
 import { postJournal, depositReceivedLines } from "./finance/ledger";
 
 export const HOLD_MINUTES = 20;
-const ACTIVE_APPT = ["PENDING_DEPOSIT", "CONFIRMED", "CHECKED_IN", "IN_SESSION"] as const;
+
+/** Appointments that still block the diary: confirmed ones, and pending ones whose deposit window has not lapsed. */
+function blockingAppointmentWhere(artistId: string, now: Date): Prisma.AppointmentWhereInput {
+  return {
+    artistId,
+    OR: [
+      { status: { in: ["CONFIRMED", "CHECKED_IN", "IN_SESSION"] } },
+      { status: "PENDING_DEPOSIT", OR: [{ holdExpiresAt: null }, { holdExpiresAt: { gt: now } }] },
+    ],
+  };
+}
+
+/** Lazily release lapsed pending appointments for one artist (called under the artist advisory lock). */
+async function releaseLapsedForArtist(tx: Tx, artistId: string, now: Date) {
+  const lapsed = await tx.appointment.findMany({ where: { artistId, status: "PENDING_DEPOSIT", holdExpiresAt: { lt: now } }, select: { id: true } });
+  for (const a of lapsed) {
+    await tx.appointment.update({ where: { id: a.id }, data: { status: "CANCELLED", cancelledAt: now, cancelReason: "Deposit not received before hold expiry" } });
+    await audit({ actorLabel: "System: hold expiry", action: "appointment.expired", entityType: "Appointment", entityId: a.id, before: { status: "PENDING_DEPOSIT" }, after: { status: "CANCELLED" } }, tx);
+  }
+  return lapsed.length;
+}
 
 /** Take a per-artist advisory lock for the rest of the transaction. */
 async function lockArtist(tx: Tx, artistId: string) {
@@ -26,7 +46,7 @@ export async function availableSlots(artistId: string, from: Date, to: Date, dur
     db.availabilityRule.findMany({ where: { artistId } }),
     db.leave.findMany({ where: { artistId, endsAt: { gt: from }, startsAt: { lt: to } } }),
     db.appointment.findMany({
-      where: { artistId, status: { in: [...ACTIVE_APPT] }, endsAt: { gt: from }, startsAt: { lt: to } },
+      where: { ...blockingAppointmentWhere(artistId, now), endsAt: { gt: from }, startsAt: { lt: to } },
       select: { startsAt: true, endsAt: true },
     }),
     db.bookingHold.findMany({
@@ -61,6 +81,7 @@ export async function createHold(input: { requestId: string; clientId: string; s
 
     await lockArtist(tx, request.artistId);
     await tx.bookingHold.deleteMany({ where: { artistId: request.artistId, consumedAt: null, expiresAt: { lte: now } } });
+    await releaseLapsedForArtist(tx, request.artistId, now);
 
     const setup = request.service?.setupMinutes ?? 15;
     const clean = request.service?.cleanMinutes ?? 15;
@@ -70,7 +91,7 @@ export async function createHold(input: { requestId: string; clientId: string; s
     const [rules, leave, appts, holds] = await Promise.all([
       tx.availabilityRule.findMany({ where: { artistId: request.artistId } }),
       tx.leave.findMany({ where: { artistId: request.artistId, endsAt: { gt: input.startsAt }, startsAt: { lt: endsAt } } }),
-      tx.appointment.findMany({ where: { artistId: request.artistId, status: { in: [...ACTIVE_APPT] }, endsAt: { gt: input.startsAt }, startsAt: { lt: endsAt } } }),
+      tx.appointment.findMany({ where: { ...blockingAppointmentWhere(request.artistId, now), endsAt: { gt: input.startsAt }, startsAt: { lt: endsAt } } }),
       tx.bookingHold.findMany({ where: { artistId: request.artistId, consumedAt: null, endsAt: { gt: input.startsAt }, startsAt: { lt: endsAt } } }),
     ]);
     const ok = generateSlots({ from: input.startsAt, to: input.startsAt, durationMinutes: total, rules, busy: [...leave, ...appts, ...holds], now })
@@ -105,6 +126,7 @@ export async function createPendingAppointmentFromHold(holdId: string, actor: { 
     const quote = hold.request.quotes[0];
     if (!quote) throw new ValidationError("No accepted quote.");
     await lockArtist(tx, hold.artistId);
+    await releaseLapsedForArtist(tx, hold.artistId, new Date());
     const reference = await allocateReference(tx, "RI");
     let appointment;
     try {
