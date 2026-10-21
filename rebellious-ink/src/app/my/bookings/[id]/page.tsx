@@ -7,6 +7,7 @@ import { formatPence } from "@/lib/money";
 import { formatStudio } from "@/lib/time";
 import { stripeConfigured } from "@/lib/env";
 import { can } from "@/lib/rbac";
+import { CompleteAppointmentForm } from "@/components/completion-forms";
 
 export default async function MyBooking({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ paid?: string; cancelled?: string }> }) {
   const { id } = await params;
@@ -27,6 +28,8 @@ export default async function MyBooking({ params, searchParams }: { params: Prom
           <div><dt className="hint">When</dt><dd className="font-semibold text-lg">{formatStudio(a.startsAt, "cccc d LLLL yyyy")}<br />{formatStudio(a.startsAt, "HH:mm")}–{formatStudio(a.endsAt, "HH:mm")} (Europe/London)</dd></div>
           <div><dt className="hint">With</dt><dd className="font-semibold text-lg">{a.artist.displayName}</dd></div>
           <div><dt className="hint">Quoted</dt><dd>{a.quotedPence ? formatPence(a.quotedPence) : "—"}</dd></div>
+          {a.creditAppliedPence > 0 && <div><dt className="hint">Studio credit applied</dt><dd className="text-acid-deep font-semibold">{formatPence(a.creditAppliedPence)} off your balance on the day</dd></div>}
+          {a.finalPricePence != null && <div><dt className="hint">Final price</dt><dd>{formatPence(a.finalPricePence)}</dd></div>}
           <div><dt className="hint">Deposit</dt><dd>{formatPence(a.depositPence)} · {paid ? <span className="text-acid-deep font-semibold">received {formatStudio(paid.verifiedAt ?? paid.createdAt)}</span> : <span className="text-danger font-semibold">outstanding</span>}</dd></div>
         </dl>
         {a.status === "PENDING_DEPOSIT" && a.clientId === p.userId && (
@@ -41,6 +44,7 @@ export default async function MyBooking({ params, searchParams }: { params: Prom
             )}
           </div>
         )}
+        {a.artistId === p.artistProfileId && a.artistId && <div className="mt-6"><CompleteAppointmentForm appointmentId={a.id} status={a.status} suggestedPence={a.quotedPence ?? 0} /></div>}
         {a.status === "CONFIRMED" && <div className="mt-6"><Alert tone="success">Confirmed. Your consent forms will open here before your appointment (Phase 2). Please read your guides below.</Alert></div>}
         <h2 className="text-xl font-bold mt-8">Your guides</h2>
         <ul className="mt-2 grid sm:grid-cols-2 gap-2">{docs.map((d) => <li key={d.id} className="card p-3"><Link href={`/guides/${d.templateKey}`} className="font-semibold underline-offset-4 hover:underline">{d.title}</Link><p className="hint">v{d.version}</p></li>)}</ul>

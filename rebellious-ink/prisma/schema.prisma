@@ -109,6 +109,7 @@ model User {
   evidence        ApprenticeEvidence[] @relation("ApprenticeEvidence")
   juniorSignoff   JuniorArtistSignoff? @relation("JuniorSignoff")
   juniorSignoffsGiven JuniorArtistSignoff[] @relation("JuniorSignoffBy")
+  loyalty         LoyaltyAccount?
 
   @@schema("public")
 }
@@ -270,6 +271,18 @@ model ArtistProfile {
   supervisees      ArtistProfile[]  @relation("Supervision")
   defaultStationId String?
   defaultStation   Station?         @relation(fields: [defaultStationId], references: [id])
+  // Rate card and boundaries (editable by the practitioner and the owner; the desk reads them)
+  hourlyRateMinPence   Int?
+  hourlyRateMaxPence   Int?
+  dayRatePence         Int?
+  minimumChargePence   Int?
+  stylesNotOffered     String[]        @default([])
+  wontDo               String?         // free text, public
+  placementsDeclined   String[]        @default([])
+  /// Piercers: sites offered and declined
+  piercingsOffered     String[]        @default([])
+  piercingsNotOffered  String[]        @default([])
+  receptionNotes       String?         // internal only, never public
   createdAt        DateTime         @default(now()) @db.Timestamptz(3)
   updatedAt        DateTime         @updatedAt @db.Timestamptz(3)
 
@@ -290,7 +303,50 @@ model ArtistProfile {
   applications      ArtistApplication[]
   stockMovements    StockMovement[]
   supervisedLogs    PracticeLog[]       @relation("LogSupervisor")
+  priceList         PriceListItem[]
+  retailSales       RetailSale[]
 
+  @@schema("public")
+}
+
+/// A practitioner's own price list (piercing menu, flash prices, set pieces).
+model PriceListItem {
+  id              String        @id @default(cuid())
+  artistId        String
+  artist          ArtistProfile @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  name            String
+  category        String        // piercing | tattoo | consultation | other
+  pricePence      Int
+  priceToPence    Int?          // optional range upper bound
+  durationMinutes Int?
+  includesJewellery Boolean     @default(false)
+  notes           String?
+  isActive        Boolean       @default(true)
+  sortOrder       Int           @default(0)
+
+  @@index([artistId, category])
+  @@schema("public")
+}
+
+/// Jewellery and aftercare retail sold to a client from studio stock.
+model RetailSale {
+  id             String         @id @default(cuid())
+  practitionerId String
+  practitioner   ArtistProfile  @relation(fields: [practitionerId], references: [id])
+  clientUserId   String?
+  clientName     String?
+  appointmentId  String?
+  productId      String
+  product        Product        @relation(fields: [productId], references: [id])
+  quantity       Int
+  unitPricePence Int
+  totalPence     Int
+  method         PaymentMethod
+  note           String?
+  ledgerGroupId  String?
+  createdAt      DateTime       @default(now()) @db.Timestamptz(3)
+
+  @@index([practitionerId, createdAt])
   @@schema("public")
 }
 
@@ -541,6 +597,7 @@ model BookingRequest {
   /// Client-declared age confirmation at enquiry time; ID still checked in person.
   declaredOver18   Boolean         @default(false)
   dateOfBirth      DateTime?       @db.Date
+  referralCode     String?
 
   expiresAt        DateTime?       @db.Timestamptz(3)
   createdAt        DateTime        @default(now()) @db.Timestamptz(3)
@@ -724,6 +781,9 @@ model Appointment {
   quotedPence   Int?
   depositPence  Int               @default(0)
   depositPaidAt DateTime?         @db.Timestamptz(3)
+  creditAppliedPence Int          @default(0)
+  completedAt   DateTime?         @db.Timestamptz(3)
+  finalPricePence Int?
   holdExpiresAt DateTime?         @db.Timestamptz(3)
   noShowFlag    Boolean           @default(false)
   noShowReviewNote String?
@@ -813,6 +873,7 @@ model ImageAsset {
   permissions     ImagePermission[]
   portfolioItems  PortfolioItem[]
   evidence        ApprenticeEvidence[]
+  socialPosts     SocialPost[]
 
   @@schema("public")
 }
@@ -1415,6 +1476,7 @@ model Product {
   isActive     Boolean   @default(true)
 
   lots         InventoryLot[]
+  retailSales  RetailSale[]
 
   @@schema("public")
 }
@@ -1601,6 +1663,102 @@ model MentorSignoff {
   note        String?
   expiresAt   DateTime? @db.Date
   createdAt   DateTime  @default(now()) @db.Timestamptz(3)
+
+  @@schema("public")
+}
+
+// ─── Referral and loyalty ─────────────────────────────────────────────────────
+
+model LoyaltyAccount {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  referralCode  String   @unique
+  balancePence  Int      @default(0)
+  createdAt     DateTime @default(now()) @db.Timestamptz(3)
+
+  transactions  LoyaltyTransaction[]
+  referralsMade Referral[] @relation("Referrer")
+  referredBy    Referral?  @relation("Referred")
+
+  @@schema("public")
+}
+
+enum LoyaltyTxType {
+  REFERRED_WELCOME
+  REFERRAL_BONUS
+  POINTS_EARNED
+  REDEEMED
+  ADJUSTMENT
+  EXPIRED
+
+  @@schema("public")
+}
+
+model LoyaltyTransaction {
+  id            String         @id @default(cuid())
+  accountId     String
+  account       LoyaltyAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  type          LoyaltyTxType
+  amountPence   Int            // positive = credit, negative = redemption
+  note          String?
+  appointmentId String?
+  actorId       String?
+  createdAt     DateTime       @default(now()) @db.Timestamptz(3)
+
+  @@index([accountId, createdAt])
+  @@schema("public")
+}
+
+enum ReferralStatus {
+  PENDING
+  QUALIFIED
+  REWARDED
+  VOID
+
+  @@schema("public")
+}
+
+model Referral {
+  id          String         @id @default(cuid())
+  referrerId  String
+  referrer    LoyaltyAccount @relation("Referrer", fields: [referrerId], references: [id])
+  referredId  String         @unique
+  referred    LoyaltyAccount @relation("Referred", fields: [referredId], references: [id])
+  code        String
+  status      ReferralStatus @default(PENDING)
+  qualifiedAt DateTime?      @db.Timestamptz(3)
+  createdAt   DateTime       @default(now()) @db.Timestamptz(3)
+
+  @@schema("public")
+}
+
+// ─── Social posting ───────────────────────────────────────────────────────────
+
+enum SocialPostStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHED
+  FAILED
+
+  @@schema("public")
+}
+
+model SocialPost {
+  id           String           @id @default(cuid())
+  caption      String
+  channels     String[]         @default([])   // provider channel ids
+  assetId      String?
+  asset        ImageAsset?      @relation(fields: [assetId], references: [id])
+  scheduledFor DateTime?        @db.Timestamptz(3)
+  status       SocialPostStatus @default(DRAFT)
+  provider     String?          // buffer
+  providerRef  String?
+  error        String?
+  createdById  String
+  publishedAt  DateTime?        @db.Timestamptz(3)
+  createdAt    DateTime         @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime         @updatedAt @db.Timestamptz(3)
 
   @@schema("public")
 }
@@ -1808,10 +1966,17 @@ model IntegrationConnection {
 model MarketingCampaign {
   id        String   @id @default(cuid())
   name      String
-  channel   String
-  status    String   @default("draft")
+  channel   String   // email
+  status    String   @default("draft") // draft | sending | sent | failed
+  subject   String?
   scheduledFor DateTime? @db.Timestamptz(3)
   body      String?
+  audience  Json     @default("{}")
+  recipientCount Int @default(0)
+  sentCount Int      @default(0)
+  failedCount Int    @default(0)
+  createdById String?
+  sentAt    DateTime? @db.Timestamptz(3)
   createdAt DateTime @default(now()) @db.Timestamptz(3)
 
   @@schema("public")

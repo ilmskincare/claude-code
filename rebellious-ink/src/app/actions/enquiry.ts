@@ -21,7 +21,7 @@ export async function submitEnquiry(_prev: ActionState, formData: FormData): Pro
     ...raw,
     preferredDays: formData.getAll("preferredDays").map(String),
     isCoverUp: raw.isCoverUp === "on", hasScarConcern: raw.hasScarConcern === "on",
-    declaredOver18: raw.declaredOver18 === "on", privacyAccepted: raw.privacyAccepted === "on",
+    declaredOver18: raw.declaredOver18 === "on", privacyAccepted: raw.privacyAccepted === "on", marketingOptIn: raw.marketingOptIn === "on",
     sizeCm: raw.sizeCm === "" ? undefined : raw.sizeCm,
   });
   if (!parsed.success) {

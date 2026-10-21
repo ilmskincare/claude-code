@@ -107,3 +107,18 @@ Deployed and verified in a real browser against https://rebellious-ink-staging.v
 - Consultation attachments: an image attached to a live thread was stored in the private Blob store and served back through the signed route (HTTP 200).
 - Stock: owner stock page lists six products; selling one box of gloves to Mo moved on-hand from 8 to 7 and recorded the sale (`staging-owner-stock.png`).
 - Apprentice portal: the owner review page shows verified hours and a disabled junior-artist sign-off with its blockers; the apprentice's own portal shows no sign-off controls (`staging-owner-apprentice.png`, `staging-apprentice-portal.png`).
+
+## Staging update, 21 October 2026, late afternoon
+
+Deployed (`vercel deploy --prod`, deployment `rebellious-ink-staging-lwrudg52g`) and verified in a real browser against https://rebellious-ink-staging.vercel.app:
+
+- Migration `20261021123029_rate_cards_retail_loyalty_marketing_social` applied through the Supabase management API and recorded in `_prisma_migrations` (four migrations now listed).
+- Seed additions loaded idempotently: rate cards for Mo and Jay, Sam's piercing list and ten-line price list, five `loyalty.*` settings, Casey's loyalty account (`CASE-TEST`, £15.00 opening credit) and marketing opt-in.
+- Ask the desk (`/owner/rates`) as the reception user: all four practitioners, Mo's hourly £100.00–£120.00, Sam's price list and private desk notes (`staging-ask-the-desk.png`).
+- Piercer saved their own card, then sold one titanium labret: on-hand moved from 8 to 7 (`staging-piercer-sales.png`).
+- Client rewards page shows the referral code and £15.00 credit (`staging-client-rewards.png`); preferences page renders.
+- Owner marketing page reports 1 opted-in client (`staging-owner-marketing.png`); social page explains Buffer is not connected and keeps posts as drafts until `BUFFER_ACCESS_TOKEN` and `BUFFER_ORGANIZATION_ID` are set in the Vercel project.
+- Public piercer page shows the price list; the private desk notes do not appear on any public page (checked by text search).
+
+Still to configure on Vercel for the social module: `BUFFER_ACCESS_TOKEN` and `BUFFER_ORGANIZATION_ID`. Buffer must be able to fetch the image URL it is given, so image posting from staging will only work once Deployment Protection is off or a public image host is used; captions post regardless.
+

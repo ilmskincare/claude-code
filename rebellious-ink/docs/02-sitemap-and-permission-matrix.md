@@ -58,7 +58,7 @@ API
 
 Defined in `src/lib/rbac.ts`:
 
-`studio.manage`, `settings.manage`, `roster.manage`, `enquiries.view_all`, `enquiries.view_assigned`, `enquiries.create_desk`, `enquiries.assign`, `quotes.issue`, `quotes.approve`, `bookings.view_all`, `bookings.view_own`, `bookings.override`, `bookings.cancel`, `finance.view_studio`, `finance.view_own`, `finance.verify_manual_payment`, `finance.refund`, `finance.export`, `clients.view_assigned`, `clients.view_all`, `health.view_need_to_know`, `portfolio.manage_own`, `portfolio.publish`, `stock.view`, `stock.manage`, `documents.manage`, `audit.view`, `staff.chat`, `academy.learn`, `academy.signoff`, `ai.use`.
+`studio.manage`, `settings.manage`, `roster.manage`, `enquiries.view_all`, `enquiries.view_assigned`, `enquiries.create_desk`, `enquiries.assign`, `quotes.issue`, `quotes.approve`, `bookings.view_all`, `bookings.view_own`, `bookings.override`, `bookings.cancel`, `finance.view_studio`, `finance.view_own`, `finance.verify_manual_payment`, `finance.refund`, `finance.export`, `clients.view_assigned`, `clients.view_all`, `health.view_need_to_know`, `portfolio.manage_own`, `portfolio.publish`, `stock.view`, `stock.manage`, `documents.manage`, `audit.view`, `staff.chat`, `academy.learn`, `academy.signoff`, `ai.use`, `loyalty.redeem`.
 
 ## Role defaults
 
@@ -95,6 +95,7 @@ Defined in `src/lib/rbac.ts`:
 | academy.learn | ✓ | | | | | | ✓ | | | | |
 | academy.signoff | ✓ | | | | | | | ✓ | | | |
 | ai.use | ✓ | ✓ | | ✓ | | | | | | | ✓ |
+| loyalty.redeem | ✓ | ✓ | ✓ | | | | | | | | |
 
 Notes
 - OWNER holds every capability. CLIENT holds none; clients are scoped purely by record ownership.
@@ -115,6 +116,11 @@ Notes
 | A booking page is visible to its client, its artist, or `bookings.view_all`. | `/my/bookings/[id]` |
 | Artist dashboards, diaries, earnings and portfolio query by the principal's own `artistProfileId`. | `/studio/*`, `artistDashboard` |
 | Manual deposit verification needs `finance.verify_manual_payment` and records `verifiedById`. | `verifyManualDeposit` in `src/lib/owner.ts` |
+| A rate card is edited by its own practitioner or `roster.manage`; the desk reference needs `enquiries.view_all`; desk notes never render publicly. | `assertCanEditProfile` in `src/lib/profiles.ts`, `/owner/rates` |
+| A retail sale is recorded by the practitioner on their own book or by `stock.manage`. | `recordRetailSale` in `src/lib/retail.ts` |
+| Completion is by the booked artist or `bookings.override`; credit redemption by `loyalty.redeem` or `bookings.override`, never above the balance or below the minimum. | `completeAppointment`, `redeemCredit` in `src/lib/loyalty.ts` |
+| Campaigns send only to the latest granted `MARKETING_EMAIL` preference; sending needs `studio.manage`; unsubscribe links are HMAC-signed. | `marketingAudience`, `sendCampaign` in `src/lib/marketing.ts` |
+| Social posts may only use `PORTFOLIO_PUBLIC` images with a granted `SOCIAL_MEDIA` permission; drafting and publishing need `portfolio.publish`. | `savePost`, `publishPost` in `src/lib/social.ts` |
 | Reschedule and cancel need `bookings.override` / `bookings.cancel`, a reason, and write audit and notifications. | `rescheduleAppointment`, `cancelAppointment` |
 
 ## How enforcement works

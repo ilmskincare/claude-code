@@ -7,7 +7,7 @@ import { BackLink } from "@/components/ui";
 
 export default async function ArtistPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const a = await db.artistProfile.findUnique({ where: { slug }, include: { portfolioItems: { where: { publishedAt: { not: null } }, include: { asset: true }, orderBy: [{ isCover: "desc" }, { sortOrder: "asc" }] }, supervisor: true, availabilityRules: { where: { validFrom: null }, orderBy: [{ weekday: "asc" }, { startMinute: "asc" }] } } });
+  const a = await db.artistProfile.findUnique({ where: { slug }, include: { portfolioItems: { where: { publishedAt: { not: null } }, include: { asset: true }, orderBy: [{ isCover: "desc" }, { sortOrder: "asc" }] }, supervisor: true, availabilityRules: { where: { validFrom: null }, orderBy: [{ weekday: "asc" }, { startMinute: "asc" }] }, priceList: { where: { isActive: true }, orderBy: { sortOrder: "asc" } } } });
   if (!a || !a.isPublished) notFound();
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
@@ -18,6 +18,7 @@ export default async function ArtistPage({ params }: { params: Promise<{ slug: s
           <p className="hint mt-1">{a.kind === "APPRENTICE" ? `Apprentice · all procedures supervised by ${a.supervisor?.displayName}` : a.kind.replace("_", " ").toLowerCase()}{a.instagramHandle ? ` · @${a.instagramHandle}` : ""}</p>
           <p className="mt-4 text-lg opacity-85">{a.bio}</p>
           <p className="mt-3">{a.styles.map((s) => <span key={s} className="badge badge-outline mr-1">{s}</span>)}</p>
+          <RateCard a={a} />
           <h2 className="text-2xl font-bold mt-10 mb-4">Portfolio</h2>
           {a.portfolioItems.length === 0 ? <p className="opacity-70">Published work will appear here once clients have given permission.</p> : (
             <ul className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -51,6 +52,22 @@ function Hours({ rules }: { rules: { weekday: number; startMinute: number; endMi
       <h3 className="font-bold">In the studio</h3>
       <ul className="mt-1 space-y-0.5">{rules.map((r, i) => <li key={i}>{DAY[r.weekday - 1]} {hhmm(r.startMinute)}–{hhmm(r.endMinute)}{r.acceptsWalkIns ? <span className="badge badge-acid ml-2">walk-ins</span> : null}</li>)}</ul>
       {walkIns.length > 0 && <p className="hint mt-2">Walk-ins are first come, first served and depend on the day. Booked work always takes priority.</p>}
+    </div>
+  );
+}
+
+function RateCard({ a }: { a: { kind: string; hourlyRateMinPence: number | null; hourlyRateMaxPence: number | null; dayRatePence: number | null; minimumChargePence: number | null; stylesNotOffered: string[]; wontDo: string | null; placementsDeclined: string[]; piercingsOffered: string[]; piercingsNotOffered: string[]; priceList: { id: string; name: string; pricePence: number; priceToPence: number | null; includesJewellery: boolean; durationMinutes: number | null }[] } }) {
+  const gbp = (p: number) => new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP", maximumFractionDigits: 0 }).format(p / 100);
+  const rates = [a.hourlyRateMinPence != null ? `Hourly from ${gbp(a.hourlyRateMinPence)}${a.hourlyRateMaxPence ? ` to ${gbp(a.hourlyRateMaxPence)}` : ""}` : null, a.dayRatePence != null ? `Day rate ${gbp(a.dayRatePence)}` : null, a.minimumChargePence != null ? `Minimum ${gbp(a.minimumChargePence)}` : null].filter(Boolean);
+  const piercer = a.kind === "PIERCER";
+  if (!rates.length && !a.wontDo && !a.placementsDeclined.length && !a.stylesNotOffered.length && !a.priceList.length && !a.piercingsOffered.length) return null;
+  return (
+    <div className="mt-6 grid sm:grid-cols-2 gap-4 text-sm">
+      {rates.length > 0 && <div className="card p-4"><h3 className="font-bold">Rates</h3><ul className="mt-1">{rates.map((r) => <li key={r}>{r}</li>)}</ul><p className="hint mt-1">Guide only; every piece is quoted individually.</p></div>}
+      {piercer && a.piercingsOffered.length > 0 && <div className="card p-4"><h3 className="font-bold">Piercings offered</h3><p className="mt-1">{a.piercingsOffered.join(", ")}</p>{a.piercingsNotOffered.length > 0 && <p className="hint mt-1">Not offered: {a.piercingsNotOffered.join(", ")}</p>}</div>}
+      {!piercer && a.stylesNotOffered.length > 0 && <div className="card p-4"><h3 className="font-bold">Not my thing</h3><p className="mt-1">{a.stylesNotOffered.join(", ")}</p></div>}
+      {(a.wontDo || a.placementsDeclined.length > 0) && <div className="card p-4"><h3 className="font-bold">Please note</h3>{a.wontDo && <p className="mt-1 whitespace-pre-wrap">{a.wontDo}</p>}{a.placementsDeclined.length > 0 && <p className="mt-1">Placements not offered: {a.placementsDeclined.join(", ")}</p>}</div>}
+      {a.priceList.length > 0 && <div className="card p-4 sm:col-span-2"><h3 className="font-bold">Price list</h3><ul className="mt-1 divide-y divide-border">{a.priceList.map((i) => <li key={i.id} className="flex justify-between py-1"><span>{i.name}{i.includesJewellery ? <span className="hint"> · basic jewellery included</span> : null}{i.durationMinutes ? <span className="hint"> · {i.durationMinutes} min</span> : null}</span><span>{gbp(i.pricePence)}{i.priceToPence ? `–${gbp(i.priceToPence)}` : ""}</span></li>)}</ul></div>}
     </div>
   );
 }

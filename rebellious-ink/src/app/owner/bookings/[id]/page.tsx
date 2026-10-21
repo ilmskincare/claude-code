@@ -7,12 +7,15 @@ import { formatPence } from "@/lib/money";
 import { formatStudio } from "@/lib/time";
 import { BookingTools } from "./tools";
 import { can } from "@/lib/rbac";
+import { CompleteAppointmentForm, ApplyCreditForm } from "@/components/completion-forms";
+import { ensureAccount, loyaltySettings } from "@/lib/loyalty";
 
 export default async function OwnerBooking({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const p = await requireCapability("bookings.view_all");
   const a = await db.appointment.findUnique({ where: { id }, include: { artist: true, client: true, station: true, payments: { orderBy: { createdAt: "desc" } }, request: true, ledgerEntries: { orderBy: { createdAt: "asc" } } } });
   if (!a) notFound();
+  const [loyalty, loyaltyCfg] = await Promise.all([ensureAccount(a.clientId), loyaltySettings()]);
   const auditRows = await db.auditLog.findMany({ where: { entityType: "Appointment", entityId: a.id }, orderBy: { createdAt: "desc" } });
   return (<>
     <BackLink href="/owner/calendar">Planner</BackLink>
@@ -25,6 +28,7 @@ export default async function OwnerBooking({ params }: { params: Promise<{ id: s
           <div><dt className="hint">Client</dt><dd>{a.client.name} · {a.client.email}</dd></div>
           <div><dt className="hint">Enquiry</dt><dd>{a.request ? <Link href={`/owner/enquiries/${a.request.id}`} className="underline">{a.request.reference}</Link> : "—"}</dd></div>
           <div><dt className="hint">Quoted / deposit</dt><dd>{a.quotedPence ? formatPence(a.quotedPence) : "—"} / {formatPence(a.depositPence)} {a.depositPaidAt ? <span className="badge badge-acid">paid</span> : <span className="badge badge-warn">outstanding</span>}</dd></div>
+          <div><dt className="hint">Final price / credit applied</dt><dd>{a.finalPricePence != null ? formatPence(a.finalPricePence) : "—"} / {formatPence(a.creditAppliedPence)}{a.completedAt && <span className="block text-xs opacity-70">completed {formatStudio(a.completedAt)}</span>}</dd></div>
           <div><dt className="hint">Hold expires</dt><dd>{a.holdExpiresAt ? formatStudio(a.holdExpiresAt) : "—"}</dd></div>
         </dl>
         <h2 className="text-lg font-bold mt-6">Payments</h2>
@@ -34,7 +38,11 @@ export default async function OwnerBooking({ params }: { params: Promise<{ id: s
         <h2 className="text-lg font-bold mt-6">Audit trail</h2>
         <ul className="text-sm space-y-1 mt-1">{auditRows.map((r) => <li key={r.id}><span className="opacity-60">{formatStudio(r.createdAt)}</span> · {r.actorLabel} · {r.action}{r.reason ? ` · "${r.reason}"` : ""}</li>)}</ul>
       </section>
+      <div className="space-y-6">
+      {(can(p, "bookings.override") || a.artistId === p.artistProfileId) && <CompleteAppointmentForm appointmentId={a.id} status={a.status} suggestedPence={a.quotedPence ?? 0} />}
+      {(can(p, "loyalty.redeem") || can(p, "bookings.override")) && loyaltyCfg.enabled && <ApplyCreditForm appointmentId={a.id} balancePence={loyalty.balancePence} minRedeemPence={loyaltyCfg.minRedeemPence} appliedPence={a.creditAppliedPence} closed={["CANCELLED", "COMPLETED", "NO_SHOW"].includes(a.status)} />}
       <BookingTools appointmentId={a.id} status={a.status} depositPence={a.depositPence} canOverride={can(p, "bookings.override")} canCancel={can(p, "bookings.cancel")} canVerify={can(p, "finance.verify_manual_payment")} />
+      </div>
     </div>
   </>);
 }

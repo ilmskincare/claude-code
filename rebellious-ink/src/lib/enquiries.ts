@@ -8,6 +8,7 @@ import { sendEmail } from "./email";
 import { can, type Principal, ForbiddenError, NotFoundError, ValidationError } from "./rbac";
 import { assertAllowedUpload, newStorageKey, putObject } from "./storage";
 import { env } from "./env";
+import { attachReferral } from "./loyalty";
 import type { EnquiryStatus, ServiceCategory, EnquirySource } from "@/generated/prisma/enums";
 
 export const enquirySchema = z.object({
@@ -32,6 +33,8 @@ export const enquirySchema = z.object({
   dateOfBirth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().or(z.literal("")),
   source: z.enum(["WEBSITE", "WALK_IN", "TELEPHONE", "INSTAGRAM", "FACEBOOK", "WHATSAPP", "REFERRAL", "OTHER"]).optional(),
   privacyAccepted: z.coerce.boolean(),
+  referralCode: z.string().trim().max(20).optional().or(z.literal("")),
+  marketingOptIn: z.coerce.boolean().optional(),
 });
 export type EnquiryInput = z.infer<typeof enquirySchema>;
 
@@ -95,12 +98,16 @@ export async function createEnquiry(input: EnquiryInput, files: File[], opts: { 
         accessNeeds: input.accessNeeds || null,
         declaredOver18: input.declaredOver18,
         dateOfBirth: dob,
+        referralCode: input.referralCode ? input.referralCode.toUpperCase() : null,
         expiresAt: new Date(Date.now() + 60 * 86400000),
         conversation: { create: {} },
         statusEvents: { create: { toStatus: "NEW", actorLabel: opts.createdBy ? `Desk: ${opts.createdBy.name ?? opts.createdBy.email}` : "Client", note: "Enquiry submitted" } },
       },
     });
-    await tx.privacyPreference.create({ data: { userId: client.id, purpose: "MARKETING_EMAIL", granted: false, source: "portal" } }).catch(() => undefined);
+    if (!(await tx.privacyPreference.findFirst({ where: { userId: client.id, purpose: "MARKETING_EMAIL" } }))) {
+      await tx.privacyPreference.create({ data: { userId: client.id, purpose: "MARKETING_EMAIL", granted: Boolean(input.marketingOptIn), grantedAt: input.marketingOptIn ? new Date() : null, source: "enquiry_form" } });
+    }
+    await attachReferral(tx, client.id, input.referralCode);
     for (const f of files) {
       const key = newStorageKey(`enquiries/${request.id}`, f.name);
       await putObject(key, new Uint8Array(await f.arrayBuffer()), f.type);

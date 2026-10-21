@@ -2,7 +2,7 @@
 
 Statuses: PASS-AUTO (automated test named), PASS-MANUAL (exercised by hand in this session), PARTIAL, NOT STARTED.
 
-Last run (21 October 2026, local dev): `npm test` 18 passed · `npm run test:integration` 15 passed · `npm run test:e2e` 20 passed (10 desktop + 10 iPhone).
+Last run (21 October 2026, local dev, late afternoon): `npx vitest run` 39 passed (unit + integration, 10 files) · `npm run test:e2e` 26 passed (13 desktop + 13 iPhone 14).
 
 | # | Acceptance test | Status | Evidence / what is missing |
 |---|---|---|---|
@@ -23,3 +23,14 @@ Last run (21 October 2026, local dev): `npm test` 18 passed · `npm run test:int
 | 15 | Cancellation, reschedule, failed payment, expiry, refunds, backup restoration, offboarding, data export and document resend all work and are tested. | PARTIAL | Cancellation and reschedule (manual), failed/expired checkout marks payment FAILED (webhook handler), hold expiry (PASS-AUTO). Refunds (P3-03), backup restore, offboarding (P1-21), export (P1-22), resend (P2-05) outstanding. |
 | 16 | Works on iPhone, Android, desktop and reception iPad viewports; practical accessibility. | PASS-AUTO (desktop and iPhone 14 viewports) / PARTIAL (iPad, Android, axe) | Responsive shells, 44px targets, labels on every field, skip link, live regions, print styles. Device-matrix screenshots and an axe audit remain to be run in CI. |
 | 17 | No live provider keys or client data in repository, logs, errors, screenshots, demo datasets or AI prompts. | PASS-MANUAL | `.env` git-ignored; `.env.test` has placeholder strings only; seed data is fictional and labelled TEST; no AI integration exists. Add secret scanning in CI. |
+
+## Added coverage, 21 October 2026, late afternoon
+
+| Area | Automated evidence |
+|---|---|
+| Rate cards: own-card editing, cross-artist refusal, range validation, desk reference, audit row | `tests/integration/rates-loyalty-marketing.test.ts`; E2E test 11 (artist edits, desk sees it, public page shows rates but not desk notes, artist is refused `/owner/rates`) |
+| Jewellery sales: FEFO deduction, `Dr CASH / Cr STOCK_SALES`, over-sale refused, other practitioner refused, `stock.manage` may record on their behalf | same integration file; E2E test 12 (piercer sells one labret, on-hand drops by one, owner sees the sale) |
+| Referral and loyalty: code attached at enquiry, self-referral ignored, nothing paid until completion, both sides credited, 5% earn, referrer emailed, redeem limits and permissions | same integration file; E2E test 13 (client sees code and share link, link prefills the form, owner completes the seeded booking, client's credit shows £12.00) |
+| Email marketing: audience from latest preference, artist filter, signed unsubscribe token, owner-only send, once per recipient, no double send | same integration file |
+| Social: assets without `SOCIAL_MEDIA` permission are not postable or draftable, publishing without Buffer fails clearly | same integration file |
+

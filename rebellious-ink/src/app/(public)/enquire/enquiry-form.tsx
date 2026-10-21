@@ -6,7 +6,7 @@ import { Alert } from "@/components/ui";
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const ZONES = ["Upper arm", "Forearm", "Hand", "Shoulder", "Chest", "Upper back", "Lower back", "Ribs", "Stomach", "Thigh", "Calf", "Shin", "Foot", "Neck", "Head/face", "Ear", "Nose", "Lip/oral", "Navel", "Other"];
 
-export function EnquiryForm({ artists, preselected }: { artists: { slug: string; displayName: string; kind: string }[]; preselected: string }) {
+export function EnquiryForm({ artists, preselected, referralCode }: { artists: { slug: string; displayName: string; kind: string }[]; preselected: string; referralCode?: string }) {
   const [state, action, pending] = useActionState(submitEnquiry, undefined);
   const [category, setCategory] = useState("TATTOO");
   const isTattoo = ["TATTOO", "FLASH", "MULTI_SESSION_PROJECT"].includes(category);
@@ -60,7 +60,9 @@ export function EnquiryForm({ artists, preselected }: { artists: { slug: string;
       <fieldset className="card p-6 space-y-3">
         <legend className="text-xl font-bold px-2">Privacy</legend>
         <label className="flex gap-3 items-start"><input type="checkbox" name="privacyAccepted" className="mt-1 size-5" required /><span>I have read the <a href="/privacy" className="underline" target="_blank">privacy notice</a> and understand my enquiry, references and messages are used to plan and provide my tattoo or piercing.</span></label>
-        <p className="hint">Marketing emails, photography and social media use are separate choices you can make later. None are ticked for you.</p>
+        <label className="flex gap-3 items-start"><input type="checkbox" name="marketingOptIn" className="mt-1 size-5" /><span>Email me studio news, flash days and offers (optional, unsubscribe any time).</span></label>
+        <p className="hint">Photography and social media use are separate choices made at your appointment. Nothing is ticked for you.</p>
+        <div><label className="field" htmlFor="referralCode">Referral code (optional)</label><input id="referralCode" name="referralCode" className="input uppercase" defaultValue={referralCode ?? ""} placeholder="e.g. CASE-3F2A" maxLength={20} /><p className="hint">Got a code from a friend? You both get studio credit once your first appointment is complete.</p></div>
       </fieldset>
       <input type="hidden" name="source" value="WEBSITE" />
       <button className="btn btn-primary w-full justify-center text-lg" disabled={pending}>{pending ? "Sending…" : "Send my enquiry"}</button>

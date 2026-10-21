@@ -37,6 +37,7 @@ export const CAPABILITIES = [
   "academy.learn",
   "academy.signoff",
   "ai.use",
+  "loyalty.redeem",
 ] as const;
 
 export type Capability = (typeof CAPABILITIES)[number];
@@ -47,11 +48,11 @@ const ROLE_DEFAULTS: Record<RoleKey, Capability[]> = {
     "roster.manage", "enquiries.view_all", "enquiries.create_desk", "enquiries.assign", "quotes.approve",
     "bookings.view_all", "bookings.override", "bookings.cancel", "finance.view_studio",
     "finance.verify_manual_payment", "clients.view_all", "stock.view", "stock.manage",
-    "documents.manage", "audit.view", "staff.chat", "portfolio.publish", "ai.use",
+    "documents.manage", "audit.view", "staff.chat", "portfolio.publish", "ai.use", "loyalty.redeem",
   ],
   RECEPTION: [
     "enquiries.view_all", "enquiries.create_desk", "enquiries.assign", "bookings.view_all",
-    "clients.view_all", "stock.view", "staff.chat",
+    "clients.view_all", "stock.view", "staff.chat", "loyalty.redeem",
   ],
   RESIDENT_ARTIST: [
     "enquiries.view_assigned", "quotes.issue", "bookings.view_own", "finance.view_own",

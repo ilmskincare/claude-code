@@ -242,3 +242,106 @@ test("10. apprentice logs hours and marks a skill ready; cannot sign off; owner 
   await o.page.screenshot({ path: path.join(SHOTS, `${info.project.name}-21-owner-apprentice-review.png`), fullPage: true });
   await o.context.close();
 });
+
+test("11. artist edits their rate card; the desk reference and public profile reflect it", async ({ browser }, info) => {
+  const a = await newSignedInPage(browser, "artist-a@test.rebelliousink.local");
+  await a.page.goto("/studio/profile");
+  await a.page.waitForLoadState("networkidle");
+  await expect(a.page.getByRole("heading", { name: "My profile and rates" })).toBeVisible();
+  await a.page.getByLabel("Hourly from (£)").fill("110");
+  await a.page.getByLabel("Hourly to (£)").fill("130");
+  await a.page.getByLabel("Day rate (£)").fill("700");
+  await a.page.getByLabel("Placements I don't tattoo (one per line)").fill("face\nneck (first tattoo)\nhands (first tattoo)\n(E2E) ribs");
+  await a.page.getByLabel("Notes for the desk (private, never public)").fill("(E2E) Quote sleeves at day rate.");
+  await a.page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(a.page.getByText("Saved. The desk and your public profile are updated.")).toBeVisible();
+  await a.page.screenshot({ path: path.join(SHOTS, `${info.project.name}-22-artist-rate-card.png`), fullPage: true });
+  // An artist cannot open another artist's card through the owner route
+  await a.page.goto("/owner/rates");
+  await expect(a.page).toHaveURL(/\/forbidden|\/login/);
+  await a.context.close();
+
+  const d = await newSignedInPage(browser, "desk@test.rebelliousink.local");
+  await d.page.goto("/owner/rates");
+  await expect(d.page.getByRole("heading", { name: "Ask the desk" })).toBeVisible();
+  const mo = d.page.locator("section, article, div.card").filter({ has: d.page.getByRole("heading", { name: /Mo Blackwork/ }) }).first();
+  await expect(mo).toContainText("£110.00–£130.00");
+  await expect(mo).toContainText("£700.00");
+  await expect(mo).toContainText("(E2E) ribs");
+  await expect(mo).toContainText("(E2E) Quote sleeves at day rate.");
+  await d.page.screenshot({ path: path.join(SHOTS, `${info.project.name}-23-ask-the-desk.png`), fullPage: true });
+  await d.context.close();
+
+  // Public profile shows the rates and declined placements, never the desk notes.
+  const pub = await browser.newPage();
+  await pub.goto("/artists/mo-blackwork");
+  await expect(pub.getByText("Hourly from £110 to £130")).toBeVisible();
+  await expect(pub.getByText("Day rate £700")).toBeVisible();
+  await expect(pub.getByText("(E2E) ribs")).toBeVisible();
+  await expect(pub.getByText("(E2E) Quote sleeves at day rate.")).toHaveCount(0);
+  await pub.close();
+});
+
+test("12. piercer logs a jewellery sale; stock comes down and the owner sees it in retail sales", async ({ browser }, info) => {
+  const pz = await newSignedInPage(browser, "piercer@test.rebelliousink.local");
+  await pz.page.goto("/studio/sales");
+  await pz.page.waitForLoadState("networkidle");
+  const item = pz.page.getByLabel("Item");
+  const before = await item.locator("option", { hasText: "Titanium labret" }).textContent();
+  const onHandBefore = Number(/(\d+) in stock/.exec(before ?? "")?.[1]);
+  await item.selectOption({ label: before! });
+  await pz.page.getByLabel("Quantity").fill("1");
+  await pz.page.getByLabel("Price each (£)").fill("12");
+  await pz.page.getByLabel("Paid by").selectOption("CASH");
+  await pz.page.getByLabel("Client name (optional)").fill("(E2E) Walk-in");
+  await pz.page.getByRole("button", { name: "Record sale" }).click();
+  await expect(pz.page.getByText("Sale recorded and stock updated.")).toBeVisible();
+  await pz.page.reload();
+  const after = await pz.page.getByLabel("Item").locator("option", { hasText: "Titanium labret" }).textContent();
+  expect(Number(/(\d+) in stock/.exec(after ?? "")?.[1])).toBe(onHandBefore - 1);
+  await expect(pz.page.locator("tr", { hasText: "(E2E) Walk-in" }).first()).toContainText("£12.00");
+  await pz.page.screenshot({ path: path.join(SHOTS, `${info.project.name}-24-piercer-sales.png`), fullPage: true });
+  await pz.context.close();
+
+  const o = await newSignedInPage(browser, "owner@test.rebelliousink.local");
+  await o.page.goto("/owner/stock/sales");
+  await expect(o.page.locator("tr", { hasText: "(E2E) Walk-in" }).first()).toContainText("Sam Piercer");
+  await o.context.close();
+});
+
+test("13. client sees their referral code; desk applies credit; completing the booking earns loyalty credit", async ({ browser }, info) => {
+  const c = await newSignedInPage(browser, "client-two@test.rebelliousink.local");
+  await c.page.goto("/my/rewards");
+  await expect(c.page.getByRole("heading", { name: "Rewards and referrals" })).toBeVisible();
+  const code = (await c.page.locator(".stat", { hasText: "Your code" }).locator(".value").textContent())!.trim();
+  expect(code).toMatch(/^[A-Z]{1,4}-[0-9A-F]{4}$/);
+  await expect(c.page.getByText(`/enquire?ref=${code}`)).toBeVisible();
+  await c.page.screenshot({ path: path.join(SHOTS, `${info.project.name}-25-client-rewards.png`), fullPage: true });
+  // The share link prefills the enquiry form
+  await c.page.goto(`/enquire?ref=${code}`);
+  await expect(c.page.getByLabel(/Referral code/)).toHaveValue(code);
+  await c.context.close();
+
+  const o = await newSignedInPage(browser, "owner@test.rebelliousink.local");
+  // The seeded appointment sits next Wednesday; the planner is keyed by week.
+  const nextWeek = new Date(); nextWeek.setDate(nextWeek.getDate() + 7);
+  await o.page.goto(`/owner/calendar?week=${nextWeek.toISOString().slice(0, 10)}`);
+  await o.page.locator('a[title^="RI-2026-000001"]').first().click();
+  await o.page.waitForURL(/\/owner\/bookings\//);
+  await o.page.waitForLoadState("networkidle");
+  const status = (await o.page.locator(".badge").first().textContent()) ?? "";
+  if (/confirmed/i.test(status)) {
+    await o.page.getByLabel("Final price (£)").fill("240");
+    await o.page.getByRole("button", { name: "Mark completed" }).click();
+    await expect(o.page.getByText(/Completed\. Rewards: client earned £12\.00/)).toBeVisible();
+  }
+  await expect(o.page.locator("dd", { hasText: "£240.00 / £" }).first()).toBeVisible();
+  await o.page.screenshot({ path: path.join(SHOTS, `${info.project.name}-26-owner-completed-booking.png`), fullPage: true });
+  await o.context.close();
+
+  const c2 = await newSignedInPage(browser, "client-two@test.rebelliousink.local");
+  await c2.page.goto("/my/rewards");
+  await expect(c2.page.locator(".stat", { hasText: "Your credit" }).locator(".value")).toContainText("£12.00");
+  await expect(c2.page.locator("tr", { hasText: "5% back on RI-2026-000001" }).first()).toBeVisible();
+  await c2.context.close();
+});
