@@ -41,8 +41,8 @@ export function env(): Env {
   if (appEnv(e) === "production") {
     const missing: string[] = [];
     if (!e.RESEND_API_KEY) missing.push("RESEND_API_KEY");
-    if (!e.STRIPE_SECRET_KEY) missing.push("STRIPE_SECRET_KEY");
-    if (!e.STRIPE_WEBHOOK_SECRET) missing.push("STRIPE_WEBHOOK_SECRET");
+    // Stripe is optional at launch: without it deposits are taken by bank transfer and the booking stays "awaiting deposit" until the desk verifies it.
+    if ((e.STRIPE_SECRET_KEY && !e.STRIPE_WEBHOOK_SECRET) || (!e.STRIPE_SECRET_KEY && e.STRIPE_WEBHOOK_SECRET)) missing.push("both STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET, or neither");
     if (e.STORAGE_DRIVER === "local") missing.push("STORAGE_DRIVER=blob|s3");
     if (missing.length) {
       throw new Error(`Production refuses to start without: ${missing.join(", ")}`);

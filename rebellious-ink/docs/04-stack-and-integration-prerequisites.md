@@ -29,7 +29,7 @@
 | `AUTH_SECRET` | Yes | Auth.js signing secret (`openssl rand -base64 32`). |
 | `AUTH_URL`, `APP_BASE_URL` | Yes | Public origin for links and callbacks. |
 | `RESEND_API_KEY`, `EMAIL_FROM` | Production | Email sending. Without the key, non-production writes to DevMailbox; production refuses to start. |
-| `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Production | Card deposits. Without them the booking page shows bank-transfer instructions; production refuses to start. |
+| `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Optional | Card deposits. Without them the booking page shows bank-transfer instructions and the desk verifies deposits by hand; set both Stripe secrets together. |
 | `STORAGE_DRIVER` (`local` or `s3`), `STORAGE_LOCAL_DIR`, `STORAGE_SIGNING_SECRET`, `S3_*` | Yes | Private object storage. Production refuses `local`. The S3 driver is ticket P1-12. |
 | `STUDIO_TIMEZONE` | Default `Europe/London` | Studio clock. |
 | `HEALTH_DATA_KEY` | Phase 2 | AES-256-GCM key for health answers. |
