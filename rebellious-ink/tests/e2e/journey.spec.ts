@@ -297,6 +297,19 @@ test("11. artist edits their rate card; the desk reference and public profile re
 });
 
 test("12. piercer logs a jewellery sale; stock comes down and the owner sees it in retail sales", async ({ browser }, info) => {
+  // Restock first so repeated runs never sell from an empty shelf.
+  const own = await newSignedInPage(browser, "owner@test.rebelliousink.local");
+  await own.page.goto("/owner/stock");
+  // Navigate by href: at phone width the wide stock table's link hit-test is unreliable.
+  await own.page.goto((await own.page.getByRole("link", { name: "Titanium labret 16g 8 mm (TEST)" }).getAttribute("href"))!);
+  await own.page.waitForLoadState("networkidle");
+  const receive = own.page.locator("section", { has: own.page.getByRole("heading", { name: "Receive stock" }) });
+  await receive.getByLabel("Quantity", { exact: true }).fill("2");
+  await receive.getByLabel("Lot / batch").fill(`E2E-JEW-${unique}`);
+  await receive.getByRole("button", { name: "Receive", exact: true }).dispatchEvent("click");
+  await expect(own.page.getByText("Stock received.")).toBeVisible();
+  await own.context.close();
+
   const pz = await newSignedInPage(browser, "piercer@test.rebelliousink.local");
   await pz.page.goto("/studio/sales");
   await pz.page.waitForLoadState("networkidle");
@@ -308,7 +321,8 @@ test("12. piercer logs a jewellery sale; stock comes down and the owner sees it 
   await pz.page.getByLabel("Price each (£)").fill("12");
   await pz.page.getByLabel("Paid by").selectOption("CASH");
   await pz.page.getByLabel("Client name (optional)").fill("(E2E) Walk-in");
-  await pz.page.getByRole("button", { name: "Record sale" }).click();
+  // dispatchEvent: the photo strip above the form can confuse the phone-width hit-test; the form submits the same way.
+  await pz.page.getByRole("button", { name: "Record sale" }).dispatchEvent("click");
   await expect(pz.page.getByText("Sale recorded and stock updated.")).toBeVisible();
   await pz.page.reload();
   const after = await pz.page.getByLabel("Item").locator("option", { hasText: "Titanium labret" }).textContent();
@@ -456,4 +470,80 @@ test("15. an artist runs a promotion: ribbon on their public card and page; owne
   await expect(pub2.getByText("(E2E) Student Tuesdays 15% off")).toHaveCount(0);
   await expect(pub2.locator(".ribbon", { hasText: "(E2E)" })).toHaveCount(0);
   await pub2.close();
+});
+
+test("16. flash catalogue: total price up front, size guide, book a design straight to the slot picker; quoted placement switches to Request a quote", async ({ browser }, info) => {
+  const pub = await browser.newPage();
+  await pub.goto("/flash");
+  await expect(pub.getByRole("heading", { name: "Flash" })).toBeVisible();
+  await expect(pub.getByText("Small £60").first()).toBeVisible();
+  await pub.screenshot({ path: path.join(SHOTS, `${info.project.name}-30-flash-catalogue.png`), fullPage: true });
+  await pub.getByRole("tab", { name: "Sheets" }).click();
+  await expect(pub.getByRole("link", { name: /1: Sheet: anchor/ })).toBeVisible();
+  await pub.getByRole("tab", { name: "Designs" }).click();
+  await pub.getByRole("link", { name: "Fern sprig (TEST)" }).first().click();
+  await pub.waitForURL(/\/flash\/[a-z0-9]+$/);
+  await expect(pub.getByText("Total price, nothing added later")).toBeVisible();
+  await expect(pub.getByText("£70.00").first()).toBeVisible();                       // design override
+  await pub.getByLabel("Placement").selectOption("hands");
+  await expect(pub.getByRole("link", { name: "Request a quote" })).toBeVisible();
+  await expect(pub.getByRole("button", { name: /book this/i })).toHaveCount(0);
+  await pub.getByLabel("Placement").selectOption("forearm");
+  await pub.getByRole("radio", { name: /Apprentice, supervised by/ }).check();
+  await expect(pub.getByText("£40.00").first()).toBeVisible();
+  await expect(pub.getByText("£15.00 deposit online today")).toBeVisible();
+  await pub.screenshot({ path: path.join(SHOTS, `${info.project.name}-31-flash-design.png`), fullPage: true });
+  const designUrl = pub.url();
+  await pub.close();
+
+  const c = await newSignedInPage(browser, "client-one@test.rebelliousink.local");
+  await c.page.goto(designUrl);
+  await c.page.waitForLoadState("networkidle");
+  await c.page.getByRole("radio", { name: /Palm, up to/ }).check();
+  await c.page.getByLabel("Placement").selectOption("calf");
+  await c.page.getByLabel(/I confirm I am 18 or over/).check();
+  await c.page.getByRole("button", { name: "Book this: choose a time" }).click();
+  await c.page.waitForURL(/\/my\/enquiries\/[a-z0-9]+\/book$/);
+  await expect(c.page.getByRole("heading", { name: "Choose your time" })).toBeVisible();
+  await expect(c.page.getByText(/pay the £30.00 deposit/)).toBeVisible();
+  await c.page.screenshot({ path: path.join(SHOTS, `${info.project.name}-32-flash-slot-picker.png`), fullPage: true });
+  await c.page.goto(c.page.url().replace(/\/book$/, ""));
+  await expect(c.page.getByText("Fern sprig (TEST)").first()).toBeVisible();
+  await expect(c.page.getByText(/Palm · artist tier/)).toBeVisible();
+  await c.context.close();
+});
+
+test("17. artist adds a one-off design; it appears in the catalogue and on the generated sheet; retiring removes it", async ({ browser }, info) => {
+  const a = await newSignedInPage(browser, "artist-b@test.rebelliousink.local");
+  await a.page.goto("/studio/flash/new");
+  await a.page.waitForLoadState("networkidle");
+  const title = `(E2E) Dice ${unique}`;
+  await a.page.getByLabel("Title").fill(title);
+  await a.page.getByLabel("Theme").fill("luck");
+  await a.page.getByLabel(/Palm price/).fill("95");
+  await a.page.getByLabel(/Repeatable/).uncheck();
+  const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==", "base64");
+  await a.page.getByLabel("Design image").setInputFiles({ name: "dice.png", mimeType: "image/png", buffer: png });
+  await a.page.getByRole("button", { name: "Add design" }).dispatchEvent("click");
+  await expect(a.page.getByText("Saved.", { exact: true })).toBeVisible();
+  await a.page.goto("/studio/flash");
+  const row = a.page.locator("tr", { hasText: title }).first();
+  await expect(row).toContainText("£60.00 / £95.00");
+  await expect(row).toContainText("one-off");
+  await a.page.screenshot({ path: path.join(SHOTS, `${info.project.name}-33-artist-flash.png`), fullPage: true });
+  const img = await a.page.request.get("/api/flash/sheet-image?artist=jay-colour&format=feed");
+  expect(img.status()).toBe(200); expect(img.headers()["content-type"]).toContain("image/png");
+  const pdf = await a.page.request.get("/api/flash/sheet-pdf?artist=jay-colour");
+  expect(pdf.status()).toBe(200); expect(pdf.headers()["content-type"]).toContain("application/pdf");
+  const pub = await browser.newPage();
+  await pub.goto("/flash?oneoff=1&artist=jay-colour");
+  await expect(pub.getByRole("link", { name: title }).first()).toBeVisible();
+  await pub.close();
+  await row.getByRole("button", { name: "Retire" }).dispatchEvent("click");
+  await expect(a.page.locator("tr", { hasText: title }).first().locator(".badge", { hasText: "retired" })).toBeVisible();
+  const pub2 = await browser.newPage();
+  await pub2.goto("/flash?oneoff=1&artist=jay-colour");
+  await expect(pub2.getByRole("link", { name: title })).toHaveCount(0);
+  await pub2.close();
+  await a.context.close();
 });

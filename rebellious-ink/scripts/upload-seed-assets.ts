@@ -10,7 +10,7 @@ import { put } from "@vercel/blob";
  */
 async function main() {
   const root = path.resolve(process.argv[2] ?? "./storage");
-  for (const prefix of ["portfolio/seed", "products/seed"]) {
+  for (const prefix of ["portfolio/seed", "products/seed", "flash/seed"]) {
     const dir = path.join(root, prefix);
     const files = await readdir(dir).catch(() => [] as string[]);
     for (const f of files) {

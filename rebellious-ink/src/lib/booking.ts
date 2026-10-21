@@ -1,7 +1,10 @@
 import { Prisma } from "@/generated/prisma/client";
 import { db, type Tx } from "./db";
 import { allocateReference } from "./references";
+import { holdDesignForRequest, markDesignBooked, flashSettings } from "./flash";
 import { generateSlots, type Slot } from "./slots";
+import { DateTime } from "luxon";
+import { STUDIO_TZ } from "./time";
 import { assertTransition } from "./enquiry-state";
 import { audit } from "./audit";
 import { ValidationError, NotFoundError } from "./rbac";
@@ -54,7 +57,35 @@ export async function availableSlots(artistId: string, from: Date, to: Date, dur
       select: { startsAt: true, endsAt: true },
     }),
   ]);
-  return generateSlots({ from, to, durationMinutes, rules, busy: [...leave, ...appts, ...holds], now });
+  const slots = generateSlots({ from, to, durationMinutes, rules, busy: [...leave, ...appts, ...holds], now });
+  return filterBySupervisor(db, artistId, slots, from, to);
+}
+
+/**
+ * An apprentice may only be booked while their supervising artist is also in the studio:
+ * every slot must sit inside one of the supervisor's working windows and outside their leave.
+ */
+export async function filterBySupervisor(client: Tx | typeof db, artistId: string, slots: Slot[], from: Date, to: Date): Promise<Slot[]> {
+  if (slots.length === 0) return slots;
+  const profile = await client.artistProfile.findUnique({ where: { id: artistId }, select: { supervisorId: true } });
+  if (!profile?.supervisorId) return slots;
+  const [rules, leave] = await Promise.all([
+    client.availabilityRule.findMany({ where: { artistId: profile.supervisorId } }),
+    client.leave.findMany({ where: { artistId: profile.supervisorId, endsAt: { gt: from }, startsAt: { lt: to } } }),
+  ]);
+  return slots.filter((s) => {
+    const start = DateTime.fromJSDate(s.startsAt, { zone: STUDIO_TZ }), end = DateTime.fromJSDate(s.endsAt, { zone: STUDIO_TZ });
+    const dayStart = start.startOf("day");
+    const inWindow = rules.some((r) => {
+      if (r.weekday !== start.weekday) return false;
+      const iso = dayStart.toISODate()!;
+      if (r.validFrom && iso < DateTime.fromJSDate(r.validFrom, { zone: "utc" }).toISODate()!) return false;
+      if (r.validTo && iso > DateTime.fromJSDate(r.validTo, { zone: "utc" }).toISODate()!) return false;
+      return start >= dayStart.plus({ minutes: r.startMinute }) && end <= dayStart.plus({ minutes: r.endMinute });
+    });
+    const onLeave = leave.some((l) => l.startsAt < s.endsAt && l.endsAt > s.startsAt);
+    return inWindow && !onLeave;
+  });
 }
 
 /**
@@ -94,9 +125,12 @@ export async function createHold(input: { requestId: string; clientId: string; s
       tx.appointment.findMany({ where: { ...blockingAppointmentWhere(request.artistId, now), endsAt: { gt: input.startsAt }, startsAt: { lt: endsAt } } }),
       tx.bookingHold.findMany({ where: { artistId: request.artistId, consumedAt: null, endsAt: { gt: input.startsAt }, startsAt: { lt: endsAt } } }),
     ]);
-    const ok = generateSlots({ from: input.startsAt, to: input.startsAt, durationMinutes: total, rules, busy: [...leave, ...appts, ...holds], now })
-      .some((s) => s.startsAt.getTime() === input.startsAt.getTime());
+    const candidate = generateSlots({ from: input.startsAt, to: input.startsAt, durationMinutes: total, rules, busy: [...leave, ...appts, ...holds], now })
+      .filter((s) => s.startsAt.getTime() === input.startsAt.getTime());
+    const ok = (await filterBySupervisor(tx, request.artistId, candidate, input.startsAt, endsAt)).length > 0;
     if (!ok) throw new ValidationError("That time is no longer available. Please choose another slot.");
+    // A one-off flash design stays reserved for this client while they pay.
+    if (request.designId) await holdDesignForRequest(tx, request.designId, request.id, (await flashSettings(tx)).designHoldMinutes + HOLD_MINUTES, now);
 
     const hold = await tx.bookingHold.create({
       data: {
@@ -221,6 +255,7 @@ export async function confirmAppointmentWithDeposit(tx: Tx, input: {
   if (appt.request && appt.request.status === "AWAITING_DEPOSIT") {
     assertTransition(appt.request.status, "CONFIRMED");
     await tx.bookingRequest.update({ where: { id: appt.request.id }, data: { status: "CONFIRMED" } });
+    await markDesignBooked(tx, appt.request.id);
     await tx.enquiryStatusEvent.create({ data: { requestId: appt.request.id, fromStatus: "AWAITING_DEPOSIT", toStatus: "CONFIRMED", actorLabel: input.actorLabel, note: `Deposit ${input.method === "CARD_STRIPE" ? "card payment confirmed by Stripe" : "verified manually"}` } });
   }
   await audit({ actorId: input.verifiedById ?? null, actorLabel: input.actorLabel, action: "appointment.confirmed", entityType: "Appointment", entityId: appt.id, before: { status: appt.status }, after: { status: "CONFIRMED", paymentId: payment.id } }, tx);
@@ -237,5 +272,6 @@ export async function expireLapsedHolds(now = new Date()) {
     });
   }
   await db.bookingHold.deleteMany({ where: { consumedAt: null, expiresAt: { lt: now } } });
+  await db.design.updateMany({ where: { status: "HELD", heldUntil: { lt: now } }, data: { status: "AVAILABLE", heldUntil: null, heldRequestId: null } });
   return lapsed.length;
 }

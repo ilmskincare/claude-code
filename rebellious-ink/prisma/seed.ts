@@ -60,7 +60,8 @@ async function main() {
   await artist(apprentice, "ash-apprentice", "Ash Apprentice (TEST)", "APPRENTICE", ["linework", "flash"], "Fictional apprentice. All client work is supervised by Mo.", stations[0].id, a.id);
 
   // Availability: Tue–Sat 10:00–18:00 for artists; piercer Wed–Sun 11:00–19:00.
-  for (const [profile, days, s, e] of [[a, [2, 3, 4, 5, 6], 600, 1080], [b, [2, 3, 4, 5, 6], 600, 1080], [pz, [3, 4, 5, 6, 7], 660, 1140]] as const) {
+  const ash = await db.artistProfile.findUniqueOrThrow({ where: { slug: "ash-apprentice" } });
+  for (const [profile, days, s, e] of [[a, [2, 3, 4, 5, 6], 600, 1080], [b, [2, 3, 4, 5, 6], 600, 1080], [pz, [3, 4, 5, 6, 7], 660, 1140], [ash, [2, 3, 4, 5, 6], 600, 1080]] as const) {
     await db.availabilityRule.deleteMany({ where: { artistId: profile.id } });
     await db.availabilityRule.createMany({ data: days.map((weekday) => ({ artistId: profile.id, weekday, startMinute: s, endMinute: e })) });
   }
@@ -158,6 +159,29 @@ async function main() {
   // Casey has opted in to news; Riley has not. Casey has a referral code to share.
   if (!(await db.privacyPreference.findFirst({ where: { userId: client1.id, purpose: "MARKETING_EMAIL" } }))) await db.privacyPreference.create({ data: { userId: client1.id, purpose: "MARKETING_EMAIL", granted: true, grantedAt: new Date(), source: "seed", version: 1 } });
   await db.loyaltyAccount.upsert({ where: { userId: client1.id }, create: { userId: client1.id, referralCode: "CASE-TEST", balancePence: 1500, transactions: { create: { type: "ADJUSTMENT", amountPence: 1500, note: "(TEST) Opening credit" } } }, update: {} });
+  // Flash catalogue: placeholder TEST designs (plain swatches) so the catalogue, sheets and games are testable.
+  if ((await db.design.count()) === 0) {
+    const flash: [typeof a, string, string, string, [number, number, number], boolean, boolean, number | null][] = [
+      [a, "Moth", "animals", "BLACK", [25, 25, 25], true, true, null], [a, "Dagger and rose", "old-school", "BLACK", [60, 70, 20], true, false, null], [a, "Crescent moon", "celestial", "BLACK", [35, 35, 50], true, true, null],
+      [a, "Snake and key", "blackwork", "BLACK", [20, 40, 20], false, true, null], [a, "Fern sprig", "botanical", "BLACK", [40, 80, 20], true, true, 7000], [a, "Crown and wings", "lettering", "BLACK", [90, 110, 0], false, false, null],
+      [b, "Swallow", "old-school", "COLOUR", [140, 60, 40], false, true, null], [b, "Peony", "botanical", "COLOUR", [160, 60, 90], false, true, null], [b, "Eye and sparkles", "celestial", "COLOUR", [60, 90, 160], false, false, null], [b, "Skull and dice", "luck", "COLOUR", [120, 120, 130], false, true, null],
+    ];
+    let n = 0;
+    for (const [profile, title, theme, colourMode, rgb, apprenticeAvailable, repeatable, priceSmall] of flash) {
+      const key = `flash/seed/${profile.slug}-${title.toLowerCase().replace(/[^a-z]+/g, "-")}.png`;
+      await mkdir(path.dirname(path.join(storageDir, key)), { recursive: true });
+      await writeFile(path.join(storageDir, key), png(...rgb));
+      await db.design.create({ data: { title: `${title} (TEST)`, artistId: profile.id, imageKey: key, theme, colourMode: colourMode as "BLACK" | "COLOUR", apprenticeAvailable, repeatable, priceSmallPence: priceSmall, sortOrder: n++ } });
+    }
+    // One uploaded sheet for Mo with two marked hotspots.
+    const sheetKey = "flash/seed/mo-sheet-1.png";
+    await writeFile(path.join(storageDir, sheetKey), png(30, 30, 30));
+    const sheet = await db.flashSheet.create({ data: { artistId: a.id, title: "Autumn sheet 1 (TEST)", imageKey: sheetKey } });
+    await db.design.createMany({ data: [
+      { title: "Sheet: anchor (TEST)", artistId: a.id, imageKey: sheetKey, sheetId: sheet.id, hotspotX: 5, hotspotY: 5, hotspotW: 40, hotspotH: 40, theme: "old-school", sortOrder: n++ },
+      { title: "Sheet: lantern (TEST)", artistId: a.id, imageKey: sheetKey, sheetId: sheet.id, hotspotX: 55, hotspotY: 50, hotspotW: 40, hotspotH: 45, theme: "old-school", repeatable: false, sortOrder: n++ },
+    ] });
+  }
   // Promotions: one studio-wide, one for Mo, one ended (so the owner page shows every state).
   if ((await db.promotion.count()) === 0) {
     const now = new Date();

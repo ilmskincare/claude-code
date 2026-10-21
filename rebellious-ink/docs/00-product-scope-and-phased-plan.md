@@ -104,3 +104,15 @@ Phase 4 — Growth
 - **Product photos**: every stock item can carry a photo (owner uploads it on the product page; stored privately, served by signed link). Thumbnails show on the owner's stock list, the artist's studio stock view, and as a tap-to-pick photo strip on the piercer's sale form so the right jewellery is chosen.
 - **Promotions**: studio-wide offers (`/owner/promotions`) show as an acid-green banner across every public page; artist offers put a corner ribbon on that artist's card on the home page and the artists page, and on their public profile with the offer terms and any code. Artists create and end their own (`/studio/promotions`); the owner or studio manager does either. Every offer has a start, an optional end and an optional "desk only" flag; live ones are listed at the top of Ask the desk.
 
+## Novelty booking, step 1: flash catalogue (21 October 2026, evening)
+
+Decisions taken with the owner before building: every game is free to play and only ever leads to a normal booking at a fixed price (no paid plays, no re-spin fees, nothing resembling gambling); crowns replace the 5% loyalty earn (step 10); touch-up window three months; placeholder TEST artwork until the artists supply originals.
+
+- **Catalogue** (`/flash`): Designs and Sheets views, filters (theme, artist, price range, colour, apprentice, one-off), tiles with "Small £60 · Palm £110" and "Apprentice from £40" chips, badges for one-off, repeatable and booked.
+- **Design page** (`/flash/[id]`): size guide drawn to scale on a forearm, size and tier choice, placement list, total price and deposit shown before anything else, "Book this". Hands, fingers, neck and face switch the button to "Request a quote" (prefilled enquiry).
+- **Booking**: "Book this" creates an enquiry with an already-accepted fixed quote and sends the client straight to the slot picker. One-off designs are row-locked and held while they pay, retire once the deposit lands, and return to the pool if the hold lapses. Repeatable designs never hold.
+- **Apprentice tier**: "Apprentice, supervised by <artist>" with its own prices and deposit; apprentice slots exist only inside the supervisor's working windows and outside their leave.
+- **Prices**: `flash.*` studio settings for defaults, deposits, sizes, diary minutes, hold minutes, quoted and fixed placements; per-design overrides; bulk adjust of overrides.
+- **Admin and artists**: `/owner/flash` (everyone's) and `/studio/flash` (own): add single designs, upload a sheet and drag hotspots over each design, retire. Shareable sheets with prices rendered from the live catalogue: Instagram feed and story images and an A4 PDF, each with a QR code per design.
+- **Not yet**: the games themselves (gumball, wheel, tarot, slots, claw), drops, advent, Needle Town editions and certificates, touch-ups, crown card.
+

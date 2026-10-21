@@ -6,7 +6,7 @@ import { Alert } from "@/components/ui";
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const ZONES = ["Upper arm", "Forearm", "Hand", "Shoulder", "Chest", "Upper back", "Lower back", "Ribs", "Stomach", "Thigh", "Calf", "Shin", "Foot", "Neck", "Head/face", "Ear", "Nose", "Lip/oral", "Navel", "Other"];
 
-export function EnquiryForm({ artists, preselected, referralCode }: { artists: { slug: string; displayName: string; kind: string }[]; preselected: string; referralCode?: string }) {
+export function EnquiryForm({ artists, preselected, referralCode, initialDescription }: { artists: { slug: string; displayName: string; kind: string }[]; preselected: string; referralCode?: string; initialDescription?: string }) {
   const [state, action, pending] = useActionState(submitEnquiry, undefined);
   const [category, setCategory] = useState("TATTOO");
   const isTattoo = ["TATTOO", "FLASH", "MULTI_SESSION_PROJECT"].includes(category);
@@ -46,7 +46,7 @@ export function EnquiryForm({ artists, preselected, referralCode }: { artists: {
           </>}
         </div>
         {isTattoo && <div className="flex flex-wrap gap-6"><label className="flex gap-2 items-center"><input type="checkbox" name="isCoverUp" className="size-5" />Cover-up of an existing tattoo</label><label className="flex gap-2 items-center"><input type="checkbox" name="hasScarConcern" className="size-5" />Scar tissue in the area (optional to tell us)</label></div>}
-        <div><label className="field" htmlFor="description">Describe your idea</label><textarea id="description" name="description" className="textarea" rows={5} required minLength={10} placeholder="What it is, what it means to you, anything you definitely do or don't want." /></div>
+        <div><label className="field" htmlFor="description">Describe your idea</label><textarea id="description" name="description" className="textarea" rows={5} required minLength={10} defaultValue={initialDescription ?? ""} placeholder="What it is, what it means to you, anything you definitely do or don't want." /></div>
         <div><label className="field" htmlFor="references">Reference images (up to 6, JPEG/PNG/WEBP/HEIC, 15 MB each)</label><input id="references" name="references" type="file" accept="image/jpeg,image/png,image/webp,image/heic" multiple className="input" capture="environment" /><p className="hint">Private to you and your artist. Never published.</p></div>
       </fieldset>
 

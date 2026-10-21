@@ -133,3 +133,16 @@ Deployed (`vercel deploy --prod`) and verified in a real browser against https:/
 - Owner promotions page lists live, live, ended (`staging-owner-promotions.png`); piercer's sale form shows the photo picker (`staging-piercer-sales-photos.png`).
 - Follow-up deploy in the same session added top padding to ribboned cards so the ribbon no longer overlaps the "Taking enquiries" badge.
 
+## Staging update, 21 October 2026, late evening: flash catalogue
+
+Deployed (`vercel deploy --prod`) and verified in a real browser against https://rebellious-ink-staging.vercel.app:
+
+- Migration `20261021140313_flash_catalogue` applied through the Supabase management API and recorded (six migrations listed). The unused `FlashDesign`/`ArtworkRights` tables were dropped by it.
+- Seed loaded idempotently (run twice, same counts): 12 TEST designs (4 one-offs, 2 cut from an uploaded sheet), 1 sheet; placeholder PNGs uploaded to the Blob store; the seeded apprentice given Tue–Sat hours so the apprentice tier is bookable.
+- Public catalogue shows 12 tiles with prices, the sheet view with its numbered hotspot, the design page with the £70 override and the size guide; choosing "neck" switches the button to "Request a quote" (`staging-flash-catalogue.png`, `staging-flash-design.png`).
+- A signed-in client booked "Fern sprig" at the apprentice tier and landed on the slot picker with the £15.00 deposit (`staging-flash-slot-picker.png`).
+- Sheet images (feed 1080×1350, story 1080×1920) and the A4 PDF render from the live catalogue with QR codes (`staging-sheet-feed.png`).
+- Owner flash page lists all 12 designs with effective prices and status (`staging-owner-flash.png`).
+
+Note: during one full local test run the marketing integration test failed once while the Playwright suite was running at the same time; it passed on its own and in the next full run (45/45). The two suites use different databases, so this is logged as unexplained rather than fixed.
+

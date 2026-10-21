@@ -147,6 +147,7 @@ export async function loadRequestFor(p: Principal, requestId: string) {
       client: { select: { id: true, name: true, email: true, phone: true } },
       artist: true,
       service: true,
+      design: true,
       attachments: true,
       statusEvents: { orderBy: { createdAt: "asc" } },
       quotes: { orderBy: { version: "desc" } },

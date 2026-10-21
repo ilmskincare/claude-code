@@ -2,9 +2,10 @@
 import { EnquiryBadge } from "./ui";
 import { signedUrl } from "@/lib/storage";
 import { formatStudio } from "@/lib/time";
-import type { BookingRequest, ImageAsset, EnquiryStatusEvent, ArtistProfile } from "@/generated/prisma/client";
+import type { BookingRequest, ImageAsset, EnquiryStatusEvent, ArtistProfile, Design } from "@/generated/prisma/client";
+import { DesignImage } from "./design-image";
 
-export function EnquirySummary({ request, showClient }: { request: BookingRequest & { attachments: ImageAsset[]; statusEvents: EnquiryStatusEvent[]; artist: ArtistProfile | null; client: { name: string | null; email: string; phone: string | null } }; showClient: boolean }) {
+export function EnquirySummary({ request, showClient }: { request: BookingRequest & { attachments: ImageAsset[]; statusEvents: EnquiryStatusEvent[]; artist: ArtistProfile | null; design?: Design | null; client: { name: string | null; email: string; phone: string | null } }; showClient: boolean }) {
   const r = request;
   const rows: [string, string | null | undefined][] = [
     ["Service", r.category.replace(/_/g, " ").toLowerCase()],
@@ -25,6 +26,7 @@ export function EnquirySummary({ request, showClient }: { request: BookingReques
       <dl className="mt-4 grid sm:grid-cols-2 gap-x-6 gap-y-2 text-sm">
         {rows.filter(([, v]) => v).map(([k, v]) => <div key={k}><dt className="hint">{k}</dt><dd>{v}</dd></div>)}
       </dl>
+      {r.design && <div className="mt-4 card p-3 bg-surface-muted flex gap-3 items-center"><DesignImage src={signedUrl(r.design.imageKey, 3600)} alt={r.design.title} hotspot={{ x: r.design.hotspotX, y: r.design.hotspotY, w: r.design.hotspotW, h: r.design.hotspotH }} className="w-20 h-20 rounded-lg shrink-0" /><div className="text-sm"><p className="hint">Flash design</p><p className="font-bold">{r.design.title}</p><p>{r.designSize === "palm" ? "Palm" : "Small"} · {r.designTier === "apprentice" ? "apprentice (supervised)" : "artist"} tier · {r.design.repeatable ? "repeatable" : "one-off"}</p></div></div>}
       <p className="mt-4 whitespace-pre-wrap">{r.description}</p>
       {r.attachments.filter((a) => !a.messageId).length > 0 && <div className="mt-4"><p className="hint mb-2">Reference images from the enquiry (private)</p><div className="flex flex-wrap gap-2">{r.attachments.filter((a) => !a.messageId).map((a) => <a key={a.id} href={signedUrl(a.storageKey)} target="_blank" rel="noreferrer"><img src={signedUrl(a.storageKey)} alt={a.originalName} className="size-24 object-cover rounded-lg border border-border" /></a>)}</div></div>}
       <details className="mt-4"><summary className="cursor-pointer font-semibold">Status history</summary>

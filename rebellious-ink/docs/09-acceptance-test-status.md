@@ -2,7 +2,7 @@
 
 Statuses: PASS-AUTO (automated test named), PASS-MANUAL (exercised by hand in this session), PARTIAL, NOT STARTED.
 
-Last run (21 October 2026, local dev, evening): `npx vitest run` 41 passed (unit + integration, 11 files) · `npm run test:e2e` 30 passed (15 desktop + 15 iPhone 14).
+Last run (21 October 2026, late evening): `npx vitest run` 45 passed (unit + integration, 12 files) · `npm run test:e2e` 34 passed (17 desktop + 17 iPhone 14).
 
 | # | Acceptance test | Status | Evidence / what is missing |
 |---|---|---|---|
@@ -35,4 +35,7 @@ Last run (21 October 2026, local dev, evening): `npx vitest run` 41 passed (unit
 | Social: assets without `SOCIAL_MEDIA` permission are not postable or draftable, publishing without Buffer fails clearly | same integration file |
 | Product photos: image stored and served, PDF refused, kept on edit, removable, `stock.manage` only | `tests/integration/promotions-and-product-photos.test.ts`; E2E test 14 (owner uploads, signed link returns 200, thumbnail on the stock list, piercer picks by photo) |
 | Promotions: own-artist only, studio-wide needs `roster.manage`, date validation, live vs scheduled vs ended, desk-only hidden from public, audit rows | same integration file; E2E test 15 (artist ribbon on card and page with code, studio banner, Ask the desk list, ending removes both at once) |
+| Flash catalogue: defaults propagate to every tile, overrides and bulk adjust, apprentice pricing, retire | `tests/integration/flash.test.ts`; E2E test 16 (catalogue, sheets, design page, quoted placement switch, apprentice price) and 17 (artist adds and retires a one-off; sheet image and PDF respond) |
+| Flash booking: accepted fixed quote straight to the slot picker; quoted placements refused; one-off held, booked exactly once on deposit, shown as Booked everywhere; lapsed hold returns; 50 simultaneous claims produce exactly one hold | same integration file; E2E test 16 books Palm and lands on the slot picker with the £30 deposit |
+| Apprentice supervision: apprentice slots only while the supervisor is in and not on leave; hold refused outside | same integration file |
 

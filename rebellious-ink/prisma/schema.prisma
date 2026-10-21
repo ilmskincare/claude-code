@@ -299,7 +299,8 @@ model ArtistProfile {
   chairRentCharges  ChairRentCharge[]
   commissionEntries CommissionEntry[]
   payouts           Payout[]
-  flashDesigns      FlashDesign[]
+  flashSheets       FlashSheet[]
+  designs           Design[]
   applications      ArtistApplication[]
   stockMovements    StockMovement[]
   supervisedLogs    PracticeLog[]       @relation("LogSupervisor")
@@ -578,6 +579,10 @@ model BookingRequest {
   artist           ArtistProfile?  @relation(fields: [artistId], references: [id])
   serviceId        String?
   service          Service?        @relation(fields: [serviceId], references: [id])
+  designId         String?         // flash catalogue design this booking is for
+  design           Design?         @relation(fields: [designId], references: [id])
+  designSize       String?         // small | palm
+  designTier       String?         // artist | apprentice
   category         ServiceCategory
   source           EnquirySource   @default(WEBSITE)
   status           EnquiryStatus   @default(NEW)
@@ -908,31 +913,6 @@ model PortfolioItem {
   createdAt   DateTime      @default(now()) @db.Timestamptz(3)
 
   @@index([artistId, publishedAt])
-  @@schema("public")
-}
-
-model FlashDesign {
-  id         String        @id @default(cuid())
-  artistId   String
-  artist     ArtistProfile @relation(fields: [artistId], references: [id])
-  title      String
-  pricePence Int
-  assetId    String?
-  isAvailable Boolean      @default(true)
-  rights     ArtworkRights?
-
-  @@schema("public")
-}
-
-model ArtworkRights {
-  id          String      @id @default(cuid())
-  flashId     String      @unique
-  flash       FlashDesign @relation(fields: [flashId], references: [id])
-  rightsHolder String
-  licenceTerms String
-  creditLine  String?
-  merchandiseAllowed Boolean @default(false)
-
   @@schema("public")
 }
 
@@ -1962,6 +1942,91 @@ model IntegrationConnection {
   lastCheckedAt DateTime? @db.Timestamptz(3)
   lastError String?
 
+  @@schema("public")
+}
+
+// ─── Flash catalogue (stock for every novelty game) ───────────────────────────
+
+enum DesignCollection {
+  CATALOGUE
+  GUMBALL
+  TAROT
+  CLAW
+  DROP
+  ADVENT
+  NEEDLE_TOWN
+
+  @@schema("public")
+}
+
+enum DesignStatus {
+  AVAILABLE
+  HELD
+  BOOKED
+  RETIRED
+
+  @@schema("public")
+}
+
+enum ColourMode {
+  BLACK
+  COLOUR
+
+  @@schema("public")
+}
+
+/// A whole flash sheet as the artist posts it; designs on it are located by hotspot.
+model FlashSheet {
+  id        String        @id @default(cuid())
+  artistId  String
+  artist    ArtistProfile @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  title     String
+  imageKey  String
+  createdAt DateTime      @default(now()) @db.Timestamptz(3)
+
+  designs   Design[]
+
+  @@schema("public")
+}
+
+/// One bookable flash design. Prices are per size; null falls back to the studio defaults.
+/// One-off designs (repeatable = false) are held while a client books and retired once booked.
+model Design {
+  id                   String           @id @default(cuid())
+  title                String
+  artistId             String
+  artist               ArtistProfile    @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  imageKey             String
+  sheetId              String?
+  sheet                FlashSheet?      @relation(fields: [sheetId], references: [id], onDelete: SetNull)
+  hotspotX             Float?           // percent of sheet width
+  hotspotY             Float?
+  hotspotW             Float?
+  hotspotH             Float?
+  theme                String?
+  colourMode           ColourMode       @default(BLACK)
+  collection           DesignCollection @default(CATALOGUE)
+  priceSmallPence      Int?
+  pricePalmPence       Int?
+  apprenticeAvailable  Boolean          @default(false)
+  apprenticeSmallPence Int?
+  apprenticePalmPence  Int?
+  repeatable           Boolean          @default(true)
+  status               DesignStatus     @default(AVAILABLE)
+  heldUntil            DateTime?        @db.Timestamptz(3)
+  heldRequestId        String?
+  bookedRequestId      String?
+  editionSize          Int?             // Needle Town: how many times it may be tattooed
+  funLine              String?          // tarot: one light line written by the artist
+  sortOrder            Int              @default(0)
+  retiredAt            DateTime?        @db.Timestamptz(3)
+  createdAt            DateTime         @default(now()) @db.Timestamptz(3)
+  updatedAt            DateTime         @updatedAt @db.Timestamptz(3)
+
+  requests             BookingRequest[]
+
+  @@index([collection, status])
+  @@index([artistId, status])
   @@schema("public")
 }
 

@@ -116,6 +116,9 @@ Notes
 | A booking page is visible to its client, its artist, or `bookings.view_all`. | `/my/bookings/[id]` |
 | Artist dashboards, diaries, earnings and portfolio query by the principal's own `artistProfileId`. | `/studio/*`, `artistDashboard` |
 | Manual deposit verification needs `finance.verify_manual_payment` and records `verifiedById`. | `verifyManualDeposit` in `src/lib/owner.ts` |
+| A flash design or sheet is created, edited or retired by its own artist or `roster.manage`; bulk price changes need `roster.manage`; only `AVAILABLE`/`HELD` designs of published artists are public. | `assertCanManageDesigns`, `catalogue` in `src/lib/flash.ts` |
+| Booking a design needs a signed-in client who declares 18+, a fixed-price placement, and an offered tier; one-off designs are claimed under `SELECT ... FOR UPDATE`. | `bookDesign`, `holdDesignForRequest` |
+| Apprentice slots are the intersection of the apprentice's and the supervisor's availability. | `filterBySupervisor` in `src/lib/booking.ts` |
 | A promotion is created or ended by its own artist or `roster.manage`; studio-wide ones need `roster.manage`; public pages only ever show live, public ones. | `savePromotion`, `endPromotion`, `livePromotions` in `src/lib/promotions.ts` |
 | A product photo is set or removed by `stock.manage` only and must be an image. | `upsertProduct` in `src/lib/inventory.ts` |
 | A rate card is edited by its own practitioner or `roster.manage`; the desk reference needs `enquiries.view_all`; desk notes never render publicly. | `assertCanEditProfile` in `src/lib/profiles.ts`, `/owner/rates` |

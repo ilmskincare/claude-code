@@ -80,11 +80,12 @@ export async function updateSettingAction(_prev: ActionState, formData: FormData
   let value: unknown = rawValue;
   if (rawValue === "true" || rawValue === "false") value = rawValue === "true";
   else if (/^-?\d+(\.\d+)?$/.test(rawValue)) value = Number(rawValue);
+  else if (rawValue.trim().startsWith("[")) { try { value = JSON.parse(rawValue); } catch { return { error: "Lists must be JSON, e.g. [\"hands\", \"neck\"]." }; } }
   const studio = await db.studio.findFirstOrThrow();
   const before = await db.studioSetting.findUnique({ where: { studioId_key: { studioId: studio.id, key } } });
   await db.studioSetting.upsert({ where: { studioId_key: { studioId: studio.id, key } }, create: { studioId: studio.id, key, value: value as object, updatedBy: p.userId }, update: { value: value as object, updatedBy: p.userId } });
   await audit({ actorId: p.userId, actorLabel: `Owner: ${p.name ?? p.email}`, action: "setting.updated", entityType: "StudioSetting", entityId: key, before: before?.value, after: value });
-  revalidatePath("/owner/settings");
+  revalidatePath("/owner/settings"); revalidatePath("/flash"); revalidatePath("/owner/flash");
   return { ok: true };
 }
 
