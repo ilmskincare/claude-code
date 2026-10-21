@@ -144,7 +144,7 @@ export async function loadRequestFor(p: Principal, requestId: string) {
       statusEvents: { orderBy: { createdAt: "asc" } },
       quotes: { orderBy: { version: "desc" } },
       appointments: { orderBy: { startsAt: "asc" }, include: { payments: true } },
-      conversation: { include: { messages: { orderBy: { createdAt: "asc" }, include: { sender: { select: { id: true, name: true } } } } } },
+      conversation: { include: { messages: { orderBy: { createdAt: "asc" }, include: { sender: { select: { id: true, name: true } }, attachments: true } } } },
     },
   });
   if (!r || !canAccessRequest(p, r)) notFound(); // 404 not 403: do not leak that the record exists
@@ -174,15 +174,23 @@ export async function assignArtist(p: Principal, requestId: string, artistId: st
   });
 }
 
-export async function postMessage(p: Principal, requestId: string, body: string, visibility: "CLIENT_VISIBLE" | "INTERNAL_ONLY" = "CLIENT_VISIBLE") {
+export async function postMessage(p: Principal, requestId: string, body: string, visibility: "CLIENT_VISIBLE" | "INTERNAL_ONLY" = "CLIENT_VISIBLE", files: File[] = []) {
   const text = body.trim();
-  if (text.length < 1 || text.length > 5000) throw new ValidationError("Message must be between 1 and 5000 characters.");
+  if (text.length > 5000) throw new ValidationError("Message must be under 5000 characters.");
+  if (text.length < 1 && files.length === 0) throw new ValidationError("Write a message or attach an image.");
+  if (files.length > 6) throw new ValidationError("Attach up to six files per message.");
+  for (const f of files) assertAllowedUpload(f.type, f.size);
   const r = await db.bookingRequest.findUnique({ where: { id: requestId }, include: { conversation: true, client: true, artist: { include: { user: true } } } });
   if (!r || !canAccessRequest(p, r) || !r.conversation) throw new NotFoundError("Enquiry not found");
   const isClient = r.clientId === p.userId && !can(p, "enquiries.view_all") && r.artistId !== p.artistProfileId;
   if (isClient && visibility === "INTERNAL_ONLY") throw new ForbiddenError();
   const message = await db.$transaction(async (tx) => {
-    const m = await tx.message.create({ data: { conversationId: r.conversation!.id, senderId: p.userId, body: text, visibility } });
+    const m = await tx.message.create({ data: { conversationId: r.conversation!.id, senderId: p.userId, body: text || (files.length ? `${files.length} image${files.length === 1 ? "" : "s"} attached` : ""), visibility } });
+    for (const f of files) {
+      const key = newStorageKey(`enquiries/${r.id}/messages`, f.name);
+      await putObject(key, new Uint8Array(await f.arrayBuffer()), f.type);
+      await tx.imageAsset.create({ data: { uploadedById: p.userId, requestId: r.id, messageId: m.id, storageKey: key, originalName: f.name.slice(0, 200), mimeType: f.type, sizeBytes: f.size, visibility: "PRIVATE_REFERENCE", scanStatus: "PENDING" } });
+    }
     if (!isClient && r.status === "NEW") await transitionRequest(tx, r.id, "IN_DISCUSSION", { userId: p.userId, label: `Staff: ${p.name ?? p.email}` }, "First reply sent");
     return m;
   });

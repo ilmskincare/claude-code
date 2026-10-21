@@ -45,8 +45,9 @@ export async function sendMessage(_prev: ActionState, formData: FormData): Promi
   const p = await requirePrincipal();
   const requestId = String(formData.get("requestId"));
   const visibility = formData.get("internal") === "on" ? "INTERNAL_ONLY" : "CLIENT_VISIBLE";
+  const files = formData.getAll("attachments").filter((f): f is File => f instanceof File && f.size > 0);
   try {
-    await postMessage(p, requestId, String(formData.get("body") ?? ""), visibility);
+    await postMessage(p, requestId, String(formData.get("body") ?? ""), visibility, files);
   } catch (e) {
     return { error: message(e) };
   }

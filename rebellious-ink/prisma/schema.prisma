@@ -329,15 +329,21 @@ model Station {
 }
 
 /// Recurring weekly working window, Europe/London local minutes-from-midnight.
+/// A one-off day is a rule whose validFrom and validTo are the same date.
 model AvailabilityRule {
-  id          String        @id @default(cuid())
-  artistId    String
-  artist      ArtistProfile @relation(fields: [artistId], references: [id], onDelete: Cascade)
-  weekday     Int           // 1 = Monday … 7 = Sunday (ISO)
-  startMinute Int
-  endMinute   Int
-  validFrom   DateTime?     @db.Date
-  validTo     DateTime?     @db.Date
+  id              String        @id @default(cuid())
+  artistId        String
+  artist          ArtistProfile @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  weekday         Int           // 1 = Monday … 7 = Sunday (ISO)
+  startMinute     Int
+  endMinute       Int
+  validFrom       DateTime?     @db.Date
+  validTo         DateTime?     @db.Date
+  /// Offered as online booking slots.
+  acceptsBookings Boolean       @default(true)
+  /// Shown publicly as walk-in hours; never offered as online slots unless acceptsBookings is also true.
+  acceptsWalkIns  Boolean       @default(false)
+  label           String?       // e.g. "Flash day", "Guest spot"
 
   @@index([artistId, weekday])
   @@schema("public")
@@ -585,6 +591,7 @@ model Message {
   visibility     MessageVisibility @default(CLIENT_VISIBLE)
   readAt         DateTime?         @db.Timestamptz(3)
   createdAt      DateTime          @default(now()) @db.Timestamptz(3)
+  attachments    ImageAsset[]
 
   @@index([conversationId, createdAt])
   @@schema("public")
@@ -778,6 +785,8 @@ model ImageAsset {
   uploadedBy      User?           @relation(fields: [uploadedById], references: [id])
   requestId       String?
   request         BookingRequest? @relation(fields: [requestId], references: [id])
+  messageId       String?
+  message         Message?        @relation(fields: [messageId], references: [id])
   storageKey      String          @unique
   originalName    String
   mimeType        String

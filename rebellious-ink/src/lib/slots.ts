@@ -30,10 +30,12 @@ export function generateSlots(opts: {
 
   while (day <= end) {
     const weekday = day.weekday; // 1 = Monday
+    const isoDay = day.toISODate()!;
     const dayRules = opts.rules.filter((r) => {
       if (r.weekday !== weekday) return false;
-      if (r.validFrom && day.toJSDate() < r.validFrom) return false;
-      if (r.validTo && day.toJSDate() > r.validTo) return false;
+      // validFrom/validTo are calendar dates (stored at UTC midnight); compare by date, not instant, so BST offsets cannot shift them.
+      if (r.validFrom && isoDay < DateTime.fromJSDate(r.validFrom, { zone: "utc" }).toISODate()!) return false;
+      if (r.validTo && isoDay > DateTime.fromJSDate(r.validTo, { zone: "utc" }).toISODate()!) return false;
       return true;
     });
     for (const rule of dayRules) {

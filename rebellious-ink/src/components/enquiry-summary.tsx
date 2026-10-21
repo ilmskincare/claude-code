@@ -26,7 +26,7 @@ export function EnquirySummary({ request, showClient }: { request: BookingReques
         {rows.filter(([, v]) => v).map(([k, v]) => <div key={k}><dt className="hint">{k}</dt><dd>{v}</dd></div>)}
       </dl>
       <p className="mt-4 whitespace-pre-wrap">{r.description}</p>
-      {r.attachments.length > 0 && <div className="mt-4"><p className="hint mb-2">Reference images (private)</p><div className="flex flex-wrap gap-2">{r.attachments.map((a) => <a key={a.id} href={signedUrl(a.storageKey)} target="_blank" rel="noreferrer"><img src={signedUrl(a.storageKey)} alt={a.originalName} className="size-24 object-cover rounded-lg border border-border" /></a>)}</div></div>}
+      {r.attachments.filter((a) => !a.messageId).length > 0 && <div className="mt-4"><p className="hint mb-2">Reference images from the enquiry (private)</p><div className="flex flex-wrap gap-2">{r.attachments.filter((a) => !a.messageId).map((a) => <a key={a.id} href={signedUrl(a.storageKey)} target="_blank" rel="noreferrer"><img src={signedUrl(a.storageKey)} alt={a.originalName} className="size-24 object-cover rounded-lg border border-border" /></a>)}</div></div>}
       <details className="mt-4"><summary className="cursor-pointer font-semibold">Status history</summary>
         <ol className="mt-2 text-sm space-y-1">{r.statusEvents.map((e) => <li key={e.id}><span className="opacity-60">{formatStudio(e.createdAt)}</span> · {e.actorLabel} · {e.note}</li>)}</ol>
       </details>

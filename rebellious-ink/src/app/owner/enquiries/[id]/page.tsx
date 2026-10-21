@@ -4,6 +4,7 @@ import { requirePrincipal } from "@/lib/session";
 import { loadRequestFor } from "@/lib/enquiries";
 import { EnquirySummary } from "@/components/enquiry-summary";
 import { Thread } from "@/components/thread";
+import { threadMessages } from "@/lib/thread-view";
 import { QuoteForm } from "@/components/quote-form";
 import { BackLink } from "@/components/ui";
 import { formatPence } from "@/lib/money";
@@ -26,7 +27,7 @@ export default async function OwnerEnquiry({ params }: { params: Promise<{ id: s
           {r.appointments.map((a) => <p key={a.id} className="mt-2">Appointment <Link href={`/owner/bookings/${a.id}`} className="underline">{a.reference}</Link> · {a.status.replace(/_/g, " ").toLowerCase()}</p>)}
         </section>
       </div>
-      <Thread requestId={r.id} meId={p.userId} canInternal messages={(r.conversation?.messages ?? []).map((m) => ({ ...m, createdAt: m.createdAt.toISOString() }))} />
+      <Thread requestId={r.id} meId={p.userId} canInternal messages={threadMessages(r.conversation?.messages ?? [])} />
     </div>
   </>);
 }

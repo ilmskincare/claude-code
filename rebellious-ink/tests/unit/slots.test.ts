@@ -21,4 +21,12 @@ describe("slot generation", () => {
     expect(starts).toContain("14:00");
     expect(starts).not.toContain("16:30"); // 16:30 + 2h exceeds 18:00
   });
+
+  it("honours a one-off day stored as a calendar date during BST", () => {
+    const oneOff = [{ weekday: 2, startMinute: 540, endMinute: 720, validFrom: new Date("2026-07-14T00:00:00Z"), validTo: new Date("2026-07-14T00:00:00Z") }];
+    const slots = generateSlots({ from: new Date("2026-07-06T00:00:00Z"), to: new Date("2026-07-26T00:00:00Z"), durationMinutes: 60, rules: oneOff, busy: [], now: new Date("2026-07-01T00:00:00Z") });
+    const days = new Set(slots.map((s) => DateTime.fromJSDate(s.startsAt, { zone: "Europe/London" }).toISODate()));
+    expect([...days]).toEqual(["2026-07-14"]);
+    expect(slots[0].startsAt.toISOString()).toBe("2026-07-14T08:00:00.000Z"); // 09:00 BST
+  });
 });

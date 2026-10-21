@@ -43,7 +43,7 @@ export async function upcomingSlots(artistId: string, durationMinutes: number) {
 
 export async function availableSlots(artistId: string, from: Date, to: Date, durationMinutes: number, now = new Date()): Promise<Slot[]> {
   const [rules, leave, appts, holds] = await Promise.all([
-    db.availabilityRule.findMany({ where: { artistId } }),
+    db.availabilityRule.findMany({ where: { artistId, acceptsBookings: true } }),
     db.leave.findMany({ where: { artistId, endsAt: { gt: from }, startsAt: { lt: to } } }),
     db.appointment.findMany({
       where: { ...blockingAppointmentWhere(artistId, now), endsAt: { gt: from }, startsAt: { lt: to } },
@@ -89,7 +89,7 @@ export async function createHold(input: { requestId: string; clientId: string; s
     const endsAt = new Date(input.startsAt.getTime() + total * 60000);
 
     const [rules, leave, appts, holds] = await Promise.all([
-      tx.availabilityRule.findMany({ where: { artistId: request.artistId } }),
+      tx.availabilityRule.findMany({ where: { artistId: request.artistId, acceptsBookings: true } }),
       tx.leave.findMany({ where: { artistId: request.artistId, endsAt: { gt: input.startsAt }, startsAt: { lt: endsAt } } }),
       tx.appointment.findMany({ where: { ...blockingAppointmentWhere(request.artistId, now), endsAt: { gt: input.startsAt }, startsAt: { lt: endsAt } } }),
       tx.bookingHold.findMany({ where: { artistId: request.artistId, consumedAt: null, endsAt: { gt: input.startsAt }, startsAt: { lt: endsAt } } }),

@@ -71,8 +71,10 @@ test("4. artist A replies and sends a quote; client accepts and books a genuinel
   await a.page.screenshot({ path: path.join(SHOTS, `${info.project.name}-06-artist-workspace.png`), fullPage: true });
   await a.page.goto(`/studio/enquiries/${id}`);
   await a.page.getByLabel("Reply").fill("(E2E) Thanks, a moth that size is about 90 minutes. Quote coming now.");
+  await a.page.getByLabel(/Attach images/).setInputFiles({ name: "stencil.png", mimeType: "image/png", buffer: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==", "base64") });
   await a.page.getByRole("button", { name: "Send", exact: true }).click();
   await expect(a.page.getByText("Quote coming now")).toBeVisible();
+  await expect(a.page.getByRole("img", { name: "stencil.png" })).toBeVisible(); // attachment rendered through the signed route
   await a.page.getByLabel("Scope").fill("Fine-line moth, 12 cm, inner forearm, single session, one free touch-up within 3 months.");
   await a.page.getByLabel("Total (£)").fill("180");
   await a.page.getByLabel("Deposit (£)").fill("50");
@@ -155,4 +157,26 @@ test("7. under-18 tattoo enquiry is refused (acceptance 8)", async ({ page }) =>
   await page.getByLabel(/privacy notice/).check();
   await page.getByRole("button", { name: "Send my enquiry" }).click();
   await expect(page.getByRole("alert").filter({ hasText: "under 18" })).toContainText("under 18 is prohibited");
+});
+
+test("8. artist sets walk-in hours and time off; walk-ins show publicly but never as online slots", async ({ browser }, info) => {
+  const a = await newSignedInPage(browser, "artist-a@test.rebelliousink.local");
+  await a.page.goto("/studio/hours");
+  await a.page.waitForLoadState("networkidle");
+  await a.page.getByLabel("Day", { exact: true }).selectOption("7");
+  await a.page.getByLabel("From", { exact: true }).first().fill("12:00");
+  await a.page.getByLabel("To", { exact: true }).first().fill("16:00");
+  await a.page.getByLabel("Use for").selectOption("walk_ins");
+  await a.page.getByRole("button", { name: "Add hours" }).click();
+  await expect(a.page.getByText("Hours added.")).toBeVisible();
+  await expect(a.page.getByText("12:00–16:00 · Walk-ins only")).toBeVisible();
+  await a.page.screenshot({ path: path.join(SHOTS, `${info.project.name}-17-artist-hours.png`), fullPage: true });
+  await a.page.goto("/artists/mo-blackwork");
+  await expect(a.page.getByText("Sun 12:00–16:00")).toBeVisible();
+  await expect(a.page.locator(".badge", { hasText: "walk-ins" })).toBeVisible();
+  // remove it again so repeated runs stay clean
+  await a.page.goto("/studio/hours");
+  await a.page.getByRole("button", { name: /Remove Sunday 12:00/ }).click();
+  await expect(a.page.getByText("12:00–16:00 · Walk-ins only")).toHaveCount(0);
+  await a.context.close();
 });

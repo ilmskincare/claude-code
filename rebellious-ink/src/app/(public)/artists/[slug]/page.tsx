@@ -7,7 +7,7 @@ import { BackLink } from "@/components/ui";
 
 export default async function ArtistPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const a = await db.artistProfile.findUnique({ where: { slug }, include: { portfolioItems: { where: { publishedAt: { not: null } }, include: { asset: true }, orderBy: [{ isCover: "desc" }, { sortOrder: "asc" }] }, supervisor: true } });
+  const a = await db.artistProfile.findUnique({ where: { slug }, include: { portfolioItems: { where: { publishedAt: { not: null } }, include: { asset: true }, orderBy: [{ isCover: "desc" }, { sortOrder: "asc" }] }, supervisor: true, availabilityRules: { where: { validFrom: null }, orderBy: [{ weekday: "asc" }, { startMinute: "asc" }] } } });
   if (!a || !a.isPublished) notFound();
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
@@ -34,8 +34,23 @@ export default async function ArtistPage({ params }: { params: Promise<{ slug: s
           <h2 className="text-xl font-bold">Work with {a.displayName.split(" ")[0]}</h2>
           <p className="mt-2 opacity-80 text-sm">Send your idea and references. You will get a reference number straight away and a reply in your private thread.</p>
           {a.acceptsEnquiries ? <Link href={`/enquire?artist=${a.slug}`} className="btn btn-primary mt-4 w-full justify-center">Start an enquiry</Link> : <p className="mt-4 badge badge-muted">Books currently closed</p>}
+          <Hours rules={a.availabilityRules} />
         </aside>
       </div>
+    </div>
+  );
+}
+
+const DAY = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const hhmm = (m: number) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+function Hours({ rules }: { rules: { weekday: number; startMinute: number; endMinute: number; acceptsWalkIns: boolean; acceptsBookings: boolean }[] }) {
+  if (rules.length === 0) return null;
+  const walkIns = rules.filter((r) => r.acceptsWalkIns);
+  return (
+    <div className="mt-5 text-sm">
+      <h3 className="font-bold">In the studio</h3>
+      <ul className="mt-1 space-y-0.5">{rules.map((r, i) => <li key={i}>{DAY[r.weekday - 1]} {hhmm(r.startMinute)}–{hhmm(r.endMinute)}{r.acceptsWalkIns ? <span className="badge badge-acid ml-2">walk-ins</span> : null}</li>)}</ul>
+      {walkIns.length > 0 && <p className="hint mt-2">Walk-ins are first come, first served and depend on the day. Booked work always takes priority.</p>}
     </div>
   );
 }
