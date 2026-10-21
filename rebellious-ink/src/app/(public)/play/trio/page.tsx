@@ -21,6 +21,7 @@ export default async function TrioPage() {
           <p className="text-acid-deep uppercase tracking-[.3em] text-sm mb-2">Three machines, one tattoo</p>
           <h1 className="text-5xl font-bold">Ink. Style. Subject.</h1>
           <p className="mt-3 text-lg opacity-85 max-w-xl">The first machine decides black and grey or colour, the second the style, the third what it is: a spider, an angel, a dagger. Together they make your brief. Your artist draws it up and tattoos it small at one fixed price.</p>
+          {mode === "locked" && <p className="mt-3 text-lg font-bold text-acid-deep" role="note">To play, fill in your date of birth first. The machines stay locked until you do.</p>}
           {mode === "locked" && <div className="mt-6"><AgeGate /></div>}
           <div className="mt-6"><TrioMachines key={mode} mode={mode} pullsLeft={t.pullsLeft} /></div>
         </div>

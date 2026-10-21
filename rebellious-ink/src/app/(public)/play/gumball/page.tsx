@@ -19,6 +19,7 @@ export default async function GumballPage() {
           <p className="text-acid-deep uppercase tracking-[.3em] text-sm mb-2">The tattoo studio for the people</p>
           <h1 className="text-5xl font-bold">Get what you get.</h1>
           <p className="mt-3 text-lg opacity-85 max-w-xl">Turn the crank and the machine picks one design from the capsules inside. No choosing, no swaps, one fixed price. Just like the machine on the studio counter, only you can do it from the sofa.</p>
+          {mode === "locked" && <p className="mt-3 text-lg font-bold text-acid-deep" role="note">To play, fill in your date of birth first. The machine stays locked until you do.</p>}
           {mode === "locked" && <div className="mt-6"><AgeGate /></div>}
           <div className="mt-6"><GumballMachine key={mode} mode={mode} capsules={m.available} spinsLeft={m.spinsLeft} /></div>
         </div>

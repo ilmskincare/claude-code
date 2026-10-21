@@ -113,7 +113,7 @@ export function AgeGate() {
       if (!dob) { e.preventDefault(); setLocalError("Tap the date box and pick your date of birth, then press Continue."); } else setLocalError(null);
     }}>
       <h2 className="text-xl font-bold">Step 1 of 2: confirm your age</h2>
-      <p className="text-sm opacity-80">You must be 18 or over to be tattooed in the UK. We check photographic ID in the studio too.</p>
+      <p className="text-sm opacity-80">You must fill this in to play. You must be 18 or over to be tattooed in the UK, and we check photographic ID in the studio too.</p>
       {(localError || state?.error) && <Alert tone="danger">{localError ?? state?.error}</Alert>}
       <div><label className="field" htmlFor="dateOfBirth">Date of birth</label><input id="dateOfBirth" name="dateOfBirth" type="date" className="input" required aria-describedby="dob-help" max={new Date().toISOString().slice(0, 10)} /><p id="dob-help" className="hint">Tap the box to pick the day, month and year.</p></div>
       <button className="btn btn-primary" disabled={pending}>{pending ? "Checking…" : "Continue"}</button>
