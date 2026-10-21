@@ -208,3 +208,8 @@ Note: during one full local test run the marketing integration test failed once 
 - First deploys failed with "self-signed certificate in certificate chain": the pinned CA copied from staging had come through as a placeholder, and the connection string carried `?sslmode=require`, which makes the pg driver ignore the pinned certificate. Fixed by storing the real Supabase root CA (single line with `\n`) and dropping the sslmode parameter, as staging does. Functions run in London (lhr1); the hold-expiry cron is registered.
 - Verified in WebKit as an iPad against the live domain: home, flash catalogue with 36 tiles and signed images returning 200, gumball age gate, spin and result image, three machines pull with Elle Evaa and the house profile offered, and a real sign-in email to the owner delivered by Resend (no dev link anywhere).
 - Housekeeping: the Resend key was pasted in chat and should be rotated from the Resend dashboard, then updated on the Vercel project; the empty US Blob store should be deleted from the Vercel dashboard; Stripe can be added later by setting both Stripe secrets together.
+
+## Live update, 21 October 2026, late evening: adding team members
+
+- Owner, then Artists & arrangements now opens with "Add someone to the team": tattoo artist, junior artist, piercer, apprentice (with supervisor) or desk. The person signs in with a magic link to the email entered. Deployed to staging and production.
+

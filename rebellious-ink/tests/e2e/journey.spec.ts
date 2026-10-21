@@ -647,3 +647,29 @@ test("20. three machines: age gate, one free pull decides ink, style and subject
   await expect(c.page.getByText("That is your go for today. Come back tomorrow for another free one.").first()).toBeVisible();
   await c.context.close();
 });
+
+test("21. owner adds an apprentice from the Artists page; they appear in the list with their supervisor and can sign in", async ({ browser }, info) => {
+  const email = `apprentice-${unique}-${info.project.name}@test.rebelliousink.local`;
+  const o = await newSignedInPage(browser, "owner@test.rebelliousink.local");
+  await o.page.goto("/owner/artists");
+  await expect(o.page.getByRole("heading", { name: "Add someone to the team" })).toBeVisible();
+  await o.page.getByLabel("What they do").selectOption("APPRENTICE");
+  await o.page.getByLabel("Supervisor").selectOption({ label: "Mo Blackwork (TEST)" });
+  await o.page.getByLabel("Full name").fill("Jo Newstart");
+  await o.page.getByLabel("Email").fill(email);
+  await o.page.getByLabel("Name shown to clients").fill(`Jo Newstart ${unique}`);
+  await o.page.getByLabel("Styles (comma separated)").fill("fine line");
+  await o.page.getByRole("button", { name: "Add to the team" }).dispatchEvent("click");
+  await expect(o.page.getByText(/added\. They sign in at \/login with/)).toBeVisible();
+  await o.page.reload();
+  const row = o.page.locator("tr").filter({ hasText: `Jo Newstart ${unique}` });
+  await expect(row).toContainText("apprentice");
+  await expect(row).toContainText(email);
+  await o.page.screenshot({ path: path.join(SHOTS, `${info.project.name}-40-owner-add-team.png`), fullPage: true });
+  await o.context.close();
+  const a = await newSignedInPage(browser, email);
+  await a.page.goto("/studio/academy");
+  await expect(a.page.getByRole("link", { name: "My training" })).toBeVisible();
+  await expect(a.page.getByRole("heading", { level: 1 })).not.toHaveText("Not found");
+  await a.context.close();
+});
