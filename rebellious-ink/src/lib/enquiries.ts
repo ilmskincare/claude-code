@@ -5,6 +5,7 @@ import { allocateReference } from "./references";
 import { assertTransition, label } from "./enquiry-state";
 import { audit } from "./audit";
 import { sendEmail } from "./email";
+import { copyRecipients, oversightSettings } from "./oversight";
 import { can, type Principal, ForbiddenError, NotFoundError, ValidationError } from "./rbac";
 import { assertAllowedUpload, newStorageKey, putObject } from "./storage";
 import { env } from "./env";
@@ -213,5 +214,24 @@ export async function postMessage(p: Principal, requestId: string, body: string,
       payload: { requestId: r.id },
     }).catch((e) => console.error("notify failed", e));
   }
+  await copyMessageToOwners(r, p, text || message.body, visibility, files.length).catch((e) => console.error("owner copy failed", e));
   return message;
+}
+
+/** Owners get the full text of every thread message (including internal notes) so they can see how clients are being looked after. */
+async function copyMessageToOwners(r: { id: string; reference: string; clientId: string; client: { email: string; name: string | null }; artist: { displayName: string; user: { email: string } } | null }, sender: Principal, body: string, visibility: "CLIENT_VISIBLE" | "INTERNAL_ONLY", attachments: number) {
+  const s = await oversightSettings();
+  if (!s.copyMessages) return;
+  const to = await copyRecipients([sender.email]);
+  if (to.length === 0) return;
+  const who = sender.userId === r.clientId ? `Client ${r.client.name ?? r.client.email}` : sender.artistProfileId && r.artist && sender.email === r.artist.user.email ? `Artist ${r.artist.displayName}` : `Staff ${sender.name ?? sender.email}`;
+  const kind = visibility === "INTERNAL_ONLY" ? "internal note" : "message";
+  const link = `${env().APP_BASE_URL}/owner/enquiries/${r.id}`;
+  const esc = (x: string) => x.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c] as string));
+  for (const addr of to) {
+    await sendEmail({ to: addr, templateKey: "oversight.message_copy", subject: `Copy: ${kind} on ${r.reference} from ${who}`,
+      text: `${who} wrote a ${kind} on ${r.reference} (${r.artist ? `artist ${r.artist.displayName}` : "no artist assigned yet"}):\n\n${body}${attachments ? `\n\n(${attachments} image${attachments === 1 ? "" : "s"} attached)` : ""}\n\nOpen the thread: ${link}\n\nYou receive copies because you are a studio owner. Switch this off under Settings.`,
+      html: `<p><strong>${esc(who)}</strong> wrote a ${kind} on <a href="${link}">${esc(r.reference)}</a> (${r.artist ? `artist ${esc(r.artist.displayName)}` : "no artist assigned yet"}):</p><blockquote style="border-left:3px solid #8cb000;padding-left:12px;white-space:pre-wrap">${esc(body)}</blockquote>${attachments ? `<p>(${attachments} image${attachments === 1 ? "" : "s"} attached)</p>` : ""}<p><a href="${link}">Open the thread</a></p><p style="color:#666;font-size:12px">You receive copies because you are a studio owner. Switch this off under Settings.</p>`,
+      payload: { requestId: r.id, visibility } });
+  }
 }

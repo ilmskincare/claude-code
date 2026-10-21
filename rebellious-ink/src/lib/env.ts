@@ -16,6 +16,8 @@ const schema = z.object({
   STUDIO_TIMEZONE: z.string().default("Europe/London"),
   RESEND_API_KEY: z.string().optional(),
   EMAIL_FROM: z.string().default("Rebellious Ink <bookings@localhost>"),
+  /** Where replies to system email land, e.g. the desk mailbox. */
+  EMAIL_REPLY_TO: z.string().optional(),
   STRIPE_SECRET_KEY: z.string().optional(),
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().optional(),

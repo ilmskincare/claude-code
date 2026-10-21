@@ -1,6 +1,7 @@
 import { Resend } from "resend";
 import { db } from "./db";
 import { env, emailProviderConfigured, isProduction } from "./env";
+import { COPY_TEMPLATES, copyRecipients, oversightSettings } from "./oversight";
 
 export type EmailInput = {
   to: string;
@@ -10,6 +11,8 @@ export type EmailInput = {
   templateKey: string;
   userId?: string | null;
   payload?: Record<string, unknown>;
+  /** Extra blind-copy addresses. Owner copies for client-facing templates are added automatically. */
+  bcc?: string[];
 };
 
 /**
@@ -19,6 +22,7 @@ export type EmailInput = {
  * when a provider accepted the message.
  */
 export async function sendEmail(input: EmailInput) {
+  const bcc = [...new Set([...(input.bcc ?? []), ...(await ownerCopies(input))])].filter((a) => a.toLowerCase() !== input.to.toLowerCase());
   const notification = await db.notification.create({
     data: {
       userId: input.userId ?? null,
@@ -26,7 +30,7 @@ export async function sendEmail(input: EmailInput) {
       templateKey: input.templateKey,
       to: input.to,
       subject: input.subject,
-      payload: (input.payload ?? {}) as object,
+      payload: { ...(input.payload ?? {}), ...(bcc.length ? { bcc } : {}) } as object,
     },
   });
 
@@ -44,6 +48,8 @@ export async function sendEmail(input: EmailInput) {
   const result = await resend.emails.send({
     from: env().EMAIL_FROM,
     to: input.to,
+    ...(bcc.length ? { bcc } : {}),
+    ...(env().EMAIL_REPLY_TO ? { replyTo: env().EMAIL_REPLY_TO } : {}),
     subject: input.subject,
     text: input.text,
     html: input.html,
@@ -57,4 +63,14 @@ export async function sendEmail(input: EmailInput) {
     data: { status: "SENT", providerId: result.data?.id ?? null, sentAt: new Date() },
   });
   return { id: notification.id, provider: "resend" as const };
+}
+
+/** Owners are blind-copied on client-facing emails only (never sign-in links or marketing), unless switched off under Settings. */
+async function ownerCopies(input: EmailInput) {
+  if (!COPY_TEMPLATES.has(input.templateKey)) return [];
+  try {
+    const s = await oversightSettings();
+    if (!s.copyEmails) return [];
+    return await copyRecipients([input.to]);
+  } catch (e) { console.error("owner copy lookup failed", e); return []; }
 }

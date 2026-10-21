@@ -28,3 +28,5 @@ Everything in the product is built for England and Wales law and UK terminology.
 ## Terminology
 
 UK English throughout the interface and documents: colour, licence (noun), programme, jewellery, sanitiser, steriliser, standard infection control precautions, registered waste carrier, council registration. Currency is GBP; dates are day/month/year in Europe/London.
+| Owner oversight of client threads | UK GDPR Article 6(1)(f) legitimate interests (quality of service, safeguarding, complaint handling); Article 13 transparency | Owners already have access to every enquiry; copies and the digest only inform them sooner. The privacy notice states that thread messages are visible to the artist, the desk and the owners. Sign-in links and marketing are never copied; recipients are limited to active owners or a configured list | Keep the recipient list to owners and managers; review if artists raise concerns about monitoring (ICO employment practices guidance) |
+

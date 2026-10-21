@@ -213,3 +213,9 @@ Note: during one full local test run the marketing integration test failed once 
 
 - Owner, then Artists & arrangements now opens with "Add someone to the team": tattoo artist, junior artist, piercer, apprentice (with supervisor) or desk. The person signs in with a magic link to the email entered. Deployed to staging and production.
 
+## Live update, 21 October 2026, late evening: owner oversight
+
+- Owners (Nikki and Sean once his account exists) are blind-copied on every client-facing email, receive the full text of every thread message, and get a 07:30 digest listing new enquiries, clients waiting on an artist for over 24 hours, deposits unpaid for over 48 hours and today's appointments. All four are settings (`oversight.*`), with the recipient list defaulting to every active owner.
+- System email now comes from thedesk@rebelliousink.tattoo with replies to the same address; the mailbox itself still needs creating (Zoho free or forwarding), until then replies bounce.
+- Privacy notice now says thread messages are visible to the artist, the desk and the owners for quality checks (legitimate interests).
+
