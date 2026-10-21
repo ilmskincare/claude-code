@@ -99,3 +99,8 @@ Phase 4 — Growth
 - **Email marketing**: campaigns with `{{name}}` merge, artist-filtered audiences, a test send and an owner-only confirmed send (`/owner/marketing`). Only clients whose latest `MARKETING_EMAIL` preference is granted are ever included; every email carries a signed one-click unsubscribe link, and clients manage the same preference at `/my/preferences`.
 - **Social posting**: the owner drafts posts from the content calendar (`/owner/social`) using only portfolio images that carry a `SOCIAL_MEDIA` permission on record, and sends them to Buffer channels (queue or scheduled). Without Buffer credentials the post is kept as a draft with the caption and image to copy by hand.
 
+## Added 21 October 2026, evening
+
+- **Product photos**: every stock item can carry a photo (owner uploads it on the product page; stored privately, served by signed link). Thumbnails show on the owner's stock list, the artist's studio stock view, and as a tap-to-pick photo strip on the piercer's sale form so the right jewellery is chosen.
+- **Promotions**: studio-wide offers (`/owner/promotions`) show as an acid-green banner across every public page; artist offers put a corner ribbon on that artist's card on the home page and the artists page, and on their public profile with the offer terms and any code. Artists create and end their own (`/studio/promotions`); the owner or studio manager does either. Every offer has a start, an optional end and an optional "desk only" flag; live ones are listed at the top of Ask the desk.
+

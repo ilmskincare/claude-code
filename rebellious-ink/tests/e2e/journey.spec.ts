@@ -116,12 +116,18 @@ test("5. owner sees the booking, verifies a manual deposit, moves it with a reas
   await expect(o.page.getByText("client deposits held")).toBeVisible();
   // Unique per run so repeated runs against the same database do not clash with earlier moved bookings.
   const n = Number(unique);
-  const newStart = new Date(Date.now() + (10 + (n % 20)) * 86400000);
-  const hh = String(9 + (n % 7)).padStart(2, "0"), mm = String((n % 4) * 15).padStart(2, "0");
-  const local = `${newStart.getFullYear()}-${String(newStart.getMonth() + 1).padStart(2, "0")}-${String(newStart.getDate()).padStart(2, "0")}T${hh}:${mm}`;
-  await o.page.getByLabel("New start (Europe/London)").fill(local);
-  await o.page.getByLabel(/Reason \(required/).fill("E2E: artist requested a later start");
-  await o.page.getByRole("button", { name: "Move and notify" }).click();
+  const hh = String(9 + (Math.floor(n / 60) % 8)).padStart(2, "0"), mm = String((Math.floor(n / 480) % 4) * 15).padStart(2, "0");
+  // A long-lived database accumulates moved bookings; if the slot clashes, try the next day (up to five times).
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const newStart = new Date(Date.now() + (10 + ((n + attempt) % 60)) * 86400000);
+    const local = `${newStart.getFullYear()}-${String(newStart.getMonth() + 1).padStart(2, "0")}-${String(newStart.getDate()).padStart(2, "0")}T${hh}:${mm}`;
+    await o.page.getByLabel("New start (Europe/London)").fill(local);
+    await o.page.getByLabel(/Reason \(required/).fill("E2E: artist requested a later start");
+    await o.page.getByRole("button", { name: "Move and notify" }).click();
+    const outcome = o.page.getByText(/Moved\. Client and artist notified\.|clashes with another booking/);
+    await expect(outcome.first()).toBeVisible();
+    if ((await outcome.first().textContent())!.startsWith("Moved")) break;
+  }
   await expect(o.page.getByText("Moved. Client and artist notified.")).toBeVisible();
   await expect(o.page.getByText("appointment.rescheduled")).toBeVisible();
   await o.page.screenshot({ path: path.join(SHOTS, `${info.project.name}-12-owner-booking-audit.png`), fullPage: true });
@@ -189,6 +195,14 @@ test("9. owner sells stock to a chair-rent artist; the artist sees what they owe
   await o.page.getByRole("link", { name: /Nitrile gloves/ }).click();
   await o.page.waitForLoadState("networkidle");
   const onHand = () => o.page.locator(".stat", { hasText: "On hand" }).locator(".value").textContent().then((t) => Number(t!.split(" ")[0]));
+  // Receive a box first so repeated runs never sell from an empty shelf.
+  const received = await onHand();
+  const receive = o.page.locator("section", { has: o.page.getByRole("heading", { name: "Receive stock" }) });
+  await receive.getByLabel("Quantity", { exact: true }).fill("1");
+  await receive.getByLabel("Lot / batch").fill(`E2E-${unique}`);
+  await receive.getByRole("button", { name: "Receive", exact: true }).click();
+  await expect(o.page.getByText("Stock received.")).toBeVisible();
+  await expect(o.page.locator(".stat", { hasText: "On hand" }).locator(".value")).toContainText(String(received + 1));
   const before = await onHand();
   const moValue = await o.page.locator("select#artistId option", { hasText: "Mo Blackwork" }).getAttribute("value");
   await o.page.getByLabel("Artist", { exact: true }).selectOption(moValue!);
@@ -344,4 +358,102 @@ test("13. client sees their referral code; desk applies credit; completing the b
   await expect(c2.page.locator(".stat", { hasText: "Your credit" }).locator(".value")).toContainText("£12.00");
   await expect(c2.page.locator("tr", { hasText: "5% back on RI-2026-000001" }).first()).toBeVisible();
   await c2.context.close();
+});
+
+test("14. owner adds a photo to a stock item; the piercer sees it when recording a sale", async ({ browser }, info) => {
+  const o = await newSignedInPage(browser, "owner@test.rebelliousink.local");
+  await o.page.goto("/owner/stock");
+  await o.page.getByRole("link", { name: "Nitrile gloves, medium, box of 100 (TEST)" }).click();
+  await o.page.waitForURL(/\/owner\/stock\/[a-z0-9]+$/);
+  await o.page.waitForLoadState("networkidle");
+  // 1x1 acid-green PNG
+  const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==", "base64");
+  await o.page.getByLabel("Photo (JPEG, PNG or WEBP)").setInputFiles({ name: "gloves.png", mimeType: "image/png", buffer: png });
+  // dispatchEvent: at phone width the long page's hit-test can stall on this button; the form submits the same way.
+  await o.page.getByRole("button", { name: "Save changes" }).dispatchEvent("click");
+  await expect(o.page.getByText("Saved.", { exact: true })).toBeVisible();
+  await o.page.reload();
+  const photo = o.page.getByRole("img", { name: "Nitrile gloves, medium, box of 100 (TEST)" });
+  await expect(photo).toBeVisible();
+  expect((await o.page.request.get((await photo.getAttribute("src"))!)).status()).toBe(200);
+  await o.page.screenshot({ path: path.join(SHOTS, `${info.project.name}-27-product-photo.png`), fullPage: true });
+  await o.page.goto("/owner/stock");
+  await expect(o.page.locator("tr", { hasText: "Nitrile gloves" }).locator("img")).toHaveCount(1);
+  await o.context.close();
+
+  const pz = await newSignedInPage(browser, "piercer@test.rebelliousink.local");
+  await pz.page.goto("/studio/sales");
+  await pz.page.waitForLoadState("networkidle");
+  await pz.page.getByRole("button", { name: "Choose Titanium labret 16g 8 mm (TEST)" }).click();
+  await expect(pz.page.getByRole("img", { name: "Titanium labret 16g 8 mm (TEST)" })).toBeVisible();
+  await expect(pz.page.getByLabel("Item")).toHaveValue(/.+/);
+  await pz.context.close();
+});
+
+test("15. an artist runs a promotion: ribbon on their public card and page; owner's studio offer shows as a banner; ending it removes both", async ({ browser }, info) => {
+  const a = await newSignedInPage(browser, "artist-b@test.rebelliousink.local");
+  await a.page.goto("/studio/promotions");
+  await a.page.waitForLoadState("networkidle");
+  await a.page.getByLabel("Ribbon text (short, max 40 characters)").fill("(E2E) Colour sleeves 10% off");
+  await a.page.getByLabel("Details and terms (public)").fill("(E2E) Full colour sleeves booked this month.");
+  await a.page.getByLabel("Code to quote (optional)").fill("sleeve10");
+  await a.page.getByRole("button", { name: "Create promotion" }).click();
+  await expect(a.page.getByText("Promotion saved.")).toBeVisible();
+  // Earlier runs leave ended copies with the same name; one live copy must exist.
+  await expect(a.page.locator("li", { hasText: "(E2E) Colour sleeves 10% off" }).filter({ has: a.page.locator(".badge", { hasText: "live" }) }).first()).toBeVisible();
+  await a.context.close();
+
+  const o = await newSignedInPage(browser, "owner@test.rebelliousink.local");
+  await o.page.goto("/owner/promotions");
+  await o.page.waitForLoadState("networkidle");
+  await o.page.getByLabel("Who is it for").selectOption("STUDIO");
+  await o.page.getByLabel("Ribbon text (short, max 40 characters)").fill("(E2E) Student Tuesdays 15% off");
+  await o.page.getByRole("button", { name: "Create promotion" }).click();
+  await expect(o.page.getByText("Promotion saved.")).toBeVisible();
+  await expect(o.page.locator("tr", { hasText: "(E2E) Student Tuesdays" }).first()).toContainText("Whole studio");
+  await o.page.goto("/owner/rates");
+  await expect(o.page.getByText("Promotions running now")).toBeVisible();
+  await expect(o.page.getByText("(E2E) Colour sleeves 10% off").first()).toBeVisible();
+  await o.page.screenshot({ path: path.join(SHOTS, `${info.project.name}-28-owner-promotions.png`), fullPage: true });
+
+  const pub = await browser.newPage();
+  await pub.goto("/artists");
+  await expect(pub.getByRole("region", { name: "Current offers" })).toContainText("(E2E) Student Tuesdays 15% off");
+  const jay = pub.locator("li.card", { has: pub.getByRole("heading", { name: "Jay Colour (TEST)" }) });
+  await expect(jay.locator(".ribbon")).toHaveText("(E2E) Colour sleeves 10% off");
+  // The ribbon band (the diagonal of its rotated box, about 24px thick) must not cross the name or the status badge.
+  const rb = (await jay.locator(".ribbon").boundingBox())!;
+  for (const el of [jay.getByRole("heading", { name: "Jay Colour (TEST)" }), jay.locator(".badge", { hasText: "Taking enquiries" })]) {
+    const b = (await el.boundingBox())!;
+    let crosses = false;
+    for (let t = 0; t <= 1; t += 0.02) {
+      const px = rb.x + t * rb.width, py = rb.y + t * rb.height;
+      if (px >= b.x - 12 && px <= b.x + b.width + 12 && py >= b.y - 12 && py <= b.y + b.height + 12) crosses = true;
+    }
+    expect(crosses, "ribbon crosses card content").toBe(false);
+  }
+  await expect(pub.locator("li.card", { has: pub.getByRole("heading", { name: "Mo Blackwork (TEST)" }) }).locator(".ribbon", { hasText: "(E2E)" })).toHaveCount(0);
+  await pub.screenshot({ path: path.join(SHOTS, `${info.project.name}-29-public-promotions.png`), fullPage: true });
+  await pub.goto("/artists/jay-colour");
+  await expect(pub.locator("aside .ribbon")).toHaveText("(E2E) Colour sleeves 10% off");
+  await expect(pub.getByText("Quote SLEEVE10")).toBeVisible();
+  await pub.close();
+
+  // Owner ends both; the public site drops them at once.
+  await o.page.goto("/owner/promotions");
+  for (const name of ["(E2E) Colour sleeves 10% off", "(E2E) Student Tuesdays 15% off"]) {
+    // Repeated runs leave earlier copies behind; end every live row with this name.
+    const liveRows = () => o.page.locator("tr", { hasText: name }).filter({ has: o.page.getByRole("button", { name: "End now" }) });
+    for (let n = await liveRows().count(); n > 0; n--) {
+      await liveRows().first().getByRole("button", { name: "End now" }).dispatchEvent("click");
+      await expect(liveRows()).toHaveCount(n - 1);
+    }
+    await expect(o.page.locator("tr", { hasText: name }).first().locator(".badge", { hasText: "ended" })).toBeVisible();
+  }
+  await o.context.close();
+  const pub2 = await browser.newPage();
+  await pub2.goto("/artists");
+  await expect(pub2.getByText("(E2E) Student Tuesdays 15% off")).toHaveCount(0);
+  await expect(pub2.locator(".ribbon", { hasText: "(E2E)" })).toHaveCount(0);
+  await pub2.close();
 });

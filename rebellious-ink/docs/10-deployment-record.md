@@ -122,3 +122,14 @@ Deployed (`vercel deploy --prod`, deployment `rebellious-ink-staging-lwrudg52g`)
 
 Still to configure on Vercel for the social module: `BUFFER_ACCESS_TOKEN` and `BUFFER_ORGANIZATION_ID`. Buffer must be able to fetch the image URL it is given, so image posting from staging will only work once Deployment Protection is off or a public image host is used; captions post regardless.
 
+## Staging update, 21 October 2026, evening
+
+Deployed (`vercel deploy --prod`) and verified in a real browser against https://rebellious-ink-staging.vercel.app:
+
+- Migration `20261021130635_product_photos_and_promotions` applied through the Supabase management API and recorded in `_prisma_migrations` (five migrations now listed).
+- Seed additions loaded idempotently (run twice, same counts): photo keys on all six products, three promotions (studio-wide balm offer, Mo's "20% off flash" with code FLASH20, one ended offer for Jay). Placeholder product PNGs uploaded to the private Blob store with `scripts/upload-seed-assets.ts`.
+- Public artists page shows the studio banner and Mo's ribbon only; Mo's page shows the offer box with the code; the home page card carries the ribbon (`staging-public-promotions.png`).
+- Owner stock list shows six thumbnails served through the signed file route (HTTP 200); uploading a new photo to the titanium labret stored it in Blob and displayed it (`staging-stock-photos.png`).
+- Owner promotions page lists live, live, ended (`staging-owner-promotions.png`); piercer's sale form shows the photo picker (`staging-piercer-sales-photos.png`).
+- Follow-up deploy in the same session added top padding to ribboned cards so the ribbon no longer overlaps the "Taking enquiries" badge.
+

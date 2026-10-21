@@ -116,6 +116,8 @@ Notes
 | A booking page is visible to its client, its artist, or `bookings.view_all`. | `/my/bookings/[id]` |
 | Artist dashboards, diaries, earnings and portfolio query by the principal's own `artistProfileId`. | `/studio/*`, `artistDashboard` |
 | Manual deposit verification needs `finance.verify_manual_payment` and records `verifiedById`. | `verifyManualDeposit` in `src/lib/owner.ts` |
+| A promotion is created or ended by its own artist or `roster.manage`; studio-wide ones need `roster.manage`; public pages only ever show live, public ones. | `savePromotion`, `endPromotion`, `livePromotions` in `src/lib/promotions.ts` |
+| A product photo is set or removed by `stock.manage` only and must be an image. | `upsertProduct` in `src/lib/inventory.ts` |
 | A rate card is edited by its own practitioner or `roster.manage`; the desk reference needs `enquiries.view_all`; desk notes never render publicly. | `assertCanEditProfile` in `src/lib/profiles.ts`, `/owner/rates` |
 | A retail sale is recorded by the practitioner on their own book or by `stock.manage`. | `recordRetailSale` in `src/lib/retail.ts` |
 | Completion is by the booked artist or `bookings.override`; credit redemption by `loyalty.redeem` or `bookings.override`, never above the balance or below the minimum. | `completeAppointment`, `redeemCredit` in `src/lib/loyalty.ts` |

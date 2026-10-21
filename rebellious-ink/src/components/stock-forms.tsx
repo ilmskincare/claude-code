@@ -1,16 +1,17 @@
+/* eslint-disable @next/next/no-img-element -- signed, short-lived URL */
 "use client";
 import { useActionState } from "react";
 import { saveProductAction, receiveStockAction, adjustStockAction, issueStockAction, artistStockPaymentAction } from "@/app/actions/inventory";
 import { Alert } from "./ui";
 
 const CATS = ["ink", "needle", "cartridge", "glove", "barrier", "cleaning", "dressing", "transfer_paper", "sterilisation", "jewellery", "aftercare_retail", "other"];
-type P = { id?: string; sku?: string; name?: string; category?: string; brand?: string | null; colour?: string | null; unit?: string; reorderLevel?: number; costPence?: number | null; retailPence?: number | null; supplierName?: string | null; material?: string | null; gauge?: string | null; length?: string | null };
+type P = { id?: string; imageUrl?: string | null; sku?: string; name?: string; category?: string; brand?: string | null; colour?: string | null; unit?: string; reorderLevel?: number; costPence?: number | null; retailPence?: number | null; supplierName?: string | null; material?: string | null; gauge?: string | null; length?: string | null };
 
 export function ProductForm({ product }: { product?: P }) {
   const [state, action, pending] = useActionState(saveProductAction, undefined);
   const v = product ?? {};
   return (
-    <form action={action} className="card p-5 space-y-3">
+    <form action={action} className="card p-5 space-y-3" encType="multipart/form-data">
       {state?.error && <Alert tone="danger">{state.error}</Alert>}{state?.ok && <Alert tone="success">Saved.</Alert>}
       {v.id && <input type="hidden" name="id" value={v.id} />}
       <div className="grid sm:grid-cols-2 gap-3">
@@ -25,6 +26,12 @@ export function ProductForm({ product }: { product?: P }) {
         <div><label className="field" htmlFor="costPounds">Cost to studio (£ per unit)</label><input id="costPounds" name="costPounds" type="number" step="0.01" min={0} className="input" defaultValue={v.costPence != null ? (v.costPence / 100).toFixed(2) : ""} /></div>
         <div><label className="field" htmlFor="artistPricePounds">Artist price (£ per unit, when sold)</label><input id="artistPricePounds" name="artistPricePounds" type="number" step="0.01" min={0} className="input" defaultValue={v.retailPence != null ? (v.retailPence / 100).toFixed(2) : ""} /></div>
         <div><label className="field" htmlFor="material">Jewellery material</label><input id="material" name="material" className="input" defaultValue={v.material ?? ""} placeholder="e.g. ASTM F-136 titanium" /></div>
+        <div className="sm:col-span-2 flex gap-4 items-start">
+          {v.imageUrl && <img src={v.imageUrl} alt="" className="w-24 h-24 rounded-lg object-cover border border-graphite" />}
+          <div className="flex-1"><label className="field" htmlFor="photo">Photo (JPEG, PNG or WEBP)</label><input id="photo" name="photo" type="file" accept="image/jpeg,image/png,image/webp,image/heic" className="input" capture="environment" />
+            {v.imageUrl && <label className="mt-2 flex items-center gap-2 text-sm"><input type="checkbox" name="removePhoto" value="yes" /> Remove the current photo</label>}
+            <p className="hint">Shown to artists and the piercer when they pick an item, so the right jewellery or ink is chosen.</p></div>
+        </div>
         <div className="grid grid-cols-2 gap-2"><div><label className="field" htmlFor="gauge">Gauge</label><input id="gauge" name="gauge" className="input" defaultValue={v.gauge ?? ""} /></div><div><label className="field" htmlFor="length">Length</label><input id="length" name="length" className="input" defaultValue={v.length ?? ""} /></div></div>
       </div>
       <button className="btn btn-primary" disabled={pending}>{pending ? "Saving…" : v.id ? "Save changes" : "Create product"}</button>

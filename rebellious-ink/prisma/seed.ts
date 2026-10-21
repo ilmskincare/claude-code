@@ -134,8 +134,13 @@ async function main() {
     ["FILM-2ND", "Adhesive film dressing roll 15 cm (TEST)", "dressing", 2, 2400, 3000, null],
     ["JEW-TI-16", "Titanium labret 16g 8 mm (TEST)", "jewellery", 4, 350, 1200, "Neometal"],
   ];
+  const productColours: Record<string, [number, number, number]> = { "INK-BLK-30": [20, 20, 20], "CART-RL-3": [90, 90, 95], "CART-RL-5": [110, 110, 118], "GLV-NIT-M": [60, 100, 160], "FILM-2ND": [200, 200, 190], "JEW-TI-16": [190, 190, 200] };
   for (const [sku, name, category, reorderLevel, costPence, retailPence, brand] of products) {
-    const pr = await db.product.upsert({ where: { sku }, create: { sku, name, category, reorderLevel, costPence, retailPence, brand, supplierId: supplier.id, ...(category === "jewellery" ? { material: "ASTM F-136 titanium", gauge: "16g", length: "8 mm" } : {}) }, update: {} });
+    // Placeholder product photo so the pickers show something (TEST data, plain colour swatch).
+    const imageKey = `products/seed/${sku.toLowerCase()}.png`;
+    await mkdir(path.dirname(path.join(storageDir, imageKey)), { recursive: true });
+    await writeFile(path.join(storageDir, imageKey), png(...productColours[sku]));
+    const pr = await db.product.upsert({ where: { sku }, create: { sku, name, category, reorderLevel, costPence, retailPence, brand, imageKey, supplierId: supplier.id, ...(category === "jewellery" ? { material: "ASTM F-136 titanium", gauge: "16g", length: "8 mm" } : {}) }, update: { imageKey } });
     if ((await db.inventoryLot.count({ where: { productId: pr.id } })) === 0) {
       const lot = await db.inventoryLot.create({ data: { productId: pr.id, lotNumber: `LOT-${sku}-A`, expiresAt: category === "ink" || category === "cartridge" ? new Date("2027-06-30") : null, quantity: category === "ink" ? 2 : 8 } });
       await db.stockMovement.create({ data: { lotId: lot.id, delta: lot.quantity, reason: "received", reference: "PO-TEST-001", actorId: owner.id } });
@@ -153,6 +158,15 @@ async function main() {
   // Casey has opted in to news; Riley has not. Casey has a referral code to share.
   if (!(await db.privacyPreference.findFirst({ where: { userId: client1.id, purpose: "MARKETING_EMAIL" } }))) await db.privacyPreference.create({ data: { userId: client1.id, purpose: "MARKETING_EMAIL", granted: true, grantedAt: new Date(), source: "seed", version: 1 } });
   await db.loyaltyAccount.upsert({ where: { userId: client1.id }, create: { userId: client1.id, referralCode: "CASE-TEST", balancePence: 1500, transactions: { create: { type: "ADJUSTMENT", amountPence: 1500, note: "(TEST) Opening credit" } } }, update: {} });
+  // Promotions: one studio-wide, one for Mo, one ended (so the owner page shows every state).
+  if ((await db.promotion.count()) === 0) {
+    const now = new Date();
+    await db.promotion.createMany({ data: [
+      { scope: "STUDIO", title: "Free aftercare balm with every tattoo", details: "(TEST) One balm per completed tattoo appointment booked this month.", startsAt: new Date(now.getTime() - 86400000), endsAt: new Date(now.getTime() + 30 * 86400000), createdById: owner.id },
+      { scope: "ARTIST", artistId: a.id, title: "20% off flash", details: "(TEST) Off Mo's pre-drawn flash sheets, weekdays only. Not combinable with studio credit.", code: "FLASH20", startsAt: new Date(now.getTime() - 86400000), endsAt: new Date(now.getTime() + 14 * 86400000), createdById: artistA.id },
+      { scope: "ARTIST", artistId: b.id, title: "Cover-up consults free", details: "(TEST) Ran last month.", startsAt: new Date(now.getTime() - 60 * 86400000), endsAt: new Date(now.getTime() - 30 * 86400000), isActive: false, createdById: owner.id },
+    ] });
+  }
   await db.studioSetting.upsert({ where: { studioId_key: { studioId: studio.id, key: "academy.minimumHours" } }, create: { studioId: studio.id, key: "academy.minimumHours", value: 500 }, update: {} });
 
   console.log("Seeded fictional TEST data for studio", studio.id);

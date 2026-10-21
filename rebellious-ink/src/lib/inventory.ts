@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { assertAllowedUpload, newStorageKey, putObject } from "./storage";
 import { db } from "./db";
 import { audit } from "./audit";
 import { postJournal } from "./finance/ledger";
@@ -48,14 +49,21 @@ export const issueSchema = z.object({
 
 const pence = (pounds?: number) => (pounds === undefined || Number.isNaN(pounds) ? null : Math.round(pounds * 100));
 
-export async function upsertProduct(p: Principal, input: z.infer<typeof productSchema>, id?: string) {
+export async function upsertProduct(p: Principal, input: z.infer<typeof productSchema>, id?: string, photo?: File | null, removePhoto = false) {
   if (!can(p, "stock.manage")) throw new ForbiddenError();
+  let imageKey: string | null | undefined = removePhoto ? null : undefined;
+  if (photo && photo.size > 0) {
+    assertAllowedUpload(photo.type, photo.size);
+    if (photo.type === "application/pdf") throw new ValidationError("A product photo must be an image.");
+    imageKey = newStorageKey("products", photo.name);
+    await putObject(imageKey, new Uint8Array(await photo.arrayBuffer()), photo.type);
+  }
   let supplierId: string | null = null;
   if (input.supplierName) {
     const sup = await db.supplier.findFirst({ where: { name: { equals: input.supplierName, mode: "insensitive" } } }) ?? await db.supplier.create({ data: { name: input.supplierName } });
     supplierId = sup.id;
   }
-  const data = { sku: input.sku, name: input.name, category: input.category, brand: input.brand || null, colour: input.colour || null, unit: input.unit || "each", reorderLevel: input.reorderLevel, costPence: pence(input.costPounds), retailPence: pence(input.artistPricePounds), supplierId, material: input.material || null, gauge: input.gauge || null, length: input.length || null };
+  const data = { sku: input.sku, name: input.name, category: input.category, brand: input.brand || null, colour: input.colour || null, unit: input.unit || "each", reorderLevel: input.reorderLevel, costPence: pence(input.costPounds), retailPence: pence(input.artistPricePounds), supplierId, material: input.material || null, gauge: input.gauge || null, length: input.length || null, ...(imageKey === undefined ? {} : { imageKey }) };
   const product = id ? await db.product.update({ where: { id }, data }) : await db.product.create({ data });
   await audit({ actorId: p.userId, actorLabel: p.name ?? p.email, action: id ? "stock.product_updated" : "stock.product_created", entityType: "Product", entityId: product.id, after: data });
   return product;

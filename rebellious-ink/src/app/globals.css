@@ -114,3 +114,7 @@ table.data { width: 100%; border-collapse: collapse; font-size: .95rem; }
 table.data th, table.data td { text-align: left; padding: .6rem .5rem; border-bottom: 1px solid var(--border); vertical-align: top; }
 table.data th { font-size: .78rem; text-transform: uppercase; letter-spacing: .05em; color: var(--mist); }
 .dark-shell table.data th, .dark-shell table.data td { border-color: var(--graphite); }
+
+/* Promotions: corner ribbon on artist cards, banner across public pages. */
+.ribbon { position: absolute; top: .9rem; right: -2.4rem; transform: rotate(45deg); background: var(--acid); color: var(--ink); font-weight: 800; font-size: .68rem; letter-spacing: .06em; text-transform: uppercase; padding: .25rem 2.4rem; box-shadow: 0 2px 8px rgba(0,0,0,.35); white-space: nowrap; max-width: 15rem; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
+.promo-banner { background: var(--acid); color: var(--ink); }

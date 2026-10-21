@@ -6,15 +6,17 @@ import { productSchema, receiveSchema, adjustSchema, issueSchema, upsertProduct,
 import type { ActionState } from "./enquiry";
 
 const msg = (e: unknown) => (e instanceof Error ? e.message : "Something went wrong.");
-const refresh = (productId?: string) => { revalidatePath("/owner/stock"); revalidatePath("/studio/stock"); if (productId) revalidatePath(`/owner/stock/${productId}`); };
+const refresh = (productId?: string) => { revalidatePath("/owner/stock"); revalidatePath("/studio/stock"); revalidatePath("/studio/sales"); if (productId) revalidatePath(`/owner/stock/${productId}`); };
 
 export async function saveProductAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const p = await requirePrincipal();
   const id = String(formData.get("id") ?? "") || undefined;
   const parsed = productSchema.safeParse(Object.fromEntries(formData.entries()));
   if (!parsed.success) return { error: `${parsed.error.issues[0].path.join(".")}: ${parsed.error.issues[0].message}` };
+  const photo = formData.get("photo");
+  const removePhoto = formData.get("removePhoto") === "yes";
   let product;
-  try { product = await upsertProduct(p, parsed.data, id); } catch (e) { return { error: msg(e) }; }
+  try { product = await upsertProduct(p, parsed.data, id, photo instanceof File ? photo : null, removePhoto); } catch (e) { return { error: msg(e) }; }
   refresh(product.id);
   if (!id) redirect(`/owner/stock/${product.id}`);
   return { ok: true };

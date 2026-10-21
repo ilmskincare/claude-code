@@ -3,15 +3,18 @@ import { requireCapability } from "@/lib/session";
 import { deskReference } from "@/lib/profiles";
 import { PageHeader } from "@/components/ui";
 import { formatPence } from "@/lib/money";
+import { allPromotions } from "@/lib/promotions";
 
 const DAY = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const hhmm = (m: number) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
 
 export default async function DeskReference() {
   await requireCapability("enquiries.view_all");
-  const artists = await deskReference();
+  const [artists, promos] = await Promise.all([deskReference(), allPromotions()]);
+  const live = promos.filter((x) => x.state === "live");
   return (<>
-    <PageHeader title="Ask the desk" intro="Everything customer service needs to answer a call: rates, styles, boundaries, hours and private notes. Updated live by the practitioners themselves." />
+    <PageHeader title="Ask the desk" intro="Everything customer service needs to answer a call: rates, styles, boundaries, hours, promotions and private notes. Updated live by the practitioners themselves." />
+    {live.length > 0 && <section className="card p-4 mb-4 border-2 border-acid"><h2 className="text-lg font-bold">Promotions running now</h2><ul className="mt-1 text-sm space-y-1">{live.map((x) => <li key={x.id}><strong>{x.scope === "STUDIO" ? "Whole studio" : x.artist?.displayName}:</strong> {x.title}{x.details ? ` · ${x.details}` : ""}{x.code ? ` · code ${x.code}` : ""}{x.endsAt ? ` · until ${x.endsAt.toLocaleDateString("en-GB")}` : ""}{!x.showOnPublic ? " · desk only" : ""}</li>)}</ul></section>}
     <div className="grid lg:grid-cols-2 gap-4">
       {artists.map((a) => (
         <section key={a.id} className="card p-5">

@@ -4,7 +4,7 @@ import type { Principal } from "@/lib/rbac";
 import { can } from "@/lib/rbac";
 import { signOutAction } from "@/app/actions/auth";
 
-export function PublicShell({ children }: { children: React.ReactNode }) {
+export function PublicShell({ children, banner }: { children: React.ReactNode; banner?: React.ReactNode }) {
   return (
     <>
       <header className="dark-shell border-b border-graphite">
@@ -18,6 +18,7 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
           </nav>
         </div>
       </header>
+      {banner}
       <main id="main" className="flex-1">{children}</main>
       <footer className="dark-shell mt-16 border-t border-graphite">
         <div className="mx-auto max-w-6xl px-4 py-8 text-sm opacity-80 grid gap-4 md:grid-cols-3">

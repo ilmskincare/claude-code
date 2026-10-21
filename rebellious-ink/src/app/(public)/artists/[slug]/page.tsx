@@ -4,11 +4,14 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { signedUrl } from "@/lib/storage";
 import { BackLink } from "@/components/ui";
+import { livePromotions } from "@/lib/promotions";
+import { PromotionRibbon } from "@/components/promotion-ribbon";
 
 export default async function ArtistPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const a = await db.artistProfile.findUnique({ where: { slug }, include: { portfolioItems: { where: { publishedAt: { not: null } }, include: { asset: true }, orderBy: [{ isCover: "desc" }, { sortOrder: "asc" }] }, supervisor: true, availabilityRules: { where: { validFrom: null }, orderBy: [{ weekday: "asc" }, { startMinute: "asc" }] }, priceList: { where: { isActive: true }, orderBy: { sortOrder: "asc" } } } });
   if (!a || !a.isPublished) notFound();
+  const promo = (await livePromotions()).byArtist.get(a.id);
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
       <BackLink href="/artists">All artists</BackLink>
@@ -31,8 +34,10 @@ export default async function ArtistPage({ params }: { params: Promise<{ slug: s
             </ul>
           )}
         </div>
-        <aside className="card p-5 h-fit md:sticky md:top-4">
+        <aside className={`card p-5 h-fit md:sticky md:top-4 relative overflow-hidden ${promo ? "pt-14" : ""}`}>
+          {promo && <PromotionRibbon title={promo.title} />}
           <h2 className="text-xl font-bold">Work with {a.displayName.split(" ")[0]}</h2>
+          {promo && <div className="mt-3 rounded-lg bg-acid/15 border border-acid p-3 text-sm"><p className="font-bold uppercase tracking-wide text-xs">Current offer</p><p className="font-semibold">{promo.title}</p>{promo.details && <p className="mt-1 opacity-90">{promo.details}</p>}{promo.code && <p className="mt-1">Quote <strong>{promo.code}</strong></p>}{promo.endsAt && <p className="hint mt-1">Until {promo.endsAt.toLocaleDateString("en-GB")}</p>}</div>}
           <p className="mt-2 opacity-80 text-sm">Send your idea and references. You will get a reference number straight away and a reply in your private thread.</p>
           {a.acceptsEnquiries ? <Link href={`/enquire?artist=${a.slug}`} className="btn btn-primary mt-4 w-full justify-center">Start an enquiry</Link> : <p className="mt-4 badge badge-muted">Books currently closed</p>}
           <Hours rules={a.availabilityRules} />

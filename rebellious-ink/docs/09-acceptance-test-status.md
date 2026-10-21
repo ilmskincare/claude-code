@@ -2,7 +2,7 @@
 
 Statuses: PASS-AUTO (automated test named), PASS-MANUAL (exercised by hand in this session), PARTIAL, NOT STARTED.
 
-Last run (21 October 2026, local dev, late afternoon): `npx vitest run` 39 passed (unit + integration, 10 files) · `npm run test:e2e` 26 passed (13 desktop + 13 iPhone 14).
+Last run (21 October 2026, local dev, evening): `npx vitest run` 41 passed (unit + integration, 11 files) · `npm run test:e2e` 30 passed (15 desktop + 15 iPhone 14).
 
 | # | Acceptance test | Status | Evidence / what is missing |
 |---|---|---|---|
@@ -33,4 +33,6 @@ Last run (21 October 2026, local dev, late afternoon): `npx vitest run` 39 passe
 | Referral and loyalty: code attached at enquiry, self-referral ignored, nothing paid until completion, both sides credited, 5% earn, referrer emailed, redeem limits and permissions | same integration file; E2E test 13 (client sees code and share link, link prefills the form, owner completes the seeded booking, client's credit shows £12.00) |
 | Email marketing: audience from latest preference, artist filter, signed unsubscribe token, owner-only send, once per recipient, no double send | same integration file |
 | Social: assets without `SOCIAL_MEDIA` permission are not postable or draftable, publishing without Buffer fails clearly | same integration file |
+| Product photos: image stored and served, PDF refused, kept on edit, removable, `stock.manage` only | `tests/integration/promotions-and-product-photos.test.ts`; E2E test 14 (owner uploads, signed link returns 200, thumbnail on the stock list, piercer picks by photo) |
+| Promotions: own-artist only, studio-wide needs `roster.manage`, date validation, live vs scheduled vs ended, desk-only hidden from public, audit rows | same integration file; E2E test 15 (artist ribbon on card and page with code, studio banner, Ask the desk list, ending removes both at once) |
 

@@ -3,9 +3,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { db } from "@/lib/db";
 import { signedUrl } from "@/lib/storage";
+import { livePromotions } from "@/lib/promotions";
+import { PromotionRibbon } from "@/components/promotion-ribbon";
 
 export default async function HomePage() {
-  const artists = await db.artistProfile.findMany({ where: { isPublished: true }, include: { portfolioItems: { where: { publishedAt: { not: null }, isCover: true }, include: { asset: true }, take: 1 } }, orderBy: { displayName: "asc" } });
+  const [artists, promos] = await Promise.all([db.artistProfile.findMany({ where: { isPublished: true }, include: { portfolioItems: { where: { publishedAt: { not: null }, isCover: true }, include: { asset: true }, take: 1 } }, orderBy: { displayName: "asc" } }), livePromotions()]);
   return (
     <>
       <section className="dark-shell">
@@ -28,7 +30,8 @@ export default async function HomePage() {
         {artists.length === 0 ? <p className="opacity-70">Artist profiles are being set up.</p> : (
           <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {artists.map((a) => (
-              <li key={a.id} className="card overflow-hidden">
+              <li key={a.id} className="card overflow-hidden relative">
+                {promos.byArtist.get(a.id) && <PromotionRibbon title={promos.byArtist.get(a.id)!.title} />}
                 <Link href={`/artists/${a.slug}`}>
                   <div className="aspect-[4/3] bg-steel relative">
                     {a.portfolioItems[0] ? <img src={signedUrl(a.portfolioItems[0].asset.storageKey, 3600)} alt={a.portfolioItems[0].caption ?? `Work by ${a.displayName}`} className="w-full h-full object-cover" /> : <div className="absolute inset-0 grid place-items-center text-bone/50">Portfolio coming soon</div>}

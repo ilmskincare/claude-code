@@ -305,6 +305,7 @@ model ArtistProfile {
   supervisedLogs    PracticeLog[]       @relation("LogSupervisor")
   priceList         PriceListItem[]
   retailSales       RetailSale[]
+  promotions        Promotion[]
 
   @@schema("public")
 }
@@ -1473,6 +1474,7 @@ model Product {
   material     String?
   gauge        String?
   length       String?
+  imageKey     String?   // product photo in private storage, served via signed URL
   isActive     Boolean   @default(true)
 
   lots         InventoryLot[]
@@ -1960,6 +1962,37 @@ model IntegrationConnection {
   lastCheckedAt DateTime? @db.Timestamptz(3)
   lastError String?
 
+  @@schema("public")
+}
+
+// ─── Promotions ───────────────────────────────────────────────────────────────
+
+enum PromotionScope {
+  STUDIO
+  ARTIST
+
+  @@schema("public")
+}
+
+/// A studio-wide or single-artist offer. Live promotions show as a ribbon on the
+/// artist's public card and page (ARTIST) or as a banner across the public site (STUDIO).
+model Promotion {
+  id           String         @id @default(cuid())
+  scope        PromotionScope
+  artistId     String?
+  artist       ArtistProfile? @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  title        String         // ribbon text, e.g. "20% off flash"
+  details      String?        // public terms in plain words
+  code         String?        // optional code to quote
+  startsAt     DateTime       @db.Timestamptz(3)
+  endsAt       DateTime?      @db.Timestamptz(3)
+  isActive     Boolean        @default(true)
+  showOnPublic Boolean        @default(true)
+  createdById  String
+  createdAt    DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime       @updatedAt @db.Timestamptz(3)
+
+  @@index([scope, isActive, startsAt, endsAt])
   @@schema("public")
 }
 
