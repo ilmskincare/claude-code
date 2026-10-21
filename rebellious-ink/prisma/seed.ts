@@ -7,7 +7,7 @@ import { PrismaClient } from "../src/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { SEED_DOCUMENTS } from "../src/content/documents";
 import { SEED_SKILLS } from "../src/content/skills";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, writeFile, copyFile } from "node:fs/promises";
 import path from "node:path";
 import { DateTime } from "luxon";
 import { deflateSync } from "node:zlib";
@@ -164,25 +164,27 @@ async function main() {
   await db.loyaltyAccount.upsert({ where: { userId: client1.id }, create: { userId: client1.id, referralCode: "CASE-TEST", balancePence: 1500, transactions: { create: { type: "ADJUSTMENT", amountPence: 1500, note: "(TEST) Opening credit" } } }, update: {} });
   // Flash catalogue: placeholder TEST designs (plain swatches) so the catalogue, sheets and games are testable.
   if ((await db.design.count()) === 0) {
-    const flash: [typeof a, string, string, string, [number, number, number], boolean, boolean, number | null][] = [
-      [a, "Moth", "animals", "BLACK", [25, 25, 25], true, true, null], [a, "Dagger and rose", "old-school", "BLACK", [60, 70, 20], true, false, null], [a, "Crescent moon", "celestial", "BLACK", [35, 35, 50], true, true, null],
-      [a, "Snake and key", "blackwork", "BLACK", [20, 40, 20], false, true, null], [a, "Fern sprig", "botanical", "BLACK", [40, 80, 20], true, true, 7000], [a, "Crown and wings", "lettering", "BLACK", [90, 110, 0], false, false, null],
-      [b, "Swallow", "old-school", "COLOUR", [140, 60, 40], false, true, null], [b, "Peony", "botanical", "COLOUR", [160, 60, 90], false, true, null], [b, "Eye and sparkles", "celestial", "COLOUR", [60, 90, 160], false, false, null], [b, "Skull and dice", "luck", "COLOUR", [120, 120, 130], false, true, null],
+    // Public-domain (CC0) crops from Smithsonian American Art Museum flash sheets, see docs/13-image-credits.md.
+    const assets = path.resolve(process.cwd(), "prisma/seed-assets/flash");
+    const flash: [typeof a, string, string, string, string, boolean, boolean, number | null][] = [
+      [a, "Moth", "moth.jpg", "animals", "COLOUR", true, true, null], [a, "Dagger and crescent", "dagger-and-crescent.jpg", "old-school", "BLACK", true, false, null], [a, "Clipper ship", "clipper-ship.jpg", "nautical", "BLACK", true, true, null],
+      [a, "Sailor's grave", "sailor-s-grave.jpg", "nautical", "BLACK", false, true, null], [a, "Heart and shield", "heart-and-shield.jpg", "old-school", "BLACK", true, true, 7000], [a, "Winged propeller", "winged-propeller.jpg", "old-school", "BLACK", false, false, null],
+      [b, "Bluebird", "bluebird.jpg", "animals", "COLOUR", false, true, null], [b, "Rose", "rose.jpg", "botanical", "COLOUR", false, true, null], [b, "Lucky cards", "lucky-cards.jpg", "luck", "COLOUR", false, false, null], [b, "Skull and cap", "skull-and-cap.jpg", "old-school", "COLOUR", false, true, null],
     ];
     let n = 0;
-    for (const [profile, title, theme, colourMode, rgb, apprenticeAvailable, repeatable, priceSmall] of flash) {
-      const key = `flash/seed/${profile.slug}-${title.toLowerCase().replace(/[^a-z]+/g, "-")}.png`;
+    for (const [profile, title, file, theme, colourMode, apprenticeAvailable, repeatable, priceSmall] of flash) {
+      const key = `flash/archive/${file}`;
       await mkdir(path.dirname(path.join(storageDir, key)), { recursive: true });
-      await writeFile(path.join(storageDir, key), png(...rgb));
-      await db.design.create({ data: { title: `${title} (TEST)`, artistId: profile.id, imageKey: key, theme, colourMode: colourMode as "BLACK" | "COLOUR", apprenticeAvailable, repeatable, priceSmallPence: priceSmall, sortOrder: n++ } });
+      await copyFile(path.join(assets, file), path.join(storageDir, key));
+      await db.design.create({ data: { title: `${title} (archive)`, artistId: profile.id, imageKey: key, theme, colourMode: colourMode as "BLACK" | "COLOUR", apprenticeAvailable, repeatable, priceSmallPence: priceSmall, sortOrder: n++ } });
     }
-    // One uploaded sheet for Mo with two marked hotspots.
-    const sheetKey = "flash/seed/mo-sheet-1.png";
-    await writeFile(path.join(storageDir, sheetKey), png(30, 30, 30));
-    const sheet = await db.flashSheet.create({ data: { artistId: a.id, title: "Autumn sheet 1 (TEST)", imageKey: sheetKey } });
+    // One whole sheet for Mo with two marked hotspots.
+    const sheetKey = "flash/archive/sheet-c.jpg";
+    await copyFile(path.join(assets, "sheet-c.jpg"), path.join(storageDir, sheetKey));
+    const sheet = await db.flashSheet.create({ data: { artistId: a.id, title: "Archive sheet C (public domain)", imageKey: sheetKey } });
     await db.design.createMany({ data: [
-      { title: "Sheet: anchor (TEST)", artistId: a.id, imageKey: sheetKey, sheetId: sheet.id, hotspotX: 5, hotspotY: 5, hotspotW: 40, hotspotH: 40, theme: "old-school", sortOrder: n++ },
-      { title: "Sheet: lantern (TEST)", artistId: a.id, imageKey: sheetKey, sheetId: sheet.id, hotspotX: 55, hotspotY: 50, hotspotW: 40, hotspotH: 45, theme: "old-school", repeatable: false, sortOrder: n++ },
+      { title: "Butterfly (archive)", artistId: a.id, imageKey: sheetKey, sheetId: sheet.id, hotspotX: 65, hotspotY: 7, hotspotW: 30, hotspotH: 44, theme: "animals", colourMode: "COLOUR", sortOrder: n++ },
+      { title: "Swallow and banner (archive)", artistId: a.id, imageKey: sheetKey, sheetId: sheet.id, hotspotX: 7, hotspotY: 42, hotspotW: 30, hotspotH: 48, theme: "old-school", colourMode: "COLOUR", repeatable: false, sortOrder: n++ },
     ] });
   }
   // Promotions: one studio-wide, one for Mo, one ended (so the owner page shows every state).

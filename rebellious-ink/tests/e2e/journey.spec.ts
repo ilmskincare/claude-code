@@ -479,9 +479,9 @@ test("16. flash catalogue: total price up front, size guide, book a design strai
   await expect(pub.getByText("Small £60").first()).toBeVisible();
   await pub.screenshot({ path: path.join(SHOTS, `${info.project.name}-30-flash-catalogue.png`), fullPage: true });
   await pub.getByRole("tab", { name: "Sheets" }).click();
-  await expect(pub.getByRole("link", { name: /1: Sheet: anchor/ })).toBeVisible();
+  await expect(pub.getByRole("link", { name: /1: Butterfly \(archive\)/ })).toBeVisible();
   await pub.getByRole("tab", { name: "Designs" }).click();
-  await pub.getByRole("link", { name: "Fern sprig (TEST)" }).first().click();
+  await pub.getByRole("link", { name: "Heart and shield (archive)" }).first().click();
   await pub.waitForURL(/\/flash\/[a-z0-9]+$/);
   await expect(pub.getByText("Total price, nothing added later")).toBeVisible();
   await expect(pub.getByText("£70.00").first()).toBeVisible();                       // design override
@@ -508,7 +508,7 @@ test("16. flash catalogue: total price up front, size guide, book a design strai
   await expect(c.page.getByText(/pay the £30.00 deposit/)).toBeVisible();
   await c.page.screenshot({ path: path.join(SHOTS, `${info.project.name}-32-flash-slot-picker.png`), fullPage: true });
   await c.page.goto(c.page.url().replace(/\/book$/, ""));
-  await expect(c.page.getByText("Fern sprig (TEST)").first()).toBeVisible();
+  await expect(c.page.getByText("Heart and shield (archive)").first()).toBeVisible();
   await expect(c.page.getByText(/Palm · artist tier/)).toBeVisible();
   await c.context.close();
 });

@@ -152,3 +152,9 @@ Note: during one full local test run the marketing integration test failed once 
 - Catalogue upserted by key (run twice, same counts): 118 active items, 89 core, 0 retired; the 4 existing progress rows survived and still show on the board.
 - Apprentice portal verified on staging: six collapsible stages with "n of m signed off" counts, prerequisites open first, "Hand hygiene and glove use" still Competent (`staging-apprentice-stages.png`).
 
+## Staging update, 21 October 2026, night: public-domain flash images
+
+- The plain-colour flash placeholders were replaced with crops from six CC0 Smithsonian American Art Museum flash sheets (credits and the crop recipe in `docs/13-image-credits.md` and `scripts/import-archive-flash.ts`). Titles carry "(archive)" so they cannot be mistaken for the studio's own work; no flags, service initials, religious symbols, nudity or red cross emblems were used.
+- Eleven JPEGs uploaded to the Blob store; design and sheet rows updated on staging by title (12 designs now on archive images, no TEST-titled designs left); the Sheets view shows the whole sheet with two hotspots (`staging-flash-archive.png`, `staging-flash-sheet.png`).
+- No deploy was needed for the images (database and storage only). A small follow-up fixed the signed file route to send the right image content type for files that have no ImageAsset row.
+

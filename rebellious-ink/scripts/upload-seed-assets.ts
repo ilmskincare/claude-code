@@ -10,12 +10,12 @@ import { put } from "@vercel/blob";
  */
 async function main() {
   const root = path.resolve(process.argv[2] ?? "./storage");
-  for (const prefix of ["portfolio/seed", "products/seed", "flash/seed"]) {
+  for (const prefix of ["portfolio/seed", "products/seed", "flash/seed", "flash/archive"]) {
     const dir = path.join(root, prefix);
     const files = await readdir(dir).catch(() => [] as string[]);
     for (const f of files) {
       const key = `${prefix}/${f}`;
-      await put(key, await readFile(path.join(dir, f)), { access: "private", addRandomSuffix: false, allowOverwrite: true, contentType: "image/png", token: process.env.BLOB_READ_WRITE_TOKEN });
+      await put(key, await readFile(path.join(dir, f)), { access: "private", addRandomSuffix: false, allowOverwrite: true, contentType: f.endsWith(".jpg") ? "image/jpeg" : "image/png", token: process.env.BLOB_READ_WRITE_TOKEN });
       console.log("uploaded", key);
     }
   }
