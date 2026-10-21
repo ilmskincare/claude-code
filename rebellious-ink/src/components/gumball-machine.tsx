@@ -78,8 +78,11 @@ export function GumballMachine({ mode, capsules, spinsLeft }: { mode: MachineMod
     if (ready) { formRef.current?.requestSubmit(); return; }
     if (mode === "locked") {
       setNote("Pop your date of birth in first, then the crank unlocks.");
+      const gate = document.getElementById("age-gate");
       const dob = document.getElementById("dateOfBirth") as HTMLInputElement | null;
-      dob?.scrollIntoView({ behavior: "smooth", block: "center" }); dob?.focus();
+      gate?.scrollIntoView({ behavior: "smooth", block: "center" });
+      gate?.classList.add("attention"); window.setTimeout(() => gate?.classList.remove("attention"), 2400);
+      dob?.focus();
       return;
     }
     setNote(mode === "spent" || mode === "ready" ? "That is your spin for today. Come back tomorrow." : mode === "restocking" ? "The machine is being restocked. Leave your email and we will tell you when it is full." : "The machine is switched off at the moment.");
@@ -100,13 +103,17 @@ export function GumballMachine({ mode, capsules, spinsLeft }: { mode: MachineMod
 
 export function AgeGate() {
   const [state, action, pending] = useActionState(ageGateAction, undefined);
+  const [localError, setLocalError] = useState<string | null>(null);
   return (
-    <form action={action} className="card p-5 space-y-3">
+    <form id="age-gate" action={action} noValidate className="card p-5 space-y-3 scroll-mt-24" onSubmit={(e) => {
+      const dob = (e.currentTarget.elements.namedItem("dateOfBirth") as HTMLInputElement | null)?.value ?? "";
+      if (!dob) { e.preventDefault(); setLocalError("Tap the date box and pick your date of birth, then press Continue."); } else setLocalError(null);
+    }}>
       <h2 className="text-xl font-bold">First, your age</h2>
       <p className="text-sm opacity-80">You must be 18 or over to be tattooed in the UK. We check photographic ID in the studio too.</p>
-      {state?.error && <Alert tone="danger">{state.error}</Alert>}
-      <div><label className="field" htmlFor="dateOfBirth">Date of birth</label><input id="dateOfBirth" name="dateOfBirth" type="date" className="input" required /></div>
-      <button className="btn btn-primary" disabled={pending}>Continue</button>
+      {(localError || state?.error) && <Alert tone="danger">{localError ?? state?.error}</Alert>}
+      <div><label className="field" htmlFor="dateOfBirth">Date of birth</label><input id="dateOfBirth" name="dateOfBirth" type="date" className="input" required aria-describedby="dob-help" max={new Date().toISOString().slice(0, 10)} /><p id="dob-help" className="hint">Tap the box to pick the day, month and year.</p></div>
+      <button className="btn btn-primary" disabled={pending}>{pending ? "Checking…" : "Continue"}</button>
     </form>
   );
 }

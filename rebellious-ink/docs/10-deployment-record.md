@@ -180,3 +180,9 @@ Note: during one full local test run the marketing integration test failed once 
 
 - Reported from an iPad: capsules floated in a diagonal line, the step boxes sat under the left column only, and pressing PUSH did nothing. Capsules now pile in the bottom of the globe as two-tone capsules; the three steps run the full width under both columns; the crank and the PUSH flap are buttons. Before the age check they read LOCKED and pressing them scrolls to and focuses the date of birth box with a note; after it they turn the crank. The right-hand card then reads "Age check done".
 - Verified in a real browser at iPad size on staging: locked press focuses the date of birth box, the note clears once the age check passes, the crank itself spins to a result, and a second visit shows "That is your spin for today" (`staging-ipad-gumball-locked.png`, `staging-ipad-gumball-ready.png`).
+
+## Staging update, 21 October 2026, evening: age check cannot fail silently
+
+- Reported from an iPad: "the gumball isn't working". The live build was replayed in WebKit (Safari's engine) as an iPad and passed end to end, and the analytics showed the iPad's visits with no completed age check. The cause: on an iPad the empty date box shows no prompt, and tapping Continue with it empty shows nothing in Safari.
+- Fix: the age form shows "Tap the date box and pick your date of birth" if Continue is pressed with no date; the box carries a "Tap the box to pick the day, month and year" hint; pressing the locked crank scrolls to the age card and pulses its border. Verified in WebKit as an iPad on staging after deploy.
+- WebKit is now installed in the session for Safari-engine checks (`npx playwright install webkit` plus its system libraries).
