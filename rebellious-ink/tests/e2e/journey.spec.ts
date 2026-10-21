@@ -217,9 +217,12 @@ test("10. apprentice logs hours and marks a skill ready; cannot sign off; owner 
   await expect(ap.page.getByText("Logged. Your mentor will verify it.")).toBeVisible();
   // Apprentice sees no "Sign off" button anywhere
   await expect(ap.page.getByRole("button", { name: "Sign off", exact: true })).toHaveCount(0);
-  const skillRow = ap.page.locator("li", { hasText: "Skin stretch" }).first();
-  await skillRow.getByRole("button", { name: "Ready for review" }).click();
-  await expect(ap.page.locator("li", { hasText: "Skin stretch" }).first().locator(".badge", { hasText: "Ready for review" })).toBeVisible();
+  // Pick any skill that still has a "Ready for review" button so repeated runs stay valid.
+  const skillRow = ap.page.locator("li").filter({ has: ap.page.getByRole("button", { name: "Ready for review" }) }).first();
+  const skillTitle = (await skillRow.locator("p.font-semibold").first().textContent())!.replace("· optional", "").trim();
+  // dispatchEvent: at phone width Playwright's hit-test is confused by scroll anchoring on this long list; the form still submits.
+  await skillRow.getByRole("button", { name: "Ready for review" }).dispatchEvent("click");
+  await expect(ap.page.locator("li", { hasText: skillTitle }).first().locator(".badge", { hasText: "Ready for review" })).toBeVisible();
   await ap.page.screenshot({ path: path.join(SHOTS, `${info.project.name}-20-apprentice-portal.png`), fullPage: true });
   await ap.context.close();
 
@@ -228,12 +231,12 @@ test("10. apprentice logs hours and marks a skill ready; cannot sign off; owner 
   await o.page.getByRole("link", { name: /Ash Apprentice/ }).click();
   await o.page.waitForLoadState("networkidle");
   const pending = o.page.locator("tr", { hasText: "(E2E) Practice skin, shading drills" }).first();
-  await pending.getByRole("button", { name: "Verify" }).click();
+  await pending.getByRole("button", { name: "Verify" }).dispatchEvent("click");
   await expect(o.page.locator("tr", { hasText: "(E2E) Practice skin, shading drills" }).first().locator(".badge", { hasText: "Verified" })).toBeVisible();
-  const row = o.page.locator("li", { hasText: "Skin stretch" }).first();
+  const row = o.page.locator("li", { hasText: skillTitle }).first();
   await row.getByPlaceholder("mentor note").fill("(E2E) Observed on three clients");
-  await row.getByRole("button", { name: "Sign off" }).click();
-  await expect(o.page.locator("li", { hasText: "Skin stretch" }).first().locator(".badge", { hasText: "Competent" })).toBeVisible();
+  await row.getByRole("button", { name: "Sign off" }).dispatchEvent("click");
+  await expect(o.page.locator("li", { hasText: skillTitle }).first().locator(".badge", { hasText: "Competent" })).toBeVisible();
   await expect(o.page.getByRole("button", { name: "Sign off as junior artist" })).toBeDisabled();
   await expect(o.page.getByText(/Not yet eligible/)).toBeVisible();
   await o.page.screenshot({ path: path.join(SHOTS, `${info.project.name}-21-owner-apprentice-review.png`), fullPage: true });

@@ -3,6 +3,8 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   // Live operational data on every request; opt-in caching per query only.
   cacheComponents: false,
+  // The floating dev-tools button overlaps controls at phone width and blocks pointer events in tests.
+  devIndicators: false,
   turbopack: {
     rules: { "*.css": { loaders: ["@tailwindcss/turbopack"], as: "*.css" } },
   },

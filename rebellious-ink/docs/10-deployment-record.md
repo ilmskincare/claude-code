@@ -95,3 +95,15 @@ Verified after deployment: `/api/health` reports database ok; home, artists, art
 Problems met and fixed on the way: Hobby plan rejects sub-daily cron (schedule changed, lazy expiry added); build-time environment validation (Auth.js config made lazy); Supabase certificate chain rejected by node-postgres (root CA supplied and verified rather than disabling verification).
 
 Tokens used for this deployment were held only in the session's scratch space and should now be revoked by the owner (Vercel account tokens page; Supabase account tokens page).
+
+
+## Staging update, 21 October 2026, 13:15 BST
+
+Deployed and verified in a real browser against https://rebellious-ink-staging.vercel.app:
+
+- Migrations `20261021113500_hours_and_thread_attachments` and `20261021114910_inventory_and_apprentice_portal` applied through the Supabase management API and recorded in `_prisma_migrations`.
+- Seed additions loaded idempotently (29 skills, 6 products with lots, apprentice progress and hours, supplies-included flags on the two arrangements).
+- Artist hours: walk-in hours added, shown on the public profile, removed again (`staging-artist-hours.png`).
+- Consultation attachments: an image attached to a live thread was stored in the private Blob store and served back through the signed route (HTTP 200).
+- Stock: owner stock page lists six products; selling one box of gloves to Mo moved on-hand from 8 to 7 and recorded the sale (`staging-owner-stock.png`).
+- Apprentice portal: the owner review page shows verified hours and a disabled junior-artist sign-off with its blockers; the apprentice's own portal shows no sign-off controls (`staging-owner-apprentice.png`, `staging-apprentice-portal.png`).
