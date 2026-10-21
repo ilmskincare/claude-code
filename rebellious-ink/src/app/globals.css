@@ -72,6 +72,13 @@ h1, h2, h3, .display { font-family: var(--font-display); letter-spacing: 0.02em;
 .input:focus, .select:focus, .textarea:focus { outline: 3px solid var(--acid-soft); border-color: var(--acid-deep); }
 .dark-shell .input, .dark-shell .select, .dark-shell .textarea { background: var(--steel); border-color: var(--graphite); color: var(--bone); }
 label.field { display: block; font-weight: 600; margin-bottom: .35rem; }
+/* Fieldsets used as cards: the legend sits inside the box as a heading, never on the border; nothing spills out. */
+fieldset { min-width: 0; }
+fieldset.card > legend { float: left; width: 100%; padding: 0; margin-bottom: .75rem; }
+fieldset.card > legend + * { clear: both; }
+.input, .select, .textarea { min-width: 0; max-width: 100%; box-sizing: border-box; }
+input[type="date"].input, input[type="time"].input, input[type="datetime-local"].input { -webkit-appearance: none; appearance: none; display: block; line-height: 1.4; }
+
 .hint { color: var(--mist); font-size: .9rem; }
 
 .badge { display: inline-block; border-radius: 999px; padding: .2rem .65rem; font-size: .78rem; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; }

@@ -8,9 +8,9 @@ export function PublicShell({ children, banner }: { children: React.ReactNode; b
   return (
     <>
       <header className="dark-shell border-b border-graphite">
-        <div className="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between gap-4">
+        <div className="mx-auto max-w-6xl px-4 py-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
           <Link href="/" aria-label="Rebellious Ink home"><Logo /></Link>
-          <nav aria-label="Main" className="flex items-center gap-1 text-sm">
+          <nav aria-label="Main" className="flex flex-wrap items-center justify-end gap-1 text-sm">
             <Link className="nav-link" href="/artists">Artists</Link>
             <Link className="nav-link" href="/flash">Flash</Link>
             <Link className="nav-link" href="/play/gumball">Gumball</Link>
