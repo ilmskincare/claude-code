@@ -29,7 +29,7 @@ export default async function GumballPage() {
             : m.restocking ? <RestockAlert />
             : !adult ? <div className="card p-5"><p className="font-bold">Two steps.</p><p className="text-sm opacity-80 mt-1">1. Enter your date of birth (the box under the heading). 2. Turn the crank. Spinning is free.</p></div>
             : <div className="card p-5"><p className="font-bold">Age check done.</p><p className="text-sm opacity-80 mt-1">{m.spinsLeft > 0 ? "Turn the crank on the machine, or press PUSH." : "That is your spin for today. Come back tomorrow for another free go."}</p></div>}
-          <p className="hint">Every capsule is a real design by one of our artists, drawn to be tattooed small. Nothing is won or lost and nothing is charged to spin. 18+ only. Hands, fingers, neck and face are not available for gumball tattoos.</p>
+          <p className="hint">Every capsule is a real design drawn to be tattooed small: classic flash and our postage-stamp pieces, a little framed design about 4 cm tall. Nothing is won or lost and nothing is charged to spin. 18+ only. Hands, fingers, neck and face are not available for gumball tattoos.</p>
           <p className="hint">Prefer a brief to a drawing? Try the <Link href="/play/trio" className="underline">three machines</Link>: ink, style and subject.</p>
         </aside>
       </div>

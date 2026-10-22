@@ -39,6 +39,10 @@ These are the pictures a player can win a slot for, so they should be small, qui
 | 17 | Lady in profile (archive) | old-school | Lady head in profile |
 | 18 | Horse (archive) | animals | Horse head |
 
+## Gumball machine: stamp set (6 designs, original vector artwork)
+
+Added 22 October 2026: six postage-stamp-style designs (star, heart, lightning bolt, crescent moon, diamond, sun) drawn as original vector art for the studio by the desk, theme "stamp", about 4 cm tall. These are the studio's own artwork and can stay, or be replaced with hand-drawn stamps in the same spirit. Generator: `scripts/stamp-flash.mjs`.
+
 ## Three machines game
 
 This game does not use pictures. It spins ink (black and grey or colour), style and a subject word (spider, angel, dagger, rose, swallow, anchor, snake, skull, heart, moon, star, butterfly, cherries, lightning bolt, eye, key, horseshoe, bee, mushroom, sun, crown, flame, cat, wave, diamond) and the artist draws it. No images needed; the word lists can be edited under Owner, then Flash and games.
