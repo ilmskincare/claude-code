@@ -215,7 +215,7 @@ Note: during one full local test run the marketing integration test failed once 
 
 ## Live update, 21 October 2026, late evening: owner oversight
 
-- Owners (Nikki and Sean once his account exists) are blind-copied on every client-facing email, receive the full text of every thread message, and get a 07:30 digest listing new enquiries, clients waiting on an artist for over 24 hours, deposits unpaid for over 48 hours and today's appointments. All four are settings (`oversight.*`), with the recipient list defaulting to every active owner.
+- Owners (Charlie, and Nikki, whose account keeps owner-level access although she is the studio manager) are blind-copied on every client-facing email, receive the full text of every thread message, and get a 07:30 digest listing new enquiries, clients waiting on an artist for over 24 hours, deposits unpaid for over 48 hours and today's appointments. All four are settings (`oversight.*`), with the recipient list defaulting to every active owner.
 - System email now comes from thedesk@rebelliousink.tattoo with replies to the same address; the mailbox itself still needs creating (Zoho free or forwarding), until then replies bounce.
 - Privacy notice now says thread messages are visible to the artist, the desk and the owners for quality checks (legitimate interests).
 
@@ -234,4 +234,4 @@ Note: during one full local test run the marketing integration test failed once 
 
 - Zoho Mail (UK datacentre, Mail Lite, three licences) hosts thedesk@, elleevaa@ and charlie@. DNS in Vercel: Zoho verification TXT, MX mx.zoho.uk 10 / mx2.zoho.uk 20 / mx3.zoho.uk 50 (the .eu hosts were wrong for the UK datacentre and were replaced), SPF `v=spf1 include:zohomail.uk ~all`, DKIM selector `zmail`, DMARC `p=none` reporting to thedesk@. Resend keeps its own `send` subdomain for the website's mail, so the two do not clash.
 - Verified: test emails from the website delivered into all three mailboxes; MX, SPF and DKIM verified in Zoho.
-- Site accounts: owner Nikki is `elleevaa` with elleevaa@rebelliousink.tattoo; owner Charlie (previously entered as Sean) is `charlie` with charlie@rebelliousink.tattoo. Owner copies and the morning digest go to both. System mail is sent from thedesk@ with replies to the same.
+- Site accounts: Charlie, the owner (previously entered as Sean), is `charlie` with charlie@rebelliousink.tattoo; Nikki (Elle Evaa), the studio manager and a resident artist, is `elleevaa` with elleevaa@rebelliousink.tattoo. Her public bio describes her as studio manager, not an owner. Owner copies and the morning digest go to both. Her account still holds owner-level access in the system (settings, team management, exports, refunds) because the Studio manager role does not include those; switching it is a one-line change on the Artists page if the owner prefers. System mail is sent from thedesk@ with replies to the same.
