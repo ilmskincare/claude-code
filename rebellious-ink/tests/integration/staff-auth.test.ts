@@ -2,7 +2,7 @@ import { beforeAll, afterAll, describe, expect, it } from "vitest";
 import { resetTestDatabase, seedMinimal, testDb } from "./helpers";
 import { capabilitiesFor, type Principal } from "@/lib/rbac";
 import { hashPassword, verifyPassword, passwordProblem, generateTempPassword } from "@/lib/passwords";
-import { checkStaffCredentials, issueCredentials, changeRole, setStaffStatus, setOwnPassword, teamList, suggestUsername, isPlaceholderEmail } from "@/lib/staff-auth";
+import { checkStaffCredentials, issueCredentials, changeRole, setStaffStatus, setOwnPassword, setJobTitle, teamList, suggestUsername, isPlaceholderEmail } from "@/lib/staff-auth";
 import { addTeamMember } from "@/lib/team";
 import { copyRecipients } from "@/lib/oversight";
 import { sendEmail } from "@/lib/email";
@@ -88,5 +88,15 @@ describe("staff sign-in and user management", () => {
     await setStaffStatus(owner, s.artistUser.id, "ACTIVE");
     expect((await checkStaffCredentials("artist.a", r.tempPassword)).id).toBe(s.artistUser.id);
     expect((await teamList()).some((t) => t.userId === s.c1.id)).toBe(false);                             // clients are not on the team table
+  });
+
+  it("a job title is a label in brackets on the team page and never changes access", async () => {
+    expect(await setJobTitle(owner, s.owner.id, "  Studio   manager ")).toBe("Studio manager");
+    const row = (await teamList()).find((t) => t.userId === s.owner.id)!;
+    expect(row.jobTitle).toBe("Studio manager"); expect(row.role).toBe("OWNER");
+    await expect(setJobTitle(owner, s.owner.id, "x".repeat(41))).rejects.toThrow(/40 characters/);
+    await expect(setJobTitle(artistA, s.owner.id, "Boss")).rejects.toThrow();
+    expect(await setJobTitle(owner, s.owner.id, "")).toBeNull();
+    expect(await testDb.auditLog.count({ where: { action: "team.job_title_changed" } })).toBe(2);
   });
 });

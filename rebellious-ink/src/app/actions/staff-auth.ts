@@ -2,7 +2,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requirePrincipal } from "@/lib/session";
-import { checkStaffCredentials, startSession, setOwnPassword, issueCredentials, changeRole, setStaffStatus, ASSIGNABLE_ROLES, type AssignableRole } from "@/lib/staff-auth";
+import { checkStaffCredentials, startSession, setOwnPassword, issueCredentials, changeRole, setStaffStatus, setJobTitle, ASSIGNABLE_ROLES, type AssignableRole } from "@/lib/staff-auth";
 
 type ActionState = { ok?: boolean; error?: string; message?: string; username?: string; tempPassword?: string } | undefined;
 const msg = (e: unknown) => (e instanceof Error ? e.message : "Something went wrong");
@@ -37,6 +37,11 @@ export async function changeRoleAction(_prev: ActionState, formData: FormData): 
   const role = String(formData.get("role") ?? "");
   if (!(ASSIGNABLE_ROLES as readonly string[]).includes(role)) return { error: "Unknown role." };
   try { await changeRole(p, String(formData.get("userId") ?? ""), role as AssignableRole); revalidatePath("/owner/artists"); return { ok: true, message: "Access updated. It applies when they next sign in." }; } catch (e) { return { error: msg(e) }; }
+}
+
+export async function setJobTitleAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const p = await requirePrincipal();
+  try { const t = await setJobTitle(p, String(formData.get("userId") ?? ""), String(formData.get("jobTitle") ?? "")); revalidatePath("/owner/artists"); return { ok: true, message: t ? `Shown as (${t}).` : "Job title removed." }; } catch (e) { return { error: msg(e) }; }
 }
 
 export async function setStaffStatusAction(_prev: ActionState, formData: FormData): Promise<ActionState> {

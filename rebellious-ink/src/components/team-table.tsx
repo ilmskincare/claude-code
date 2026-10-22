@@ -1,10 +1,30 @@
 "use client";
 import { useActionState, useState } from "react";
 import Link from "next/link";
-import { issueCredentialsAction, changeRoleAction, setStaffStatusAction } from "@/app/actions/staff-auth";
+import { issueCredentialsAction, changeRoleAction, setStaffStatusAction, setJobTitleAction } from "@/app/actions/staff-auth";
 import { Alert } from "./ui";
 
-export type TeamRow = { membershipId: string; userId: string; name: string; fullName: string | null; email: string | null; username: string | null; hasPassword: boolean; mustChangePassword: boolean; locked: boolean; role: string; status: string; profileId: string | null; kind: string | null; isPublished: boolean };
+export type TeamRow = { membershipId: string; userId: string; name: string; fullName: string | null; jobTitle: string | null; email: string | null; username: string | null; hasPassword: boolean; mustChangePassword: boolean; locked: boolean; role: string; status: string; profileId: string | null; kind: string | null; isPublished: boolean };
+
+/** The name with the job title in brackets, and a small form to change the title. The title is a label only; access is the dropdown. */
+function PersonCell({ row }: { row: TeamRow }) {
+  const [state, action, pending] = useActionState(setJobTitleAction, undefined);
+  const [open, setOpen] = useState(false);
+  return (
+    <div>
+      <strong>{row.name}</strong>{row.jobTitle && <span className="opacity-80"> ({row.jobTitle})</span>}
+      {row.fullName && row.fullName !== row.name && <span className="block text-xs opacity-60">{row.fullName}</span>}
+      {row.profileId && <span className="block text-xs"><Link href={`/owner/artists/${row.profileId}/profile`} className="underline">Profile & rates</Link> · <Link href={`/owner/artists/${row.profileId}/hours`} className="underline">Hours</Link>{!row.isPublished && <span className="opacity-60"> · not on public site</span>}</span>}
+      <button type="button" className="block underline text-xs mt-1" onClick={() => setOpen((o) => !o)}>{row.jobTitle ? "Change job title" : "Add job title"}</button>
+      {open && <form action={action} className="mt-1 flex gap-1 items-end">
+        <input type="hidden" name="userId" value={row.userId} />
+        <div><label className="sr-only" htmlFor={`jt-${row.userId}`}>Job title for {row.name}</label><input id={`jt-${row.userId}`} name="jobTitle" className="input text-sm" placeholder="e.g. Studio manager" maxLength={40} defaultValue={row.jobTitle ?? ""} /></div>
+        <button className="btn btn-secondary text-sm" disabled={pending}>{pending ? "…" : "Save"}</button>
+      </form>}
+      {state?.error && <span className="block text-xs text-danger" role="alert">{state.error}</span>}{state?.ok && <span className="block text-xs text-acid-bright">{state.message}</span>}
+    </div>
+  );
+}
 
 function RoleCell({ row, roles, labels }: { row: TeamRow; roles: readonly string[]; labels: Record<string, string> }) {
   const [state, action, pending] = useActionState(changeRoleAction, undefined);
@@ -58,9 +78,9 @@ export function TeamTable({ rows, roles, labels }: { rows: TeamRow[]; roles: rea
   return (
     <section className="card p-4 mb-10">
       <h2 className="text-xl font-bold mb-1">The team</h2>
-      <p className="hint mb-3">Change someone&apos;s access from the dropdown. &ldquo;Give a username and password&rdquo; lets them sign in without an email; a reset signs them out everywhere and gives a new one-time password.</p>
+      <p className="hint mb-3">Change someone&apos;s access from the dropdown; a job title is just a label shown in brackets after their name. &ldquo;Give a username and password&rdquo; lets them sign in without an email; a reset signs them out everywhere and gives a new one-time password.</p>
       <div className="overflow-x-auto"><table className="data"><thead><tr><th>Person</th><th>Sign-in</th><th>Access</th><th>Status</th></tr></thead><tbody>
-        {rows.map((r) => <tr key={r.membershipId}><td><strong>{r.name}</strong>{r.fullName && r.fullName !== r.name && <span className="block text-xs opacity-60">{r.fullName}</span>}{r.profileId && <span className="block text-xs"><Link href={`/owner/artists/${r.profileId}/profile`} className="underline">Profile & rates</Link> · <Link href={`/owner/artists/${r.profileId}/hours`} className="underline">Hours</Link>{!r.isPublished && <span className="opacity-60"> · not on public site</span>}</span>}</td><td><CredentialsCell row={r} /></td><td><RoleCell row={r} roles={roles} labels={labels} /></td><td><StatusCell row={r} /></td></tr>)}
+        {rows.map((r) => <tr key={r.membershipId}><td><PersonCell row={r} /></td><td><CredentialsCell row={r} /></td><td><RoleCell row={r} roles={roles} labels={labels} /></td><td><StatusCell row={r} /></td></tr>)}
       </tbody></table></div>
     </section>
   );

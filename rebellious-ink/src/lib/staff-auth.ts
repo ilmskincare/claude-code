@@ -98,6 +98,19 @@ export async function changeRole(p: Principal, userId: string, role: AssignableR
   await audit({ actorId: p.userId, actorLabel: `Owner: ${p.name ?? p.email}`, action: "team.role_changed", entityType: "Membership", entityId: m.id, before: { roles: m.roles }, after: { roles: [role] } });
 }
 
+/** A job title shown in brackets after the name on the team page (e.g. "Studio manager"). It is a label only and never changes access. */
+export async function setJobTitle(p: Principal, userId: string, title: string) {
+  if (!can(p, "roster.manage")) throw new ForbiddenError();
+  const clean = title.trim().replace(/\s+/g, " ");
+  if (clean.length > 40) throw new ValidationError("Keep the job title to 40 characters.");
+  const studio = await db.studio.findFirstOrThrow();
+  const m = await db.membership.findUnique({ where: { userId_studioId: { userId, studioId: studio.id } } });
+  if (!m) throw new NotFoundError("Staff member not found");
+  await db.membership.update({ where: { id: m.id }, data: { jobTitle: clean || null } });
+  await audit({ actorId: p.userId, actorLabel: `Owner: ${p.name ?? p.email}`, action: "team.job_title_changed", entityType: "Membership", entityId: m.id, before: { jobTitle: m.jobTitle }, after: { jobTitle: clean || null } });
+  return clean || null;
+}
+
 /** Suspend (sign them out everywhere and refuse new sign-ins) or reactivate. */
 export async function setStaffStatus(p: Principal, userId: string, status: "ACTIVE" | "SUSPENDED") {
   if (!can(p, "roster.manage")) throw new ForbiddenError();
@@ -119,5 +132,5 @@ export async function setStaffStatus(p: Principal, userId: string, status: "ACTI
 export async function teamList() {
   const studio = await db.studio.findFirstOrThrow();
   const rows = await db.membership.findMany({ where: { studioId: studio.id }, include: { user: { select: { id: true, name: true, email: true, username: true, passwordHash: true, mustChangePassword: true, lockedUntil: true, artistProfile: { select: { id: true, displayName: true, kind: true, isPublished: true } } } } }, orderBy: { createdAt: "asc" } });
-  return rows.filter((m) => m.roles.some((r) => r !== "CLIENT")).map((m) => ({ membershipId: m.id, userId: m.user.id, name: m.user.artistProfile?.displayName ?? m.user.name ?? m.user.email, fullName: m.user.name, email: isPlaceholderEmail(m.user.email) ? null : m.user.email, username: m.user.username, hasPassword: Boolean(m.user.passwordHash), mustChangePassword: m.user.mustChangePassword, locked: Boolean(m.user.lockedUntil && m.user.lockedUntil > new Date()), role: (m.roles[0] ?? "RECEPTION") as AssignableRole, status: m.status, profileId: m.user.artistProfile?.id ?? null, kind: m.user.artistProfile?.kind ?? null, isPublished: m.user.artistProfile?.isPublished ?? false }));
+  return rows.filter((m) => m.roles.some((r) => r !== "CLIENT")).map((m) => ({ membershipId: m.id, userId: m.user.id, name: m.user.artistProfile?.displayName ?? m.user.name ?? m.user.email, fullName: m.user.name, jobTitle: m.jobTitle, email: isPlaceholderEmail(m.user.email) ? null : m.user.email, username: m.user.username, hasPassword: Boolean(m.user.passwordHash), mustChangePassword: m.user.mustChangePassword, locked: Boolean(m.user.lockedUntil && m.user.lockedUntil > new Date()), role: (m.roles[0] ?? "RECEPTION") as AssignableRole, status: m.status, profileId: m.user.artistProfile?.id ?? null, kind: m.user.artistProfile?.kind ?? null, isPublished: m.user.artistProfile?.isPublished ?? false }));
 }

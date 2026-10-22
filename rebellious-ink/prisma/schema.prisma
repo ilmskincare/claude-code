@@ -212,6 +212,8 @@ model Membership {
   /// Granular capability overrides, e.g. { "finance.export": true }
   capabilities    Json             @default("{}")
   status          MembershipStatus @default(ACTIVE)
+  /// Job title shown in brackets after the name on the team page, e.g. "Studio manager". Does not change access.
+  jobTitle        String?
   mfaEnrolled     Boolean          @default(false)
   accessExpiresAt DateTime?        @db.Timestamptz(3)
   lastReviewedAt  DateTime?        @db.Timestamptz(3)
