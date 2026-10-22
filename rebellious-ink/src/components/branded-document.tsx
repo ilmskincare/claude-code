@@ -1,8 +1,10 @@
 import Image from "next/image";
 import type { DocumentTemplateVersion } from "@/generated/prisma/client";
 import { renderDocumentBody } from "@/lib/markup";
+import { env } from "@/lib/env";
 
 export function BrandedDocument({ doc, recipientName, reference }: { doc: DocumentTemplateVersion; recipientName?: string; reference?: string }) {
+  const site = env().APP_BASE_URL.replace(/^https?:\/\//, "");
   return (
     <article className="paper">
       <header>
@@ -14,7 +16,7 @@ export function BrandedDocument({ doc, recipientName, reference }: { doc: Docume
       {renderDocumentBody(doc.bodyMarkdown)}
       <footer>
         <span>Rebellious Ink · {doc.templateKey} v{doc.version} · Owner: {doc.ownerName}{doc.approverName ? ` · Approved by ${doc.approverName}` : ""}</span>
-        <span>Review due {doc.reviewDate.toLocaleDateString("en-GB")} · Latest version: rebelliousink.example/guides/{doc.templateKey}</span>
+        <span>Review due {doc.reviewDate.toLocaleDateString("en-GB")} · Latest version: {site}/guides/{doc.templateKey}</span>
       </footer>
     </article>
   );

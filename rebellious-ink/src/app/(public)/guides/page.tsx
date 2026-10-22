@@ -6,7 +6,7 @@ export const metadata = { title: "Preparation and aftercare guides" };
 
 export default async function GuidesPage() {
   const docs = await db.documentTemplateVersion.findMany({ where: { isCurrent: true }, orderBy: [{ kind: "asc" }, { title: "asc" }] });
-  const groups = [["PREPARATION_GUIDE", "Preparation"], ["AFTERCARE_GUIDE", "Aftercare"], ["INFORMATION", "Information"]] as const;
+  const groups = [["PREPARATION_GUIDE", "Preparation"], ["AFTERCARE_GUIDE", "Aftercare"], ["INFORMATION", "Information and policies"], ["CONSENT_FORM", "Consent forms (read before your appointment)"]] as const;
   return (
     <div className="mx-auto max-w-4xl px-4 py-10">
       <PageHeader title="Client information library" intro="Branded, version-controlled guides you can read online, download as a PDF or receive by email with your booking. Each guide shows its version and review date." />

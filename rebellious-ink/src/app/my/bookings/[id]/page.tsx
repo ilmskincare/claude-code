@@ -15,7 +15,8 @@ export default async function MyBooking({ params, searchParams }: { params: Prom
   const p = await requirePrincipal();
   const a = await db.appointment.findUnique({ where: { id }, include: { artist: true, payments: { orderBy: { createdAt: "desc" } }, studio: true, generatedPdfs: true } });
   if (!a || (a.clientId !== p.userId && !can(p, "bookings.view_all") && a.artistId !== p.artistProfileId)) notFound();
-  const docs = await db.documentTemplateVersion.findMany({ where: { isCurrent: true, OR: [{ procedureType: a.category === "PIERCING" ? "piercing" : "tattoo" }, { procedureType: "all" }, ...(a.category === "PIERCING" ? [{ procedureType: "piercing_ear_face" }] : [])] } });
+  // Guides for this booking: the procedure's own, every piercing site for a piercing, and the general ones (age, deposits, complaints, privacy, allergies, medical conditions, infection control).
+  const docs = await db.documentTemplateVersion.findMany({ where: { isCurrent: true, kind: { in: ["PREPARATION_GUIDE", "AFTERCARE_GUIDE", "INFORMATION", "CONSENT_FORM"] }, procedureType: { in: ["all", "general", ...(a.category === "PIERCING" ? ["piercing", "piercing_ear_face", "piercing_oral", "piercing_body", "piercing_genital"] : ["tattoo"])] } }, orderBy: [{ kind: "asc" }, { title: "asc" }] });
   const paid = a.payments.find((x) => x.status === "SUCCEEDED" && x.purpose === "DEPOSIT");
   return (
     <>
