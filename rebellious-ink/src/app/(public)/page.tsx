@@ -14,7 +14,7 @@ export default async function HomePage() {
         <div className="mx-auto max-w-6xl px-4 py-16 md:py-24 grid md:grid-cols-[1.2fr_1fr] gap-10 items-center">
           <div>
             <p className="text-acid-bright uppercase tracking-[.3em] text-sm mb-4">Tattoo &amp; piercing studio</p>
-            <h1 className="text-4xl md:text-6xl font-bold leading-tight">Bold work.<br />Honest advice.<br /><span className="text-acid">Medical-grade precision.</span></h1>
+            <h1 className="text-4xl md:text-6xl font-bold leading-tight">Bold work.<br />Honest advice.<br /><span className="text-acid">Sterile precision.</span></h1>
             <p className="mt-6 text-lg max-w-xl opacity-85">Around here we don&apos;t do pretentious or shortcuts. This is the tattoo studio for the people, built on high-calibre artistry and zero compromise on your safety. We cater to the Rebellious Hustlers who grind hard and live by their own rules. We match that energy with honesty, elite talent and a sterile environment that treats your skin with the respect it deserves. No pressure, no fake promises or availability. Talk directly to your artist or piercer, browse real healed work and get straight answers.</p>
             <p className="mt-4 text-xl font-bold text-acid-bright">Pain is temporary, ink is forever.</p>
             <div className="mt-8 flex flex-wrap gap-3">
