@@ -1,0 +1,8 @@
+docs/screenshots
+test-results
+playwright-report
+storage
+storage-test
+tests
+.env
+.env.test
