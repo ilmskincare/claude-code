@@ -242,3 +242,10 @@ Note: during one full local test run the marketing integration test failed once 
 - New Owner, then Documents page lists every document with its "Practitioner to confirm" count, a Read and PDF link, and an Approve button that records the approver's name; approval can be withdrawn. Consent forms now appear in the public library and bookings list every guide relevant to the procedure. The document footer prints the real site address.
 - Contract drafts for the owner and a solicitor in `docs/contracts/`: chair rent, resident artist on commission, guest artist, piercer, apprentice and junior artist, plus a cover note on employment status, a schedule of commercial terms and a daily settlement explainer. Not loaded into the app.
 
+## 26 October 2026: skills catalogue missing from production (fixed)
+
+- Symptom: Owner, then Apprentices, and every apprentice's My training page showed "0 / 0" skills with nothing to tick. The owner could not show the skills list.
+- Cause: the apprenticeship skills catalogue (118 staged skills in `src/content/skills.ts`) is loaded by the development seed only. The production seed written for go-live did not include it, so the live `Skill` table was empty. Pages rendered without error, which is why it went unnoticed until an apprentice was added.
+- Fix: `prisma/sql/skills-catalogue-v1.sql`, generated from the same content file, loaded into production (118 active skills). It is idempotent and refreshes wording and order on re-run without touching recorded progress. Added to the production seed so a rebuild includes it.
+- Also loaded this week: 23 document library drafts, six stamp capsules, three portfolio photos for Elle Evaa, four demo staff accounts and one demo enquiry (ENQ-2026-000002) for the owner walk-through.
+
