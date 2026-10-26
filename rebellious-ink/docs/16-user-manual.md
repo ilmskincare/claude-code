@@ -62,6 +62,15 @@ Access comes from the role chosen in the dropdown on the Artists & models page. 
 
 A job title (for example "Studio manager") can be shown in brackets after someone's name on the team page. It is a label only and does not change access.
 
+### Putting it on a phone like an app
+
+There is nothing to download from an app store. The site installs itself as an icon on the home screen and opens full screen like an app:
+
+- **iPhone or iPad.** Open https://rebelliousink.tattoo/login?staff=1 in Safari (it must be Safari), tap the Share button (the square with an arrow), then "Add to Home Screen", then Add.
+- **Android.** Open the same address in Chrome, tap the three dots, then "Add to Home screen" or "Install app", then Install.
+
+The icon is the studio logo. Staff sign in once and stay signed in on that device until they sign out, are reset, or are suspended. Clients can do the same with the main address.
+
 ### Phones and tablets
 
 The whole site works on a phone. Staff pages are easiest on a tablet or laptop because of the tables. The games have been tested on iPad Safari.
