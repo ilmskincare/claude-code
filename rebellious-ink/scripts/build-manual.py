@@ -45,6 +45,8 @@ while i < len(lines):
 missing=[h for h in PLACE if h not in used]
 md2="\n".join(out)
 body=md2.split("\n",1)[1]
+# The Markdown has its own plain contents list between a line "Contents" and section 1; the PDF has a real one, so drop it.
+body=re.sub(r"\n+Contents\n.*?(?=\n## 1\. )", "\n", body, count=1, flags=re.S)
 html=markdown.markdown(body, extensions=["tables","toc","sane_lists","md_in_html"], extension_configs={"toc":{"toc_depth":"2-3"}})
 logo=base64.b64encode(open("public/brand/rebellious-ink-logo.jpg","rb").read()).decode()
 toc=re.findall(r'<h2 id="([^"]+)">(.*?)</h2>', html)
@@ -65,7 +67,7 @@ html,body {{ font-family: Helvetica, Arial, sans-serif; color:#111; font-size: 1
 .toc h2 {{ border:0; margin-top:0; }}
 .toc ol {{ list-style: none; padding:0; counter-reset: s; column-count: 2; column-gap: 10mm; }}
 .toc li {{ counter-increment: s; padding: 1.6mm 0; border-bottom: 1px solid var(--line); break-inside: avoid; }}
-.toc li::before {{ content: counter(s) ". "; color: var(--acid-deep); font-weight: 700; }}
+.toc li::before {{ content: ""; }}
 .toc a {{ color:#111; text-decoration:none; }}
 h2.section {{ page-break-before: always; font-size: 18pt; margin: 0 0 4mm; padding-bottom: 2mm; border-bottom: 3px solid var(--acid); }}
 h3 {{ font-size: 12.5pt; margin: 6mm 0 2mm; color: var(--ink); page-break-after: avoid; }}
