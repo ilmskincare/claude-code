@@ -1,5 +1,7 @@
 # Flash images to replace on the live site
 
+**Update, 28 October 2026.** The twelve archive catalogue designs below are retired. The catalogue now holds the studio's own house flash: winged propeller, sacred heart, clipper ship, dagger and crescent moon, and luna moth, each offered in colour and in black and grey (ten tiles, filterable by colour), all available to the apprentice at £30. The six archive gumball capsules remain alongside the stamp set.
+
 Taken from the live database on 22 October 2026. Every design on rebelliousink.tattoo is currently a public-domain archive crop under the "House flash (archive)" profile. Replace each with original studio artwork (yours, or an artist's with their written permission). Keep the titles or rename them as you upload.
 
 ## Image spec (same for every file)

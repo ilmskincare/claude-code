@@ -25,3 +25,7 @@ Logo and brand assets: supplied by the owner. Product photos, portfolio and appr
 
 Six postage-stamp-style designs (`flash/stamps/stamp-*.png`) are original vector artwork generated for Rebellious Ink by `scripts/stamp-flash.mjs` on 22 October 2026. No third-party images or fonts beyond the system sans-serif. Rights: the studio.
 
+## House flash (catalogue)
+
+Ten images under `flash/house/` (five subjects in colour and black and grey) supplied by the studio on 28 October 2026 as its own artwork. Rights: the studio. The archive catalogue designs are retired but kept on record.
+
