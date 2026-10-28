@@ -244,7 +244,7 @@ export async function bookDesign(p: Principal, input: z.infer<typeof bookDesignS
   const s = await flashSettings();
   if (!s.fixedPlacements.map((x) => x.toLowerCase()).includes(input.placement.toLowerCase())) throw new ValidationError("Flash prices only apply to the listed flat areas. For anywhere else, contact the desk for a custom price.");
   if (input.sizeCm != null && !s.sizeOptionsCm.includes(input.sizeCm)) throw new ValidationError("Choose a size from the list. For a bigger piece, contact the desk for a custom price.");
-  const design = await db.design.findUnique({ where: { id: input.designId }, include: { artist: { include: { supervisees: { where: { isPublished: true, acceptsEnquiries: true } } } } } });
+  const design = await db.design.findUnique({ where: { id: input.designId }, include: { artist: true } });
   if (!design || design.status === "RETIRED") throw new NotFoundError("Design not found");
   if (design.collection !== "CATALOGUE" && !override) throw new ValidationError("This design is only available through its game.");
   const basePrice = override ? { totalPence: override.totalPence, depositPence: override.depositPence, estimatedMinutes: override.estimatedMinutes, maxCm: s.smallMaxCm } : priceFor(design, input.size, input.tier, s);
@@ -252,7 +252,7 @@ export async function bookDesign(p: Principal, input: z.infer<typeof bookDesignS
   const price = { ...basePrice, maxCm: input.sizeCm ?? basePrice.maxCm };
   let artistId = design.artistId;
   if (input.tier === "apprentice") {
-    const apprentices = design.artist.supervisees.filter((a) => a.kind === "APPRENTICE");
+    const apprentices = design.apprenticeAvailable ? await apprenticesForDesignArtist(design.artistId) : [];
     const chosen = apprentices.find((a) => a.id === input.apprenticeId) ?? (apprentices.length === 1 ? apprentices[0] : undefined);
     if (!chosen) throw new ValidationError("Choose which supervised apprentice you would like.");
     artistId = chosen.id;
@@ -297,11 +297,25 @@ export async function catalogue(filter: CatalogueFilter = {}) {
   return { items: filtered, themes, settings: s };
 }
 
+/**
+ * Apprentices who may take a supervised slot on a design: those the design's artist supervises, or, where that
+ * artist supervises nobody (the house flash profile), every published apprentice with a published supervisor.
+ * Apprentices never take general enquiries, so acceptsEnquiries is not required here; the design's own
+ * apprenticeAvailable switch is the consent, and the supervisor's hours still cap the slots.
+ */
+export async function apprenticesForDesignArtist(artistId: string) {
+  const own = await db.artistProfile.findMany({ where: { supervisorId: artistId, kind: "APPRENTICE", isPublished: true }, include: { supervisor: { select: { displayName: true } } }, orderBy: { displayName: "asc" } });
+  if (own.length) return own;
+  return db.artistProfile.findMany({ where: { kind: "APPRENTICE", isPublished: true, supervisor: { isPublished: true } }, include: { supervisor: { select: { displayName: true } } }, orderBy: { displayName: "asc" } });
+}
+
 export async function designById(id: string) {
   await releaseLapsedDesignHolds();
   const s = await flashSettings();
-  const d = await db.design.findUnique({ where: { id }, include: { artist: { include: { supervisees: { where: { kind: "APPRENTICE", isPublished: true, acceptsEnquiries: true }, include: { supervisor: { select: { displayName: true } } } } } }, sheet: true } });
-  if (!d || d.status === "RETIRED" || d.collection !== "CATALOGUE" || !d.artist.isPublished) return null;
+  const found = await db.design.findUnique({ where: { id }, include: { artist: true, sheet: true } });
+  if (!found || found.status === "RETIRED" || found.collection !== "CATALOGUE" || !found.artist.isPublished) return null;
+  const supervisees = found.apprenticeAvailable ? await apprenticesForDesignArtist(found.artistId) : [];
+  const d = { ...found, artist: { ...found.artist, supervisees } };
   return { design: d, prices: effectivePrices(d, s), settings: s };
 }
 

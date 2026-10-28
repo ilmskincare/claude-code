@@ -125,4 +125,17 @@ describe("apprentice tier (supervised)", () => {
     const plain = await createDesign(artistB, { ...base, title: "Plain", artistId: s.artistB.id }, png());
     await expect(bookDesign(client1, { designId: plain.id, size: "small", tier: "apprentice", placement: "thigh (outer)", declaredOver18: true })).rejects.toThrow(/not offered/);
   });
+
+  it("a house design whose owner supervises nobody offers every published apprentice, even with books closed to enquiries", async () => {
+    const hu = await testDb.user.create({ data: { email: "house@test.local", name: "House", memberships: { create: { studioId: s.studio.id, roles: ["RESIDENT_ARTIST"] } } } });
+    const house = await testDb.artistProfile.create({ data: { userId: hu.id, slug: "house", displayName: "House flash", kind: "TATTOO_ARTIST", isPublished: true, acceptsEnquiries: true } });
+    await testDb.artistProfile.update({ where: { slug: "app" }, data: { acceptsEnquiries: false } });                      // apprentices do not take enquiries
+    const d = await createDesign(owner, { ...base, title: "House moth", apprenticeAvailable: true, artistId: house.id }, png());
+    const page = await designById(d.id);
+    expect(page!.design.artist.supervisees.map((a) => a.slug)).toEqual(["app"]);
+    const r = await bookDesign(client1, { designId: d.id, size: "small", tier: "apprentice", placement: "thigh (outer)", declaredOver18: true });
+    expect(r.artistId).toBe((await testDb.artistProfile.findUniqueOrThrow({ where: { slug: "app" } })).id);
+    const off = await createDesign(owner, { ...base, title: "House plain", apprenticeAvailable: false, artistId: house.id }, png());
+    expect((await designById(off.id))!.design.artist.supervisees).toEqual([]);
+  });
 });

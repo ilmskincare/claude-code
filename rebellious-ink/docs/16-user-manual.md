@@ -383,6 +383,8 @@ Each apprentice with their supervisor, verified hours against the target, core s
 ### Flash
 All designs and sheets. The page opens with the defaults (price, size, apprentice price), the number of live designs, one-offs still available and one-offs already booked, a bulk price form, links to shareable sheets for each artist, uploaded sheets and the full list of designs with their prices and status (Available, Held, Booked or Retired).
 
+Apprentice slots on flash: ticking "apprentice available" on a design offers it at the apprentice price (Settings, Flash: apprentice price, currently £30). The apprentices offered are those supervised by the design's artist; for house designs, whose profile supervises nobody, every published apprentice with a published supervisor is offered. Apprentices do not need books open, because they never take general enquiries, and the supervisor's hours and leave still cap the slots.
+
 - **Add a design**: title, artist, image (JPEG, PNG, WebP or HEIC, under 15 MB), theme, colour (black or colour), collection, prices (blank means follow the studio default), apprentice available with apprentice prices, repeatable or one-off, an optional edition size and an optional fun line (both for later games and not used today). The artist and image are required; a title is 2 to 80 characters.
 - **Collections**: Catalogue (the public fixed-price wall) and Gumball (the machine) are live. Tarot, Claw, Drop, Advent and Needle Town are reserved for later games; a design placed in one of those collections is not shown or bookable anywhere yet. Stamp designs for the gumball should be given the theme "stamp".
 - **Retire** removes a design from the catalogue and every game but keeps the record and any bookings.
