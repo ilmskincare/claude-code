@@ -25,7 +25,7 @@ export function PublicShell({ children, banner, gumball = true }: { children: Re
       <footer className="dark-shell mt-16 border-t border-graphite">
         <div className="mx-auto max-w-6xl px-4 py-8 text-sm opacity-80 grid gap-4 md:grid-cols-3">
           <div><Logo size={32} /><p className="mt-2">Tattoo and piercing studio, United Kingdom.<br />18+ for tattooing, photographic ID required.</p></div>
-          <div><p className="font-semibold text-acid-bright">Information</p><ul className="mt-1 space-y-1"><li><Link href="/guides">Preparation and aftercare guides</Link></li><li><Link href="/privacy">Privacy notice</Link></li><li><Link href="/enquire">Make an enquiry</Link></li></ul></div>
+          <div><p className="font-semibold text-acid-bright">Information</p><ul className="mt-1 space-y-1"><li><a href="https://www.instagram.com/rebellious_ink_tattoo" target="_blank" rel="noopener noreferrer">Instagram: @rebellious_ink_tattoo</a></li><li><Link href="/guides">Preparation and aftercare guides</Link></li><li><Link href="/privacy">Privacy notice</Link></li><li><Link href="/enquire">Make an enquiry</Link></li></ul></div>
           <div><p className="font-semibold text-acid-bright">Need medical advice?</p><p className="mt-1">We cannot diagnose. For worsening redness, swelling, heat, pain, pus or fever contact your GP, NHS 111, or 999 in an emergency.</p></div>
         </div>
       </footer>
