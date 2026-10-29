@@ -320,7 +320,8 @@ export async function designById(id: string) {
 }
 
 export async function sheetsForCatalogue(artistSlug?: string) {
-  return db.flashSheet.findMany({ where: { artist: { isPublished: true, ...(artistSlug ? { slug: artistSlug } : {}) } }, include: { artist: { select: { slug: true, displayName: true } }, designs: { where: { status: { not: "RETIRED" } }, orderBy: { sortOrder: "asc" } } }, orderBy: { createdAt: "desc" } });
+  const sheets = await db.flashSheet.findMany({ where: { artist: { isPublished: true, ...(artistSlug ? { slug: artistSlug } : {}) } }, include: { artist: { select: { slug: true, displayName: true } }, designs: { where: { status: { not: "RETIRED" } }, orderBy: { sortOrder: "asc" } } }, orderBy: { createdAt: "desc" } });
+  return sheets.filter((sh) => sh.designs.length > 0);                                 // a sheet whose designs are all retired is off the site
 }
 
 export async function designsForManagement(artistId?: string) {
