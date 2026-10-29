@@ -35,6 +35,14 @@ export async function canMentor(p: Principal, apprenticeUserId: string) {
   return profile?.supervisorId === p.artistProfileId;
 }
 
+/** Who a staff member may review: everyone (academy.signoff), or only the apprentices they supervise. */
+export async function mentorScope(p: Principal) {
+  if (can(p, "academy.signoff")) return { any: true, all: true, supervisedUserIds: [] as string[] };
+  if (!p.artistProfileId) return { any: false, all: false, supervisedUserIds: [] as string[] };
+  const sup = await db.artistProfile.findMany({ where: { supervisorId: p.artistProfileId }, select: { userId: true } });
+  return { any: sup.length > 0, all: false, supervisedUserIds: sup.map((s) => s.userId) };
+}
+
 export async function isApprentice(p: Principal) {
   return p.roles.includes("APPRENTICE") || can(p, "academy.learn");
 }

@@ -27,21 +27,6 @@ export default async function HomePage() {
           <div className="justify-self-center"><Image src="/brand/rebellious-ink-logo.jpg" alt="" width={360} height={360} className="rounded-full shadow-[0_0_80px_rgba(140,176,0,.35)]" priority /></div>
         </div>
       </section>
-      <section className="mx-auto max-w-6xl px-4 pt-10" aria-labelledby="cash-sign">
-        <aside className="card border-2 border-acid p-6 md:p-8 md:flex md:gap-8 md:items-start">
-          <div className="md:w-64 shrink-0"><p className="text-acid-deep uppercase tracking-[.3em] text-sm">A note from the studio</p><h2 id="cash-sign" className="text-3xl font-bold leading-tight mt-1">Cash is king, because every percentage counts.</h2></div>
-          <div className="mt-4 md:mt-0 space-y-3 text-[15px] opacity-90">
-            <p>At Rebellious Ink we value the true cost of our craftsmanship. For every Rebellious Hustler on our team the priority is simple: pay in cash and the artist keeps 100 per cent of what they earn. Card processors take a cut of every tap, straight out of an independent artist&apos;s pocket.</p>
-            <p>Choosing cash supports the studio&apos;s financial health and creative independence. Here is why cash keeps us strong:</p>
-            <ul className="list-disc pl-5 space-y-1">
-              <li><strong>No processing deductions.</strong> Every penny goes to the work.</li>
-              <li><strong>Immediate cash flow.</strong> We reinvest in premium inks, better equipment and client comfort.</li>
-              <li><strong>Straightforward transactions.</strong> Simple, quick, and in the studio&apos;s own hands.</li>
-            </ul>
-            <p>We appreciate your support in keeping our business thriving and independent. Deposits are taken when you book; the balance on the day is best paid in cash, and we always give a receipt.</p>
-          </div>
-        </aside>
-      </section>
       <section className="mx-auto max-w-6xl px-4 py-14">
         <div className="flex items-end justify-between mb-6"><h2 className="text-3xl font-bold">Artists</h2><Link href="/artists" className="underline">See all</Link></div>
         {artists.length === 0 ? <p className="opacity-70">Artist profiles are being set up.</p> : (
@@ -59,6 +44,22 @@ export default async function HomePage() {
             ))}
           </ul>
         )}
+      </section>
+      <section className="mx-auto max-w-6xl px-4 pb-14" aria-labelledby="cash-sign">
+        <aside className="card border-2 border-acid p-6 md:p-8 md:flex md:gap-8 md:items-start">
+          <div className="md:w-64 shrink-0"><p className="text-acid-deep uppercase tracking-[.3em] text-sm">A note from the studio</p><h2 id="cash-sign" className="text-3xl font-bold leading-tight mt-1">Cash is king, because every percentage counts.</h2></div>
+          <div className="mt-4 md:mt-0 space-y-3 text-[15px] opacity-90">
+            <p>At Rebellious Ink we value the true cost of our craftsmanship. For every Rebellious Hustler on our team the priority is simple: pay in cash and the artist keeps 100 per cent of what they earn. Card processors take a cut of every tap, straight out of an independent artist&apos;s pocket.</p>
+            <p>Choosing cash supports the studio&apos;s financial health and creative independence. Here is why cash keeps us strong:</p>
+            <ul className="list-disc pl-5 space-y-1">
+              <li><strong>No processing deductions.</strong> Every penny goes to the work.</li>
+              <li><strong>Immediate cash flow.</strong> We reinvest in premium inks, better equipment and client comfort.</li>
+              <li><strong>Straightforward transactions.</strong> Simple, quick, and in the studio&apos;s own hands.</li>
+            </ul>
+            <p>We appreciate your support in keeping our business thriving and independent. Deposits are taken when you book; the balance on the day is best paid in cash, and we always give a receipt.</p>
+            <div className="pt-2 flex flex-wrap gap-2"><Link href="/enquire" className="btn btn-primary">Book now</Link><Link href="/flash" className="btn btn-secondary">See the flash wall</Link></div>
+          </div>
+        </aside>
       </section>
       {gumball.enabled && (
       <section className="mx-auto max-w-6xl px-4 pb-14">

@@ -10,7 +10,7 @@ def gallery(items): return "".join(fig(n,c) for n,c in items)
 # Where each screenshot goes: after the first paragraph following the given heading (exact heading text).
 PLACE = {
  "### Signing in": [("login-client","The client sign-in tab: email link, no password"),("login-staff","The staff sign-in tab: username and password")],
- "## 2. What clients see: the public website": [("public-home","Home page"),("public-artists","Artists"),("public-artist-elle","An artist's public page"),("public-flash","Flash catalogue"),("public-play-gumball","Gumball machine"),("public-play-trio","Three machines"),("public-enquire","Enquiry form"),("public-guides","Client information library"),("public-guide-tattoo-aftercare","A guide, with the draft banner until approved"),("public-privacy","Privacy notice")],
+ "## 2. What clients see: the public website": [("public-home","Home page"),("public-artists","Artists"),("public-artist-elle","An artist's public page"),("public-flash","Flash catalogue"),("public-play-gumball","Gumball machine (switched off until launch; shown from the practice site)"),("public-play-trio","Three machines"),("public-enquire","Enquiry form"),("public-guides","Client information library"),("public-guide-tattoo-aftercare","A guide, with the draft banner until approved"),("public-privacy","Privacy notice")],
  "## 3. The client's journey, start to finish": [("client-enquiries","Client portal: My enquiries (test data)"),("client-enquiry-detail","An enquiry thread with the quote card (test data)"),("client-bookings","My bookings (test data)"),("client-booking-detail","A booking with deposit instructions and guides (test data)"),("client-documents","My documents"),("client-rewards","Rewards"),("client-preferences","Preferences")],
  "### Overview": [("owner-overview","Owner: Overview (test data)")],
  "### Chat": [("studio-chat","Staff chat (test data)")],
@@ -32,7 +32,7 @@ PLACE = {
  "### Settings": [("owner-settings","Settings")],
  "### Outbox": [("owner-mailbox","Notification outbox (test data)")],
  "## 6. The artist and piercer workspace": [("studio-today","Artist: Today (test data)"),("studio-enquiries","My enquiries (test data)"),("studio-enquiry-detail","An enquiry with the reply box and quote form (test data)"),("studio-diary","My diary (test data)"),("studio-hours","My hours (test data)"),("studio-earnings","My earnings (test data)"),("studio-portfolio","My portfolio (test data)"),("studio-flash","My flash (test data)"),("studio-profile","Profile & rates (test data)"),("studio-promotions","My promotions (test data)"),("studio-piercer-sales","Retail sales: the piercer's sale form (test data)"),("studio-stock","Studio stock (test data)")],
- "## 7. Apprentices and mentors": [("studio-apprentice-today","Apprentice: Today (test data)"),("studio-apprentice-training","My training: hours, photos, skills (test data)")],
+ "## 7. Apprentices and mentors": [("studio-apprentices","Mentor view: the apprentices you supervise (test data)"),("studio-apprentice-today","Apprentice: Today (test data)"),("studio-apprentice-training","My training: hours, photos, skills (test data)")],
 }
 lines=md.split("\n"); out=[]; i=0; pending=None; used=set()
 while i < len(lines):
@@ -88,7 +88,7 @@ figcaption::before {{ content: "Screen: "; color: var(--acid-deep); font-weight:
 hr {{ display:none; }}
 a {{ color: var(--acid-deep); }}
 </style></head><body>
-<section class="cover"><img src="data:image/jpeg;base64,{logo}" alt=""><p class="kicker">Rebellious Ink Studio OS</p><h1>User manual<br><span>Version 2</span></h1><p>26 October 2026. For the owner, the studio manager, the desk, artists, piercers and apprentices. Every page and button is named exactly as it appears on screen. Screens marked "test data" were captured on the practice site, which holds made-up clients and artists.</p></section>
+<section class="cover"><img src="data:image/jpeg;base64,{logo}" alt=""><p class="kicker">Rebellious Ink Studio OS</p><h1>User manual<br><span>Version 3</span></h1><p>29 October 2026. For the owner, the studio manager, the desk, artists, piercers and apprentices. Every page and button is named exactly as it appears on screen. Screens marked "test data" were captured on the practice site, which holds made-up clients and artists.</p></section>
 <section class="toc"><h2>Contents</h2><ol>{toc_html}</ol></section>
 {html}
 </body></html>"""

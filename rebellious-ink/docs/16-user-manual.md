@@ -495,7 +495,7 @@ Artists sign in as staff and land on Today. If you have an artist profile you se
 
 Apprentices can be given slots on flash designs marked apprentice-available, at the apprentice price, always under their supervisor. An apprentice's own public profile says all procedures are supervised, and their slots only open while the supervisor is in (section 3). An apprentice is added with Books open off, so for the apprentice tier to appear on flash designs, switch on Books open for them and make sure they are published.
 
-**Supervisors and mentors** verify or reject hours, review photos, move skills through Start, Ready for review and Sign off (or Not yet, which puts it back to in progress, or Renewal due), and add notes. The rules behind this: anyone holding the mentor sign-off permission, or the apprentice's named supervising artist, counts as a mentor for that apprentice. The screens for it (the Apprentices pages) sit inside the owner area, which today opens only for people who can see all enquiries, and the list page also needs the sign-off permission or owner access. In practice, therefore, hours and skills are verified by the owner. If you want a supervising artist to do it from their own login, ask the desk.
+**Supervisors and mentors** see Apprentices in their own artist workspace menu: the apprentices they supervise, or everyone for a person with the Mentor role. From there they verify or reject hours, review photos and move skills through Start, Ready for review and Sign off. The final junior-artist sign-off stays with the owner.
 
 **Junior-artist sign-off.** Only the owner can do this, it cannot be undone, and it needs all of the following:
 
