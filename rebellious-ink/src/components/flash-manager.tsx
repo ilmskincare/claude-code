@@ -17,7 +17,7 @@ export async function FlashManager({ artistId, basePath, canBulk }: { artistId?:
   const artistSlugs = [...new Set(rows.map((r) => r.artist.slug))];
   return (<>
     <PageHeader title={artistId ? "My flash" : "Flash catalogue"} intro={`Defaults: ${gbp(settings.smallPence)} up to ${settings.smallMaxCm} cm${settings.palmEnabled ? ` / Palm ${gbp(settings.palmPence)}` : ""}, apprentice ${gbp(settings.apprenticeSmallPence)}${settings.palmEnabled ? ` / ${gbp(settings.apprenticePalmPence)}` : ""}. ${canBulk ? "Change defaults under Settings; every design without its own price follows them." : "Leave a price blank to follow the studio default."}`} actions={<><Link href={`${basePath}/new`} className="btn btn-primary">Add design</Link><Link href={`${basePath}/sheets/new`} className="btn btn-secondary">Upload a sheet</Link></>} />
-    <div className="grid grid-cols-3 gap-4 mb-6"><Stat label="Live designs" value={live.length} /><Stat label="One-offs still available" value={live.filter((r) => !r.repeatable && r.status === "AVAILABLE").length} /><Stat label="Booked one-offs" value={rows.filter((r) => r.status === "BOOKED").length} /></div>
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6"><Stat label="Live designs" value={live.length} /><Stat label="One-offs still available" value={live.filter((r) => !r.repeatable && r.status === "AVAILABLE").length} /><Stat label="Booked one-offs" value={rows.filter((r) => r.status === "BOOKED").length} /></div>
     {canBulk && <div className="mb-6"><BulkPriceForm /></div>}
     <section className="card p-4 mb-6">
       <h2 className="text-xl font-bold mb-2">Shareable sheets with prices</h2>

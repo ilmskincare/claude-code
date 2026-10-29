@@ -118,6 +118,13 @@ a.nav-link:hover, a.nav-link[aria-current="page"] { background: var(--steel); op
 }
 
 table.data { width: 100%; border-collapse: collapse; font-size: .95rem; }
+/* Below desktop width a data table scrolls inside its own box instead of pushing the page sideways. */
+@media (max-width: 1023px) { table.data { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; white-space: nowrap; max-width: 100%; } table.data td, table.data th { white-space: normal; min-width: 7rem; } }
+img, svg, video, canvas { max-width: 100%; height: auto; }
+/* Grid cells and cards default to min-width:auto, which lets a wide table or a long <select> push them past the screen. */
+[class*="grid-cols"] > *, .card, main { min-width: 0; }
+select, .select, .input, .textarea { max-width: 100%; }
+.select { width: 100%; }
 table.data th, table.data td { text-align: left; padding: .6rem .5rem; border-bottom: 1px solid var(--border); vertical-align: top; }
 table.data th { font-size: .78rem; text-transform: uppercase; letter-spacing: .05em; color: var(--mist); }
 .dark-shell table.data th, .dark-shell table.data td { border-color: var(--graphite); }

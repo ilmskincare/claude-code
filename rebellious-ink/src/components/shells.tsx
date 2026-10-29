@@ -39,12 +39,18 @@ export function AppShell({ principal, area, nav, children }: { principal: Princi
   const dark = area !== "Client portal";
   return (
     <div className={`min-h-full flex flex-col md:flex-row ${dark ? "dark-shell" : ""}`}>
-      <aside className={`md:w-64 shrink-0 border-b md:border-b-0 md:border-r ${dark ? "border-graphite bg-charcoal" : "border-border bg-surface"}`}>
+      <aside className={`md:w-56 lg:w-64 shrink-0 border-b md:border-b-0 md:border-r ${dark ? "border-graphite bg-charcoal" : "border-border bg-surface"}`}>
         <div className="p-4 flex items-center justify-between md:block">
           <Link href={nav[0]?.href ?? "/"}><Logo size={36} /></Link>
           <p className={`text-xs uppercase tracking-widest mt-0 md:mt-3 ${dark ? "text-acid-bright" : "text-acid-deep"}`}>{area}</p>
         </div>
-        <nav aria-label={area} className="px-2 pb-3 flex md:flex-col gap-1 overflow-x-auto">
+        <details className="md:hidden px-2 pb-3 group">
+          <summary className={`cursor-pointer list-none px-3 py-2 rounded-lg font-semibold flex items-center justify-between ${dark ? "bg-steel" : "bg-surface-muted"}`}><span>Menu</span><span aria-hidden="true" className="text-xs opacity-70 group-open:rotate-180 transition-transform">▼</span></summary>
+          <nav aria-label={`${area} (mobile)`} className="mt-2 grid grid-cols-2 gap-1">
+            {nav.map((n) => <Link key={n.href} href={n.href} className={dark ? "nav-link" : "px-3 py-2 rounded-lg hover:bg-surface-muted"}>{n.label}</Link>)}
+          </nav>
+        </details>
+        <nav aria-label={area} className="hidden md:flex px-2 pb-3 flex-col gap-1">
           {nav.map((n) => <Link key={n.href} href={n.href} className={dark ? "nav-link whitespace-nowrap" : "px-3 py-2 rounded-lg hover:bg-surface-muted whitespace-nowrap"}>{n.label}</Link>)}
         </nav>
         <div className={`px-4 py-3 text-sm border-t ${dark ? "border-graphite" : "border-border"} flex items-center justify-between gap-2`}>
@@ -54,7 +60,7 @@ export function AppShell({ principal, area, nav, children }: { principal: Princi
         {can(principal, "studio.manage") && area !== "Owner command centre" && <Link href="/owner" className="block px-4 pb-3 text-xs underline">Switch to owner view</Link>}
         {principal.artistProfileId && area !== "Artist workspace" && <Link href="/studio" className="block px-4 pb-3 text-xs underline">Switch to artist view</Link>}
       </aside>
-      <main id="main" className="flex-1 p-4 md:p-8 max-w-6xl w-full">{children}</main>
+      <main id="main" className="flex-1 min-w-0 p-4 md:p-8 max-w-6xl w-full">{children}</main>
     </div>
   );
 }

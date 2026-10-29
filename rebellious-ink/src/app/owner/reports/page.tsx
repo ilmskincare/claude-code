@@ -23,7 +23,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
     <div className="grid lg:grid-cols-2 gap-6">
       {reports.map((rep) => (
         <section key={rep.key} className="card p-4">
-          <div className="flex items-start justify-between gap-3 mb-2"><div><h2 className="text-xl font-bold">{rep.title}</h2><p className="hint">{rep.blurb}</p></div><a className="btn btn-secondary shrink-0" href={`/owner/reports/export?report=${rep.key}&${qs}`}>Download CSV</a></div>
+          <div className="flex flex-wrap items-start justify-between gap-3 mb-2"><div><h2 className="text-xl font-bold">{rep.title}</h2><p className="hint">{rep.blurb}</p></div><a className="btn btn-secondary shrink-0" href={`/owner/reports/export?report=${rep.key}&${qs}`}>Download CSV</a></div>
           {rep.rows.length === 0 ? <p className="opacity-60 text-sm">Nothing in this period.</p> : (
             <div className="overflow-x-auto"><table className="data"><thead><tr>{rep.columns.map((c) => <th key={c}>{c}</th>)}</tr></thead><tbody>
               {rep.rows.map((row, i) => <tr key={i} className={String(row[0]) === "All" ? "font-bold" : ""}>{row.map((v, j) => <td key={j}>{rep.money?.includes(j) && typeof v === "number" ? formatPence(v) : v}</td>)}</tr>)}

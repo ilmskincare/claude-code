@@ -15,7 +15,7 @@ export function WeekPlanner({ weekStartIso, basePath, appointments, rules, linkP
   return (
     <div>
       <div className="flex items-center justify-between mb-3 text-sm"><Link className="underline" href={`${basePath}?week=${start.minus({ weeks: 1 }).toISODate()}`}>← Previous week</Link><strong>{start.toFormat("d LLL")} – {start.plus({ days: 6 }).toFormat("d LLL yyyy")}</strong><Link className="underline" href={`${basePath}?week=${start.plus({ weeks: 1 }).toISODate()}`}>Next week →</Link></div>
-      <div className="grid grid-cols-7 gap-1 overflow-x-auto min-w-[700px]">
+      <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0"><div className="grid grid-cols-7 gap-1 min-w-[700px]">
         {days.map((d) => {
           const dayAppts = appointments.filter((a) => DateTime.fromISO(a.startsAt, { zone: STUDIO_TZ }).hasSame(d, "day"));
           const dayRules = rules.filter((r) => r.weekday === d.weekday);
@@ -29,7 +29,7 @@ export function WeekPlanner({ weekStartIso, basePath, appointments, rules, linkP
             </div>
           );
         })}
-      </div>
+      </div></div>
       <p className="hint mt-2">Shaded = working hours. Red = confirmed, amber = awaiting deposit.</p>
     </div>
   );

@@ -91,7 +91,7 @@ The icon is the studio logo. Staff sign in once and stay signed in on that devic
 
 ### Phones and tablets
 
-The whole site works on a phone. Staff pages are easiest on a tablet or laptop because of the tables. The games have been tested on iPad Safari.
+The whole site works on a phone, tablet or desktop. On a phone or tablet the staff menu sits behind a Menu button at the top, and wide tables scroll sideways inside their box rather than the page. The games have been tested on iPad Safari.
 
 ---
 
