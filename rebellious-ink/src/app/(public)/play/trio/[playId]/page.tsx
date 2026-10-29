@@ -1,3 +1,4 @@
+import { gumballSettings } from "@/lib/gumball";
 import { notFound } from "next/navigation";
 import { trioPlayFor } from "@/lib/trio";
 import { getPrincipal } from "@/lib/session";
@@ -14,7 +15,7 @@ export default async function TrioResult({ params }: { params: Promise<{ playId:
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
       <BackLink href="/play/trio">Three machines</BackLink>
-      <TrioReveal playId={play.id} result={result} artists={artists} placements={placements} pricePence={result.pricePence} depositPence={result.depositPence} maxCm={maxCm} signedIn={Boolean(p)} alreadyBooked={play.status === "BOOKED"} />
+      <TrioReveal gumballOn={(await gumballSettings()).enabled} playId={play.id} result={result} artists={artists} placements={placements} pricePence={result.pricePence} depositPence={result.depositPence} maxCm={maxCm} signedIn={Boolean(p)} alreadyBooked={play.status === "BOOKED"} />
     </div>
   );
 }

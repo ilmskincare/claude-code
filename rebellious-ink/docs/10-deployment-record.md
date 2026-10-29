@@ -249,3 +249,12 @@ Note: during one full local test run the marketing integration test failed once 
 - Fix: `prisma/sql/skills-catalogue-v1.sql`, generated from the same content file, loaded into production (118 active skills). It is idempotent and refreshes wording and order on re-run without touching recorded progress. Added to the production seed so a rebuild includes it.
 - Also loaded this week: 23 document library drafts, six stamp capsules, three portfolio photos for Elle Evaa, four demo staff accounts and one demo enquiry (ENQ-2026-000002) for the owner walk-through.
 
+## 29 October 2026: go-live tidy
+
+- Gumball is now a launch switch: with "Gumball: machine switched on" off in Settings, the page returns Not found, and the home panel, header link and the three machines' cross-link disappear. Switched off on the live site until launch; the three machines remain.
+- House Flash is flagged as the studio's catalogue account (`isHouse`, migration `20261029090000_house_account`): shown in the flash catalogue, never on the Artists page, the home page or the enquiry form's artist list.
+- Demo accounts (demo.artist, demo.piercer, demo.apprentice, demo.desk) suspended, unpublished and marked removed; the demo enquiry ENQ-2026-000002 cancelled; the leftover "Moth (archive)" design retired.
+- Public guides library lists approved documents only, with a "being finalised" line while none are approved; unapproved guides and their PDFs return Not found to the public but stay viewable to staff who hold documents.manage (the Documents page links). Booking pages list approved guides only.
+- Privacy notice: draft badge removed and the placeholder "legal entity to be confirmed" wording replaced with Rebellious Ink. The owner should confirm the legal entity name and address with their adviser.
+- Accounts added this week: Sophie (username tidied), Honey (apprentice, supervised by Elle Evaa), Chris (resident artist, 60/40 commission split recorded).
+

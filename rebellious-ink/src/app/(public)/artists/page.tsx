@@ -9,7 +9,7 @@ import { PromotionRibbon } from "@/components/promotion-ribbon";
 export const metadata = { title: "Artists" };
 
 export default async function ArtistsPage() {
-  const [artists, promos] = await Promise.all([db.artistProfile.findMany({ where: { isPublished: true }, include: { portfolioItems: { where: { publishedAt: { not: null } }, include: { asset: true }, orderBy: [{ isCover: "desc" }, { sortOrder: "asc" }], take: 3 }, supervisor: true }, orderBy: { displayName: "asc" } }), livePromotions()]);
+  const [artists, promos] = await Promise.all([db.artistProfile.findMany({ where: { isPublished: true, isHouse: false }, include: { portfolioItems: { where: { publishedAt: { not: null } }, include: { asset: true }, orderBy: [{ isCover: "desc" }, { sortOrder: "asc" }], take: 3 }, supervisor: true }, orderBy: { displayName: "asc" } }), livePromotions()]);
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
       <PageHeader title="Our artists and piercers" intro="Every image here is genuine client work published with that client's separate permission. Nothing is AI-generated or retouched to change the result." />

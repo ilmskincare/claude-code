@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { machineState } from "@/lib/gumball";
+import { notFound } from "next/navigation";
+import { machineState, gumballSettings } from "@/lib/gumball";
 import { getPrincipal } from "@/lib/session";
 import { getVisitorId, hasPassedAgeGate } from "@/lib/visitor";
 import { track } from "@/lib/analytics";
@@ -8,6 +9,7 @@ import { GumballMachine, AgeGate, RestockAlert, PricePanel, type MachineMode } f
 export const metadata = { title: "Gumball machine: get what you get" };
 
 export default async function GumballPage() {
+  if (!(await gumballSettings()).enabled) notFound();                                   // launch switch: Settings, "Gumball: machine switched on"
   const [p, visitorId, adult] = await Promise.all([getPrincipal(), getVisitorId(), hasPassedAgeGate()]);
   const m = await machineState(visitorId, p?.userId ?? null);
   await track("game_viewed", { game: "gumball", visitorId, userId: p?.userId ?? null });

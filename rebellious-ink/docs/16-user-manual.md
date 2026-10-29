@@ -394,6 +394,8 @@ Apprentice slots on flash: ticking "apprentice available" on a design offers it 
 - Artists see the same form under My flash for their own designs.
 
 ### Gumball
+
+Launch switch: the setting "Gumball: machine switched on" controls whether the gumball exists on the public site at all. Off, the page returns Not found and every link to it disappears; on, it is live. The three machines game has its own switch.
 The machine's dashboard: capsules available, spins and bookings in the last 7 days, and the number of people waiting for a restock alert. Under it, the last 30 days of first-party event counts, the list of capsule designs (add or retire designs under Flash), the 50 most recent spins, and a Three machines panel with the same measures and the latest 30 goes. The machine shows as restocking when available designs drop below the minimum in Settings. When stock is back above the minimum and people are waiting, the owner can press the button to email everyone who asked to be told (each person is emailed once, and then marked as told). Both games' prices, limits and lists are changed under Settings.
 
 ### Promotions

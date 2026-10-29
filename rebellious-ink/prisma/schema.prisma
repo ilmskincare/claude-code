@@ -276,6 +276,8 @@ model ArtistProfile {
   instagramHandle  String?
   avatarKey        String?          // artist logo or portrait in private storage, served via signed URL
   isPublished      Boolean          @default(false)
+  /// The studio's own catalogue account (house flash): shown in the flash catalogue, never listed as an artist.
+  isHouse          Boolean          @default(false)
   acceptsEnquiries Boolean          @default(true)
   /// For apprentices: the supervising practitioner shown on client-facing reservations.
   supervisorId     String?

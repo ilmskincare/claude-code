@@ -4,7 +4,7 @@ import type { Principal } from "@/lib/rbac";
 import { can } from "@/lib/rbac";
 import { signOutAction } from "@/app/actions/auth";
 
-export function PublicShell({ children, banner }: { children: React.ReactNode; banner?: React.ReactNode }) {
+export function PublicShell({ children, banner, gumball = true }: { children: React.ReactNode; banner?: React.ReactNode; gumball?: boolean }) {
   return (
     <>
       <header className="dark-shell border-b border-graphite">
@@ -13,7 +13,7 @@ export function PublicShell({ children, banner }: { children: React.ReactNode; b
           <nav aria-label="Main" className="flex flex-wrap items-center justify-end gap-1 text-sm">
             <Link className="nav-link" href="/artists">Artists</Link>
             <Link className="nav-link" href="/flash">Flash</Link>
-            <Link className="nav-link" href="/play/gumball">Gumball</Link>
+            {gumball && <Link className="nav-link" href="/play/gumball">Gumball</Link>}
             <Link className="nav-link" href="/guides">Guides</Link>
             <Link className="nav-link" href="/login">Sign in</Link>
             <Link className="btn btn-primary ml-2" href="/enquire">Enquire</Link>

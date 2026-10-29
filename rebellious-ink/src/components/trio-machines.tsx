@@ -93,7 +93,7 @@ export function TrioMachines({ mode, pullsLeft }: { mode: "off" | "locked" | "re
 }
 
 /** Result page: the three machines land one after another, then the brief and the booking card appear. */
-export function TrioReveal({ playId, result, artists, placements, pricePence, depositPence, maxCm, signedIn, alreadyBooked }: { playId: string; result: { ink: string; style: string; subject: string }; artists: { id: string; slug: string; displayName: string }[]; placements: string[]; pricePence: number; depositPence: number; maxCm: number; signedIn: boolean; alreadyBooked: boolean }) {
+export function TrioReveal({ playId, result, artists, placements, pricePence, depositPence, maxCm, signedIn, alreadyBooked, gumballOn = true }: { playId: string; gumballOn?: boolean; result: { ink: string; style: string; subject: string }; artists: { id: string; slug: string; displayName: string }[]; placements: string[]; pricePence: number; depositPence: number; maxCm: number; signedIn: boolean; alreadyBooked: boolean }) {
   const [landed, setLanded] = useState(0);
   const [state, action, pending] = useActionState(bookTrioAction, undefined);
   useEffect(() => {
@@ -132,7 +132,7 @@ export function TrioReveal({ playId, result, artists, placements, pricePence, de
             <p className="hint">What you get is what you get: no swaps. Your artist sketches the design and confirms size and placement in your private thread before the day. Free touch-up included.</p>
           </form>
         )}
-        <p className="hint mt-4">Fancy a drawn design instead? Try the <Link href="/play/gumball" className="underline">gumball machine</Link>.</p>
+        {gumballOn && <p className="hint mt-4">Fancy a drawn design instead? Try the <Link href="/play/gumball" className="underline">gumball machine</Link>.</p>}
       </aside>
     </div>
   );
