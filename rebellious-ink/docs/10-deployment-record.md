@@ -265,4 +265,5 @@ Note: during one full local test run the marketing integration test failed once 
 - 29 October: the cash-is-king note moved below the artists on the home page with Book now and See the flash wall buttons.
 - 29 October: mentors reach apprentices from the artist workspace. New Apprentices pages under /studio/apprentices (list and review) for anyone with academy.signoff or who supervises an apprentice; the owner's pages are unchanged. Damien Cooper given the Mentor role alongside Resident artist so he can verify hours and sign off skills; the final junior-artist decision stays with studio.manage.
 - 29 October: letters, the artist set-up form, the formulation brief and the user manual (v3, screenshots re-captured) regenerated in the red brand with the new logo.
+- 29 October: the new resident artist's correct name is Damian Cooper (username `damian`, page /artists/damian-cooper). A reusable artist welcome guide (login steps, what to fill in, day-to-day use, mentoring) lives in docs/letters as a template; the personalised copy with a one-time password is never committed.
 
