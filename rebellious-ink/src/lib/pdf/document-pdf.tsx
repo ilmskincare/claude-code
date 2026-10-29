@@ -3,7 +3,7 @@ import path from "node:path";
 import { createHash } from "node:crypto";
 import type { DocumentTemplateVersion } from "@/generated/prisma/client";
 
-const ACID = "#8cb000", ACID_DEEP = "#5f8300", INK = "#070807", RED = "#e0533f";
+const ACID = "#e0202a", ACID_DEEP = "#a3121a", INK = "#070807", RED = "#e0533f";
 const s = StyleSheet.create({
   page: { paddingTop: 48, paddingBottom: 60, paddingHorizontal: 48, fontFamily: "Helvetica", fontSize: 10.5, lineHeight: 1.5, color: "#111" },
   header: { flexDirection: "row", alignItems: "center", borderBottomWidth: 3, borderBottomColor: ACID, paddingBottom: 10, marginBottom: 14 },
@@ -15,10 +15,10 @@ const s = StyleSheet.create({
   p: { marginBottom: 6 },
   li: { flexDirection: "row", marginBottom: 3, paddingLeft: 6 },
   bullet: { width: 10 },
-  callout: { borderLeftWidth: 4, borderLeftColor: ACID, backgroundColor: "#f6f8f0", padding: 8, marginVertical: 6, borderRadius: 3 },
+  callout: { borderLeftWidth: 4, borderLeftColor: ACID, backgroundColor: "#f8f4f3", padding: 8, marginVertical: 6, borderRadius: 3 },
   urgent: { borderLeftColor: RED },
   draft: { borderLeftWidth: 4, borderLeftColor: RED, backgroundColor: "#fdecea", padding: 8, marginBottom: 8 },
-  footer: { position: "absolute", bottom: 28, left: 48, right: 48, borderTopWidth: 1, borderTopColor: "#d7dccd", paddingTop: 6, fontSize: 7.5, color: "#555", flexDirection: "row", justifyContent: "space-between" },
+  footer: { position: "absolute", bottom: 28, left: 48, right: 48, borderTopWidth: 1, borderTopColor: "#ddd6d3", paddingTop: 6, fontSize: 7.5, color: "#555", flexDirection: "row", justifyContent: "space-between" },
 });
 
 function Body({ body }: { body: string }) {

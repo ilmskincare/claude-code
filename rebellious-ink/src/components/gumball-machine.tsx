@@ -10,7 +10,7 @@ const gbp = (p: number) => `£${(p / 100).toFixed(0)}`;
 function capsulePile(count: number) {
   const rows = [{ cy: 282, n: 4 }, { cy: 256, n: 5 }, { cy: 230, n: 6 }, { cy: 204, n: 6 }, { cy: 178, n: 5 }];
   const out: { cx: number; cy: number; a: string; b: string }[] = [];
-  const colours = [["#8cb000", "#e9ecdc"], ["#e9ecdc", "#5f8300"], ["#a6d118", "#131613"], ["#5f8300", "#e9ecdc"]];
+  const colours = [["#e0202a", "#e9ecdc"], ["#e9ecdc", "#a3121a"], ["#ff4a52", "#131613"], ["#a3121a", "#e9ecdc"]];
   let left = Math.min(count, 26);
   for (const row of rows) {
     if (left <= 0) break;
@@ -22,7 +22,7 @@ function capsulePile(count: number) {
   return out;
 }
 
-/** The machine drawn in brand style: black body, acid-green globe, crown on top, RI shield on the coin slot, capsules piled inside. The crank and flap are real controls. */
+/** The machine drawn in brand style: black body, red globe, crown on top, RI shield on the coin slot, capsules piled inside. The crank and flap are real controls. */
 export function MachineArt({ spinning, capsules = 14, locked = false, glow = false, onCrank }: { spinning: boolean; capsules?: number; locked?: boolean; glow?: boolean; onCrank?: () => void }) {
   const pile = capsulePile(capsules);
   const handle = onCrank ? { role: "button" as const, tabIndex: 0, onClick: onCrank, onKeyDown: (e: React.KeyboardEvent) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onCrank(); } }, style: { cursor: "pointer" } } : {};
@@ -30,10 +30,10 @@ export function MachineArt({ spinning, capsules = 14, locked = false, glow = fal
     <svg viewBox="0 0 360 520" className="w-full max-w-sm mx-auto" role="img" aria-label={`Illustrated gumball machine with ${capsules} capsule${capsules === 1 ? "" : "s"} inside`}>
       <defs><radialGradient id="globe" cx="40%" cy="35%" r="70%"><stop offset="0" stopColor="#1b2410" /><stop offset="1" stopColor="#070807" /></radialGradient></defs>
       {/* crown */}
-      <path d="M140 62 L155 30 L172 56 L180 22 L188 56 L205 30 L220 62 Z" fill="#8cb000" stroke="#070807" strokeWidth="3" />
-      <rect x="138" y="60" width="84" height="12" rx="3" fill="#8cb000" />
+      <path d="M140 62 L155 30 L172 56 L180 22 L188 56 L205 30 L220 62 Z" fill="#e0202a" stroke="#070807" strokeWidth="3" />
+      <rect x="138" y="60" width="84" height="12" rx="3" fill="#e0202a" />
       {/* globe */}
-      <g className="gumball-globe"><circle cx="180" cy="190" r="118" fill="url(#globe)" stroke="#8cb000" strokeWidth="5" />
+      <g className="gumball-globe"><circle cx="180" cy="190" r="118" fill="url(#globe)" stroke="#e0202a" strokeWidth="5" />
         {pile.map((c, i) => <g key={i}>
           <circle cx={c.cx} cy={c.cy} r="13" fill={c.a} stroke="#070807" strokeWidth="1.5" />
           <path d={`M${c.cx - 13} ${c.cy} A13 13 0 0 1 ${c.cx + 13} ${c.cy} Z`} fill={c.b} stroke="#070807" strokeWidth="1.5" />
@@ -42,25 +42,25 @@ export function MachineArt({ spinning, capsules = 14, locked = false, glow = fal
         <ellipse cx="135" cy="120" rx="34" ry="14" fill="#e9ecdc" opacity=".12" transform="rotate(-30 135 120)" />
       </g>
       {/* body */}
-      <path d="M90 300 L270 300 L285 500 L75 500 Z" fill="#131613" stroke="#8cb000" strokeWidth="4" />
-      <rect x="120" y="300" width="120" height="24" fill="#070807" stroke="#8cb000" strokeWidth="3" />
+      <path d="M90 300 L270 300 L285 500 L75 500 Z" fill="#131613" stroke="#e0202a" strokeWidth="4" />
+      <rect x="120" y="300" width="120" height="24" fill="#070807" stroke="#e0202a" strokeWidth="3" />
       {/* coin slot with RI shield */}
-      <path d="M180 340 L202 348 L202 372 L180 390 L158 372 L158 348 Z" fill="#070807" stroke="#8cb000" strokeWidth="3" />
-      <text x="180" y="372" textAnchor="middle" fontSize="16" fontWeight="700" fill="#8cb000" fontFamily="serif">RI</text>
-      <rect x="174" y="332" width="12" height="4" fill="#8cb000" />
+      <path d="M180 340 L202 348 L202 372 L180 390 L158 372 L158 348 Z" fill="#070807" stroke="#e0202a" strokeWidth="3" />
+      <text x="180" y="372" textAnchor="middle" fontSize="16" fontWeight="700" fill="#e0202a" fontFamily="serif">RI</text>
+      <rect x="174" y="332" width="12" height="4" fill="#e0202a" />
       {/* crank */}
       <g className={`gumball-crank ${spinning ? "spinning" : ""}`} style={{ transformOrigin: "250px 362px", opacity: locked ? 0.55 : 1 }} aria-label={locked ? "Crank, locked until you confirm your age" : "Turn the crank"} {...handle}>
-        <circle cx="250" cy="362" r="22" fill="#070807" stroke="#8cb000" strokeWidth="4" />
-        <rect x="246" y="340" width="8" height="22" rx="2" fill="#8cb000" />
-        <rect x="250" y="358" width="22" height="8" rx="2" fill="#8cb000" />
+        <circle cx="250" cy="362" r="22" fill="#070807" stroke="#e0202a" strokeWidth="4" />
+        <rect x="246" y="340" width="8" height="22" rx="2" fill="#e0202a" />
+        <rect x="250" y="358" width="22" height="8" rx="2" fill="#e0202a" />
       </g>
       {/* flap */}
       <g aria-label={locked ? "Push, locked until you confirm your age" : "Push to turn the crank"} {...handle}>
-        <rect x="140" y="420" width="80" height="50" rx="8" fill={glow ? "#8cb000" : "#070807"} stroke={glow ? "#e9ecdc" : "#8cb000"} strokeWidth="3" className={glow ? "flap-glow" : undefined} />
-        <text x="180" y="450" textAnchor="middle" fontSize="13" fontWeight="700" fill={glow ? "#070807" : "#8cb000"} letterSpacing="2">{locked ? "LOCKED" : "PUSH"}</text>
+        <rect x="140" y="420" width="80" height="50" rx="8" fill={glow ? "#e0202a" : "#070807"} stroke={glow ? "#e9ecdc" : "#e0202a"} strokeWidth="3" className={glow ? "flap-glow" : undefined} />
+        <text x="180" y="450" textAnchor="middle" fontSize="13" fontWeight="700" fill={glow ? "#070807" : "#e0202a"} letterSpacing="2">{locked ? "LOCKED" : "PUSH"}</text>
       </g>
       {/* stars */}
-      {[[60, 90], [300, 90], [60, 290], [300, 290]].map(([x, y], i) => <path key={i} d={`M${x} ${y - 8} L${x + 2} ${y - 2} L${x + 8} ${y} L${x + 2} ${y + 2} L${x} ${y + 8} L${x - 2} ${y + 2} L${x - 8} ${y} L${x - 2} ${y - 2} Z`} fill="#8cb000" opacity=".8" />)}
+      {[[60, 90], [300, 90], [60, 290], [300, 290]].map(([x, y], i) => <path key={i} d={`M${x} ${y - 8} L${x + 2} ${y - 2} L${x + 8} ${y} L${x + 2} ${y + 2} L${x} ${y + 8} L${x - 2} ${y + 2} L${x - 8} ${y} L${x - 2} ${y - 2} Z`} fill="#e0202a" opacity=".8" />)}
     </svg>
   );
 }

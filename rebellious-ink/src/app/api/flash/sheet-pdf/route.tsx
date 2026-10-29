@@ -4,15 +4,15 @@ import { sheetData } from "@/lib/flash-sheet";
 
 const st = StyleSheet.create({
   page: { backgroundColor: "#070807", color: "#e9ecdc", padding: 28, fontFamily: "Helvetica" },
-  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", borderBottomWidth: 1.5, borderBottomColor: "#8cb000", paddingBottom: 8 },
-  brand: { fontSize: 9, color: "#8cb000", letterSpacing: 3 },
+  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", borderBottomWidth: 1.5, borderBottomColor: "#e0202a", paddingBottom: 8 },
+  brand: { fontSize: 9, color: "#e0202a", letterSpacing: 3 },
   title: { fontSize: 22, fontFamily: "Helvetica-Bold", marginTop: 2 },
   grid: { flexDirection: "row", flexWrap: "wrap", marginTop: 14 },
   tile: { width: "31.3%", marginRight: "2%", marginBottom: 12, backgroundColor: "#131613", borderRadius: 8, overflow: "hidden" },
   img: { width: "100%", height: 150, objectFit: "cover" },
   meta: { padding: 6, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  n: { position: "absolute", top: 6, left: 6, backgroundColor: "#8cb000", color: "#070807", fontSize: 9, fontFamily: "Helvetica-Bold", paddingHorizontal: 6, paddingVertical: 1, borderRadius: 8 },
-  footer: { position: "absolute", bottom: 20, left: 28, right: 28, flexDirection: "row", justifyContent: "space-between", alignItems: "center", borderTopWidth: 1, borderTopColor: "#8cb000", paddingTop: 8, fontSize: 8 },
+  n: { position: "absolute", top: 6, left: 6, backgroundColor: "#e0202a", color: "#070807", fontSize: 9, fontFamily: "Helvetica-Bold", paddingHorizontal: 6, paddingVertical: 1, borderRadius: 8 },
+  footer: { position: "absolute", bottom: 20, left: 28, right: 28, flexDirection: "row", justifyContent: "space-between", alignItems: "center", borderTopWidth: 1, borderTopColor: "#e0202a", paddingTop: 8, fontSize: 8 },
 });
 
 /** A4 flash sheet for the studio wall: same data as the share images. */
@@ -34,7 +34,7 @@ export async function GET(req: Request) {
               <Image src={d.image} style={st.img} />
               <Text style={st.n}>{d.n}</Text>
               <View style={st.meta}>
-                <View><Text style={{ fontSize: 9, fontFamily: "Helvetica-Bold" }}>{d.title}{d.repeatable ? "" : " (one-off)"}</Text><Text style={{ fontSize: 8, color: "#8cb000" }}>{s.palmEnabled ? `Small ${gbp(d.prices.small)} / Palm ${gbp(d.prices.palm)}` : gbp(d.prices.small)}</Text>{d.prices.apprenticeSmall != null && <Text style={{ fontSize: 7, opacity: 0.85 }}>Apprentice {gbp(d.prices.apprenticeSmall)}{s.palmEnabled ? ` / ${gbp(d.prices.apprenticePalm ?? 0)}` : ""}</Text>}</View>
+                <View><Text style={{ fontSize: 9, fontFamily: "Helvetica-Bold" }}>{d.title}{d.repeatable ? "" : " (one-off)"}</Text><Text style={{ fontSize: 8, color: "#e0202a" }}>{s.palmEnabled ? `Small ${gbp(d.prices.small)} / Palm ${gbp(d.prices.palm)}` : gbp(d.prices.small)}</Text>{d.prices.apprenticeSmall != null && <Text style={{ fontSize: 7, opacity: 0.85 }}>Apprentice {gbp(d.prices.apprenticeSmall)}{s.palmEnabled ? ` / ${gbp(d.prices.apprenticePalm ?? 0)}` : ""}</Text>}</View>
                 <Image src={d.qr} style={{ width: 28, height: 28 }} />
               </View>
             </View>

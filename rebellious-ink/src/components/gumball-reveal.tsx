@@ -26,7 +26,7 @@ export function GumballReveal({ playId, title, artistName, artistSlug, imageUrl,
         <div className="relative mx-auto w-full max-w-sm aspect-square">
           {phase !== "shown" && (
             <div className={`absolute inset-0 grid place-items-center ${phase === "drop" ? "capsule-drop" : "capsule-pop"}`} aria-hidden>
-              <svg viewBox="0 0 200 200" className="w-48 h-48"><circle cx="100" cy="100" r="90" fill="#8cb000" /><path d="M10 100 A90 90 0 0 1 190 100 Z" fill="#e9ecdc" /><circle cx="100" cy="100" r="90" fill="none" stroke="#070807" strokeWidth="6" /><ellipse cx="70" cy="60" rx="18" ry="8" fill="#fff" opacity=".5" transform="rotate(-30 70 60)" /></svg>
+              <svg viewBox="0 0 200 200" className="w-48 h-48"><circle cx="100" cy="100" r="90" fill="#e0202a" /><path d="M10 100 A90 90 0 0 1 190 100 Z" fill="#e9ecdc" /><circle cx="100" cy="100" r="90" fill="none" stroke="#070807" strokeWidth="6" /><ellipse cx="70" cy="60" rx="18" ry="8" fill="#fff" opacity=".5" transform="rotate(-30 70 60)" /></svg>
             </div>
           )}
           {phase === "shown" && <div className="reveal-in absolute inset-0"><DesignImage src={imageUrl} alt={`${title} by ${artistName}`} hotspot={hotspot} className="w-full h-full rounded-2xl border-4 border-acid" /></div>}

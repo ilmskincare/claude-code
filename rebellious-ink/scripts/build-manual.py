@@ -55,7 +55,7 @@ html=re.sub(r'<h2 ', '<h2 class="section" ', html)
 doc=f"""<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><title>Rebellious Ink Studio OS: user manual</title>
 <style>
 @page {{ size: A4; margin: 18mm 16mm 20mm 16mm; }}
-:root {{ --ink:#070807; --acid:#8cb000; --acid-deep:#5f8300; --grey:#555; --line:#d7dccd; }}
+:root {{ --ink:#070807; --acid:#e0202a; --acid-deep:#a3121a; --grey:#555; --line:#ddd6d3; }}
 html,body {{ font-family: Helvetica, Arial, sans-serif; color:#111; font-size: 10.5pt; line-height: 1.45; }}
 .cover {{ height: 240mm; display:flex; flex-direction:column; justify-content:center; align-items:flex-start; page-break-after: always; }}
 .cover img {{ width: 38mm; height: 38mm; border-radius: 50%; }}
@@ -78,7 +78,7 @@ ul, ol {{ margin: 0 0 3mm; padding-left: 5mm; }}
 li {{ margin-bottom: 1mm; }}
 table {{ border-collapse: collapse; width: 100%; margin: 2mm 0 4mm; font-size: 9.2pt; page-break-inside: auto; }}
 tr {{ page-break-inside: avoid; }}
-th {{ text-align:left; background: #eef3dc; color: var(--ink); padding: 1.8mm 2mm; border-bottom: 2px solid var(--acid); }}
+th {{ text-align:left; background: #fbe9ea; color: var(--ink); padding: 1.8mm 2mm; border-bottom: 2px solid var(--acid); }}
 td {{ padding: 1.6mm 2mm; border-bottom: 1px solid var(--line); vertical-align: top; }}
 code {{ font-family: Menlo, Consolas, monospace; font-size: 8.8pt; background:#f3f5ee; padding: 0 1mm; }}
 figure {{ margin: 3mm 0 5mm; page-break-inside: avoid; }}

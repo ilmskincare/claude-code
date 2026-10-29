@@ -20,12 +20,12 @@ export async function GET(req: Request) {
       <div style={{ width, height, display: "flex", flexDirection: "column", background: "#070807", color: "#e9ecdc", padding: pad, fontFamily: "sans-serif" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", flexDirection: "column" }}>
-            <div style={{ display: "flex", fontSize: 26, letterSpacing: 6, color: "#8cb000", textTransform: "uppercase" }}>Rebellious Ink · Flash</div>
+            <div style={{ display: "flex", fontSize: 26, letterSpacing: 6, color: "#e0202a", textTransform: "uppercase" }}>Rebellious Ink · Flash</div>
             <div style={{ display: "flex", fontSize: 52, fontWeight: 700, marginTop: 6 }}>{data.artist.displayName.replace(" (TEST)", "")}</div>
           </div>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", fontSize: 24 }}>
-            <div style={{ display: "flex" }}>{s.palmEnabled ? "Small " : ""}up to {s.smallMaxCm} cm <span style={{ color: "#8cb000", marginLeft: 8 }}>{gbp(s.smallPence)}</span></div>
-            {s.palmEnabled && <div style={{ display: "flex" }}>Palm up to {s.palmMaxCm} cm <span style={{ color: "#8cb000", marginLeft: 8 }}>{gbp(s.palmPence)}</span></div>}
+            <div style={{ display: "flex" }}>{s.palmEnabled ? "Small " : ""}up to {s.smallMaxCm} cm <span style={{ color: "#e0202a", marginLeft: 8 }}>{gbp(s.smallPence)}</span></div>
+            {s.palmEnabled && <div style={{ display: "flex" }}>Palm up to {s.palmMaxCm} cm <span style={{ color: "#e0202a", marginLeft: 8 }}>{gbp(s.palmPence)}</span></div>}
             <div style={{ display: "flex", fontSize: 20, opacity: 0.8 }}>Apprentice from {gbp(s.apprenticeSmallPence)} · deposit {gbp(s.depositSmallPence)}</div>
           </div>
         </div>
@@ -35,13 +35,13 @@ export async function GET(req: Request) {
               <div style={{ display: "flex", position: "relative" }}>
                 {/* eslint-disable-next-line @next/next/no-img-element -- satori renders data URLs */}
                 <img src={d.image} alt="" width={tile} height={tile} style={{ objectFit: "cover" }} />
-                <div style={{ position: "absolute", top: 10, left: 10, display: "flex", background: "#8cb000", color: "#070807", fontWeight: 700, fontSize: 22, padding: "2px 12px", borderRadius: 999 }}>{d.n}</div>
-                {!d.repeatable && <div style={{ position: "absolute", top: 10, right: 10, display: "flex", background: "#070807", color: "#8cb000", fontSize: 18, padding: "2px 10px", borderRadius: 999 }}>one-off</div>}
+                <div style={{ position: "absolute", top: 10, left: 10, display: "flex", background: "#e0202a", color: "#070807", fontWeight: 700, fontSize: 22, padding: "2px 12px", borderRadius: 999 }}>{d.n}</div>
+                {!d.repeatable && <div style={{ position: "absolute", top: 10, right: 10, display: "flex", background: "#070807", color: "#e0202a", fontSize: 18, padding: "2px 10px", borderRadius: 999 }}>one-off</div>}
               </div>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 12px" }}>
                 <div style={{ display: "flex", flexDirection: "column" }}>
                   <div style={{ display: "flex", fontSize: 22, fontWeight: 700 }}>{d.title.slice(0, 22)}</div>
-                  <div style={{ display: "flex", fontSize: 19, color: "#8cb000" }}>{s.palmEnabled ? `Small ${gbp(d.prices.small)} / Palm ${gbp(d.prices.palm)}` : gbp(d.prices.small)}</div>
+                  <div style={{ display: "flex", fontSize: 19, color: "#e0202a" }}>{s.palmEnabled ? `Small ${gbp(d.prices.small)} / Palm ${gbp(d.prices.palm)}` : gbp(d.prices.small)}</div>
                   {d.prices.apprenticeSmall != null && <div style={{ display: "flex", fontSize: 16, opacity: 0.85 }}>Apprentice {gbp(d.prices.apprenticeSmall)}{s.palmEnabled ? ` / ${gbp(d.prices.apprenticePalm ?? 0)}` : ""}</div>}
                 </div>
                 {/* eslint-disable-next-line @next/next/no-img-element -- QR code */}
@@ -50,8 +50,8 @@ export async function GET(req: Request) {
             </div>
           ))}
         </div>
-        <div style={{ display: "flex", marginTop: "auto", alignItems: "center", justifyContent: "space-between", fontSize: 24, borderTop: "2px solid #8cb000", paddingTop: 20 }}>
-          <div style={{ display: "flex", flexDirection: "column" }}><div style={{ display: "flex" }}>Book at <span style={{ color: "#8cb000", marginLeft: 8 }}>{data.bookUrl}</span></div><div style={{ display: "flex", fontSize: 18, opacity: 0.8 }}>Total price shown. Deposit comes off it. 18+, photographic ID checked. Free touch-up included.</div></div>
+        <div style={{ display: "flex", marginTop: "auto", alignItems: "center", justifyContent: "space-between", fontSize: 24, borderTop: "2px solid #e0202a", paddingTop: 20 }}>
+          <div style={{ display: "flex", flexDirection: "column" }}><div style={{ display: "flex" }}>Book at <span style={{ color: "#e0202a", marginLeft: 8 }}>{data.bookUrl}</span></div><div style={{ display: "flex", fontSize: 18, opacity: 0.8 }}>Total price shown. Deposit comes off it. 18+, photographic ID checked. Free touch-up included.</div></div>
           {/* eslint-disable-next-line @next/next/no-img-element -- QR code */}
           <img src={data.qrAll} alt="" width={100} height={100} />
         </div>

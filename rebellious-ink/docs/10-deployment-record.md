@@ -258,4 +258,5 @@ Note: during one full local test run the marketing integration test failed once 
 - Privacy notice: draft badge removed and the placeholder "legal entity to be confirmed" wording replaced with Rebellious Ink. The owner should confirm the legal entity name and address with their adviser.
 - Accounts added this week: Sophie (username tidied), Honey (apprentice, supervised by Elle Evaa), Chris (resident artist, 60/40 commission split recorded).
 - 29 October: the new resident artist's account renamed twice on the owner's instruction (Chris, Cooper, finally Connor: username `connor`, page /artists/connor); nine portfolio photos loaded from his Drive folder with bio and styles set.
+- 29 October: rebrand to the red and black crest logo. Logo files replaced (1536 JPEG, 192 and 512 PNG icons, favicon), brand tokens in globals.css moved from acid green to red (token names kept so no class changed), every hard-coded green in the game components, share images, flash sheets, emails and document PDFs recoloured, manifest theme colour updated, and the branded letter and manual builders recoloured to match.
 

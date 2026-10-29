@@ -324,7 +324,7 @@ Search by name, email or phone (the 200 most recently added are shown). The tabl
 - There is no separate client record page yet; the table is the record.
 
 ### Planner
-A week view for everyone or one artist (pick an artist and press Filter). Bookings are blocks: green is confirmed, amber is awaiting deposit; cancelled bookings are hidden. Working hours are shaded only when a single artist is selected. Previous and next week arrows at the top. Press a booking to open it and use its tools. Moving a booking is always done from its page, never by dragging, and always needs a reason.
+A week view for everyone or one artist (pick an artist and press Filter). Bookings are blocks: red is confirmed, amber is awaiting deposit; cancelled bookings are hidden. Working hours are shaded only when a single artist is selected. Previous and next week arrows at the top. Press a booking to open it and use its tools. Moving a booking is always done from its page, never by dragging, and always needs a reason.
 
 ### Ask the desk
 The desk's crib sheet: every practitioner's rate card (hourly range, day rate, minimum), whether their books are open, their hours, what they do and do not tattoo, what they will not do, piercings offered and not offered, their price list, private desk notes (never shown publicly), and the promotions running now (marked "desk only" if hidden from the public). Use it when someone rings or walks in. Each card has links to edit the profile and to the public page. Practitioners keep their own cards up to date.

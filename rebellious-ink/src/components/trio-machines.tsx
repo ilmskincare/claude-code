@@ -8,7 +8,7 @@ const gbp = (p: number) => `£${(p / 100).toFixed(0)}`;
 export type MiniState = "locked" | "idle" | "spinning" | "shown";
 
 /** One small machine in brand style with a window that shows its reel. */
-export function MiniMachine({ label, value, state, glow = false, onCrank, tone = "#8cb000" }: { label: string; value?: string | null; state: MiniState; glow?: boolean; onCrank?: () => void; tone?: string }) {
+export function MiniMachine({ label, value, state, glow = false, onCrank, tone = "#e0202a" }: { label: string; value?: string | null; state: MiniState; glow?: boolean; onCrank?: () => void; tone?: string }) {
   const handle = onCrank ? { role: "button" as const, tabIndex: 0, onClick: onCrank, onKeyDown: (e: React.KeyboardEvent) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onCrank(); } }, style: { cursor: "pointer" } } : {};
   const windowText = state === "shown" ? value ?? "" : state === "spinning" ? "…" : state === "locked" ? "LOCKED" : "READY";
   const font = (windowText.length > 12 ? 13 : windowText.length > 9 ? 15 : 18);

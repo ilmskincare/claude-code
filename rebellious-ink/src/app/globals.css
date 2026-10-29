@@ -1,25 +1,25 @@
 @import "tailwindcss";
 
-/* ───────────── Rebellious Ink brand tokens (sampled from the approved logo) ───────────── */
+/* ───────────── Rebellious Ink brand tokens (sampled from the red and black crest logo) ───────────── */
 :root {
   --ink: #070807;          /* logo background */
-  --charcoal: #121412;
-  --steel: #1c201c;
-  --graphite: #2a2f2a;
-  --acid: #8cb000;         /* dominant logo green */
-  --acid-bright: #a6d118;  /* highlight edges */
-  --acid-deep: #5f8300;    /* shadowed green */
-  --acid-soft: #d9ef9a;
-  --bone: #eef1e6;         /* near-white with a green cast */
-  --mist: #9aa396;
-  --danger: #e0533f;
+  --charcoal: #121212;
+  --steel: #1c1c1e;
+  --graphite: #2b2b2e;
+  --acid: #e0202a;         /* dominant logo red (token name kept for the existing classes) */
+  --acid-bright: #ff4a52;  /* highlight edges */
+  --acid-deep: #a3121a;    /* shadowed red */
+  --acid-soft: #fadada;
+  --bone: #f4f1ef;         /* warm near-white */
+  --mist: #9a9593;
+  --danger: #c2410c;       /* distinct from the brand red */
   --warn: #e8b931;
-  --ok: #8cb000;
+  --ok: #3a9d4f;
   --background: var(--bone);
   --foreground: var(--ink);
   --surface: #ffffff;
-  --surface-muted: #f6f8f0;
-  --border: #d7dccd;
+  --surface-muted: #f8f4f3;
+  --border: #ddd6d3;
 }
 
 @theme inline {

@@ -30,7 +30,7 @@ export function WeekPlanner({ weekStartIso, basePath, appointments, rules, linkP
           );
         })}
       </div>
-      <p className="hint mt-2">Shaded = working hours. Green = confirmed, amber = awaiting deposit.</p>
+      <p className="hint mt-2">Shaded = working hours. Red = confirmed, amber = awaiting deposit.</p>
     </div>
   );
 }

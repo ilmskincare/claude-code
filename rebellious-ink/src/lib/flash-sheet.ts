@@ -23,5 +23,5 @@ export async function sheetData(artistSlug: string, limit = 12) {
     return { n: i + 1, id: d.id, title: d.title, repeatable: d.repeatable, image: `data:${mime};base64,${bytes.toString("base64")}`, qr: await QRCode.toDataURL(`${base}/flash/${d.id}`, { margin: 0, width: 160, color: { dark: "#070807", light: "#e9ecdc" } }), prices };
   }));
   const gbp = (p: number) => `£${(p / 100).toFixed(0)}`;
-  return { artist, items, settings: s, gbp, bookUrl: `${base.replace(/^https?:\/\//, "")}/flash`, qrAll: await QRCode.toDataURL(`${base}/flash?artist=${artistSlug}`, { margin: 0, width: 200, color: { dark: "#070807", light: "#8cb000" } }) };
+  return { artist, items, settings: s, gbp, bookUrl: `${base.replace(/^https?:\/\//, "")}/flash`, qrAll: await QRCode.toDataURL(`${base}/flash?artist=${artistSlug}`, { margin: 0, width: 200, color: { dark: "#070807", light: "#e0202a" } }) };
 }
