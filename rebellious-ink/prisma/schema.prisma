@@ -1,0 +1,2216 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// Rebellious Ink Studio OS — Prisma schema
+//
+// Conventions
+//  • All timestamps are timestamptz; the application converts to Europe/London.
+//  • Money is stored in integer pence (GBP). Never floats.
+//  • Health data lives in the `restricted` Postgres schema and is only reachable
+//    through src/lib/health/* which enforces need-to-know access and logs it.
+//  • Financial ledger entries and signed documents are append-only; corrections
+//    are reversal entries, never updates.
+// ─────────────────────────────────────────────────────────────────────────────
+
+generator client {
+  provider        = "prisma-client"
+  output          = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  schemas  = ["public", "restricted"]
+}
+
+// ═══════════════════════════════ Tenancy & identity ═════════════════════════
+
+model Studio {
+  id              String   @id @default(cuid())
+  name            String
+  tradingName     String
+  slug            String   @unique
+  timezone        String   @default("Europe/London")
+  currency        String   @default("GBP")
+  createdAt       DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime @updatedAt @db.Timestamptz(3)
+
+  legalEntities   LegalEntity[]
+  memberships     Membership[]
+  stations        Station[]
+  services        Service[]
+  settings        StudioSetting[]
+  bookingRequests BookingRequest[]
+  appointments    Appointment[]
+  roles           CustomRole[]
+
+  @@schema("public")
+}
+
+/// A contracting party (e.g. the studio Ltd, or a chair-rent artist's own business).
+model LegalEntity {
+  id                 String   @id @default(cuid())
+  studioId           String
+  studio             Studio   @relation(fields: [studioId], references: [id])
+  name               String
+  companyNumber      String?
+  vatNumber          String?
+  addressLine1       String?
+  addressLine2       String?
+  town               String?
+  postcode           String?
+  country            String   @default("GB")
+  isStudioEntity     Boolean  @default(false)
+  createdAt          DateTime @default(now()) @db.Timestamptz(3)
+
+  contracts          ArtistContractVersion[]
+  invoices           Invoice[]
+
+  @@schema("public")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime? @db.Timestamptz(3)
+  image         String?
+  phone         String?
+  isSuspended   Boolean   @default(false)
+  /// Staff sign-in without email: a username and a password hash (scrypt). Clients keep the email link.
+  username           String?   @unique
+  passwordHash       String?
+  mustChangePassword Boolean   @default(false)
+  failedLogins       Int       @default(0)
+  lockedUntil        DateTime? @db.Timestamptz(3)
+  createdAt     DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime  @updatedAt @db.Timestamptz(3)
+
+  accounts       Account[]
+  sessions       Session[]
+  memberships    Membership[]
+  clientProfile  ClientProfile?
+  artistProfile  ArtistProfile?
+  auditLogs      AuditLog[]      @relation("AuditActor")
+  messages       Message[]
+  notifications  Notification[]
+  uploadedAssets ImageAsset[]
+  invitations    Invitation[]    @relation("InvitedBy")
+  verifiedPayments Payment[]     @relation("PaymentVerifier")
+  bookingRequests BookingRequest[] @relation("ClientRequests")
+  createdRequests BookingRequest[] @relation("CreatedByStaff")
+  appointments    Appointment[]  @relation("ClientAppointments")
+  payments        Payment[]      @relation("ClientPayments")
+  quotesIssued    Quote[]        @relation("QuoteIssuer")
+  holds           BookingHold[]
+  deviceLogs      DeviceLog[]
+  privacyPrefs    PrivacyPreference[]
+  aiApprovals     AIActionApproval[]
+  enrolments      Enrolment[]
+  signoffs        MentorSignoff[] @relation("Mentor")
+  signatures      Signature[]
+  healthRecords   ClientHealthRecord[]
+  healthAccess    HealthAccessLog[]
+  skillProgress   SkillProgress[]      @relation("ApprenticeProgress")
+  skillSignoffs   SkillProgress[]      @relation("SkillSignoffs")
+  practiceLogs    PracticeLog[]        @relation("ApprenticeLogs")
+  verifiedLogs    PracticeLog[]        @relation("LogVerifier")
+  evidence        ApprenticeEvidence[] @relation("ApprenticeEvidence")
+  juniorSignoff   JuniorArtistSignoff? @relation("JuniorSignoff")
+  juniorSignoffsGiven JuniorArtistSignoff[] @relation("JuniorSignoffBy")
+  loyalty         LoyaltyAccount?
+  plays           Play[]
+
+  @@schema("public")
+  chatMemberships ChatMember[]
+  chatMessages    ChatMessage[]
+}
+
+// Auth.js adapter tables
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@schema("public")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime @db.Timestamptz(3)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@schema("public")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime @db.Timestamptz(3)
+
+  @@unique([identifier, token])
+  @@schema("public")
+}
+
+model DeviceLog {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userAgent String?
+  ipHash    String?
+  event     String   // signed_in, signed_out, session_revoked
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+
+  @@schema("public")
+}
+
+enum RoleKey {
+  OWNER
+  STUDIO_MANAGER
+  RECEPTION
+  RESIDENT_ARTIST
+  CHAIR_RENT_ARTIST
+  GUEST_ARTIST
+  PIERCER
+  APPRENTICE
+  MENTOR
+  CLIENT
+  FINANCE_ADVISER
+  AI_ASSISTANT
+
+  @@schema("public")
+}
+
+enum MembershipStatus {
+  INVITED
+  ACTIVE
+  SUSPENDED
+  OFFBOARDED
+
+  @@schema("public")
+}
+
+/// A person's relationship with the studio. One user may hold several roles.
+model Membership {
+  id              String           @id @default(cuid())
+  userId          String
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  studioId        String
+  studio          Studio           @relation(fields: [studioId], references: [id])
+  roles           RoleKey[]
+  customRoleIds   String[]         @default([])
+  /// Granular capability overrides, e.g. { "finance.export": true }
+  capabilities    Json             @default("{}")
+  status          MembershipStatus @default(ACTIVE)
+  /// Job title shown in brackets after the name on the team page, e.g. "Studio manager". Does not change access.
+  jobTitle        String?
+  mfaEnrolled     Boolean          @default(false)
+  accessExpiresAt DateTime?        @db.Timestamptz(3)
+  lastReviewedAt  DateTime?        @db.Timestamptz(3)
+  createdAt       DateTime         @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime         @updatedAt @db.Timestamptz(3)
+
+  compensationModels CompensationModel[]
+  contracts          ArtistContractVersion[]
+
+  @@unique([userId, studioId])
+  @@schema("public")
+}
+
+model CustomRole {
+  id           String   @id @default(cuid())
+  studioId     String
+  studio       Studio   @relation(fields: [studioId], references: [id])
+  name         String
+  capabilities Json     @default("{}")
+  createdAt    DateTime @default(now()) @db.Timestamptz(3)
+
+  @@unique([studioId, name])
+  @@schema("public")
+}
+
+model Invitation {
+  id          String    @id @default(cuid())
+  email       String
+  roles       RoleKey[]
+  token       String    @unique
+  invitedById String
+  invitedBy   User      @relation("InvitedBy", fields: [invitedById], references: [id])
+  expiresAt   DateTime  @db.Timestamptz(3)
+  acceptedAt  DateTime? @db.Timestamptz(3)
+  createdAt   DateTime  @default(now()) @db.Timestamptz(3)
+
+  @@schema("public")
+}
+
+// ═══════════════════════════════ Practitioners ══════════════════════════════
+
+enum PractitionerKind {
+  TATTOO_ARTIST
+  JUNIOR_ARTIST
+  PIERCER
+  APPRENTICE
+
+  @@schema("public")
+}
+
+model ArtistProfile {
+  id               String           @id @default(cuid())
+  userId           String           @unique
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  slug             String           @unique
+  displayName      String
+  kind             PractitionerKind @default(TATTOO_ARTIST)
+  bio              String?
+  styles           String[]         @default([])
+  instagramHandle  String?
+  avatarKey        String?          // artist logo or portrait in private storage, served via signed URL
+  isPublished      Boolean          @default(false)
+  /// The studio's own catalogue account (house flash): shown in the flash catalogue, never listed as an artist.
+  isHouse          Boolean          @default(false)
+  acceptsEnquiries Boolean          @default(true)
+  /// For apprentices: the supervising practitioner shown on client-facing reservations.
+  supervisorId     String?
+  supervisor       ArtistProfile?   @relation("Supervision", fields: [supervisorId], references: [id])
+  supervisees      ArtistProfile[]  @relation("Supervision")
+  defaultStationId String?
+  defaultStation   Station?         @relation(fields: [defaultStationId], references: [id])
+  // Rate card and boundaries (editable by the practitioner and the owner; the desk reads them)
+  hourlyRateMinPence   Int?
+  hourlyRateMaxPence   Int?
+  dayRatePence         Int?
+  minimumChargePence   Int?
+  stylesNotOffered     String[]        @default([])
+  wontDo               String?         // free text, public
+  placementsDeclined   String[]        @default([])
+  /// Piercers: sites offered and declined
+  piercingsOffered     String[]        @default([])
+  piercingsNotOffered  String[]        @default([])
+  receptionNotes       String?         // internal only, never public
+  createdAt        DateTime         @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime         @updatedAt @db.Timestamptz(3)
+
+  availabilityRules AvailabilityRule[]
+  leave             Leave[]
+  bookingRequests   BookingRequest[]
+  quotes            Quote[]
+  appointments      Appointment[]
+  holds             BookingHold[]
+  portfolioItems    PortfolioItem[]
+  licences          PractitionerLicence[]
+  insurance         InsuranceRecord[]
+  ledgerEntries     FinancialLedgerEntry[]
+  chairRentCharges  ChairRentCharge[]
+  commissionEntries CommissionEntry[]
+  payouts           Payout[]
+  flashSheets       FlashSheet[]
+  designs           Design[]
+  applications      ArtistApplication[]
+  stockMovements    StockMovement[]
+  supervisedLogs    PracticeLog[]       @relation("LogSupervisor")
+  priceList         PriceListItem[]
+  retailSales       RetailSale[]
+  promotions        Promotion[]
+
+  @@schema("public")
+}
+
+/// A practitioner's own price list (piercing menu, flash prices, set pieces).
+model PriceListItem {
+  id              String        @id @default(cuid())
+  artistId        String
+  artist          ArtistProfile @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  name            String
+  category        String        // piercing | tattoo | consultation | other
+  pricePence      Int
+  priceToPence    Int?          // optional range upper bound
+  durationMinutes Int?
+  includesJewellery Boolean     @default(false)
+  notes           String?
+  isActive        Boolean       @default(true)
+  sortOrder       Int           @default(0)
+
+  @@index([artistId, category])
+  @@schema("public")
+}
+
+/// Jewellery and aftercare retail sold to a client from studio stock.
+model RetailSale {
+  id             String         @id @default(cuid())
+  practitionerId String
+  practitioner   ArtistProfile  @relation(fields: [practitionerId], references: [id])
+  clientUserId   String?
+  clientName     String?
+  appointmentId  String?
+  productId      String
+  product        Product        @relation(fields: [productId], references: [id])
+  quantity       Int
+  unitPricePence Int
+  totalPence     Int
+  method         PaymentMethod
+  note           String?
+  ledgerGroupId  String?
+  createdAt      DateTime       @default(now()) @db.Timestamptz(3)
+
+  @@index([practitionerId, createdAt])
+  @@schema("public")
+}
+
+model PractitionerLicence {
+  id          String        @id @default(cuid())
+  artistId    String
+  artist      ArtistProfile @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  authority   String        // e.g. local authority registration
+  reference   String?
+  issuedAt    DateTime?     @db.Timestamptz(3)
+  expiresAt   DateTime?     @db.Timestamptz(3)
+  evidenceKey String?       // storage key, restricted
+  verifiedAt  DateTime?     @db.Timestamptz(3)
+
+  @@schema("public")
+}
+
+model InsuranceRecord {
+  id          String        @id @default(cuid())
+  artistId    String
+  artist      ArtistProfile @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  insurer     String
+  policyRef   String?
+  expiresAt   DateTime      @db.Timestamptz(3)
+  evidenceKey String?
+  verifiedAt  DateTime?     @db.Timestamptz(3)
+
+  @@schema("public")
+}
+
+model Station {
+  id           String   @id @default(cuid())
+  studioId     String
+  studio       Studio   @relation(fields: [studioId], references: [id])
+  name         String
+  kind         String   @default("TATTOO") // TATTOO | PIERCING | CONSULT
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now()) @db.Timestamptz(3)
+
+  artists      ArtistProfile[]
+  appointments Appointment[]
+  holds        BookingHold[]
+
+  @@unique([studioId, name])
+  @@schema("public")
+}
+
+/// Recurring weekly working window, Europe/London local minutes-from-midnight.
+/// A one-off day is a rule whose validFrom and validTo are the same date.
+model AvailabilityRule {
+  id              String        @id @default(cuid())
+  artistId        String
+  artist          ArtistProfile @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  weekday         Int           // 1 = Monday … 7 = Sunday (ISO)
+  startMinute     Int
+  endMinute       Int
+  validFrom       DateTime?     @db.Date
+  validTo         DateTime?     @db.Date
+  /// Offered as online booking slots.
+  acceptsBookings Boolean       @default(true)
+  /// Shown publicly as walk-in hours; never offered as online slots unless acceptsBookings is also true.
+  acceptsWalkIns  Boolean       @default(false)
+  label           String?       // e.g. "Flash day", "Guest spot"
+
+  @@index([artistId, weekday])
+  @@schema("public")
+}
+
+model Leave {
+  id        String        @id @default(cuid())
+  artistId  String
+  artist    ArtistProfile @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  startsAt  DateTime      @db.Timestamptz(3)
+  endsAt    DateTime      @db.Timestamptz(3)
+  reason    String?
+
+  @@index([artistId, startsAt, endsAt])
+  @@schema("public")
+}
+
+// ═══════════════════════════════ Clients ════════════════════════════════════
+
+model ClientProfile {
+  id                 String    @id @default(cuid())
+  userId             String    @unique
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  preferredName      String?
+  dateOfBirth        DateTime? @db.Date
+  phone              String?
+  accessNeeds        String?   // reasonable adjustments, voluntarily disclosed
+  emergencyContact   String?
+  howFound           String?
+  createdAt          DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt          DateTime  @updatedAt @db.Timestamptz(3)
+
+  ageVerifications   AgeVerification[]
+
+  @@schema("public")
+}
+
+/// In-person photographic ID check outcome recorded by staff. No ID copies stored.
+model AgeVerification {
+  id             String        @id @default(cuid())
+  clientId       String
+  client         ClientProfile @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  appointmentId  String?
+  appointment    Appointment?  @relation(fields: [appointmentId], references: [id])
+  checkedById    String
+  documentType   String        // passport | driving_licence | pass_card | other
+  outcome        String        // verified | failed | not_presented
+  dateOfBirthSeen DateTime?    @db.Date
+  notes          String?
+  checkedAt      DateTime      @default(now()) @db.Timestamptz(3)
+
+  @@schema("public")
+}
+
+enum PrivacyPurpose {
+  TREATMENT_PHOTOGRAPHY
+  PORTFOLIO_PUBLICATION
+  SOCIAL_MEDIA
+  MARKETING_EMAIL
+  MARKETING_SMS
+  MERCHANDISE_USE
+  WHATSAPP_CONTACT
+
+  @@schema("public")
+}
+
+/// Separate, un-bundled opt-ins. Never pre-ticked.
+model PrivacyPreference {
+  id          String         @id @default(cuid())
+  userId      String
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  purpose     PrivacyPurpose
+  granted     Boolean
+  grantedAt   DateTime?      @db.Timestamptz(3)
+  withdrawnAt DateTime?      @db.Timestamptz(3)
+  source      String?        // portal | tablet | staff
+  version     Int            @default(1)
+
+  @@unique([userId, purpose, version])
+  @@schema("public")
+}
+
+// ═══════════════════════════════ Enquiry → booking ══════════════════════════
+
+enum ServiceCategory {
+  TATTOO
+  CONSULTATION
+  PIERCING
+  FLASH
+  MULTI_SESSION_PROJECT
+
+  @@schema("public")
+}
+
+model Service {
+  id              String          @id @default(cuid())
+  studioId        String
+  studio          Studio          @relation(fields: [studioId], references: [id])
+  name            String
+  category        ServiceCategory
+  defaultMinutes  Int
+  setupMinutes    Int             @default(15)
+  cleanMinutes    Int             @default(15)
+  priceFromPence  Int?
+  depositPence    Int?
+  minimumAge      Int             @default(18)
+  /// Piercing-specific: permitted site, aftercare category, jurisdiction notes
+  piercingSite    String?
+  aftercareCategory String?
+  requiresPolicyReview Boolean    @default(false)
+  isActive        Boolean         @default(true)
+
+  bookingRequests BookingRequest[]
+  appointments    Appointment[]
+
+  @@schema("public")
+}
+
+enum EnquiryStatus {
+  NEW
+  NEEDS_INFORMATION
+  IN_DISCUSSION
+  QUOTED
+  AWAITING_ACCEPTANCE
+  AWAITING_DEPOSIT
+  CONFIRMED
+  FORMS_PENDING
+  CHECKED_IN
+  IN_SESSION
+  COMPLETED
+  CANCELLED
+  EXPIRED
+  DECLINED
+  NO_SHOW
+  RESCHEDULE_REQUESTED
+  REFUNDED
+  DISPUTED
+
+  @@schema("public")
+}
+
+enum EnquirySource {
+  WEBSITE
+  WALK_IN
+  TELEPHONE
+  INSTAGRAM
+  FACEBOOK
+  WHATSAPP
+  REFERRAL
+  OTHER
+
+  @@schema("public")
+}
+
+model BookingRequest {
+  id               String          @id @default(cuid())
+  reference        String          @unique // ENQ-2026-000123
+  studioId         String
+  studio           Studio          @relation(fields: [studioId], references: [id])
+  clientId         String
+  client           User            @relation("ClientRequests", fields: [clientId], references: [id])
+  createdById      String?         // staff member who logged a phone/walk-in enquiry
+  createdBy        User?           @relation("CreatedByStaff", fields: [createdById], references: [id])
+  artistId         String?         // null = "match me with an artist"
+  artist           ArtistProfile?  @relation(fields: [artistId], references: [id])
+  serviceId        String?
+  service          Service?        @relation(fields: [serviceId], references: [id])
+  designId         String?         // flash catalogue design this booking is for
+  design           Design?         @relation(fields: [designId], references: [id])
+  designSize       String?         // small | palm
+  designTier       String?         // artist | apprentice
+  category         ServiceCategory
+  source           EnquirySource   @default(WEBSITE)
+  status           EnquiryStatus   @default(NEW)
+
+  // Structured brief
+  placement        String?
+  bodyMapZone      String?
+  sizeCm           Int?
+  style            String?
+  colour           String?         // colour | black_and_grey | undecided
+  isCoverUp        Boolean         @default(false)
+  hasScarConcern   Boolean         @default(false)
+  description      String
+  budgetBand       String?
+  preferredDays    String[]        @default([])
+  availabilityNote String?
+  accessNeeds      String?
+  /// Client-declared age confirmation at enquiry time; ID still checked in person.
+  declaredOver18   Boolean         @default(false)
+  dateOfBirth      DateTime?       @db.Date
+  referralCode     String?
+
+  expiresAt        DateTime?       @db.Timestamptz(3)
+  createdAt        DateTime        @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime        @updatedAt @db.Timestamptz(3)
+
+  statusEvents     EnquiryStatusEvent[]
+  attachments      ImageAsset[]
+  conversation     Conversation?
+  quotes           Quote[]
+  appointments     Appointment[]
+  holds            BookingHold[]
+  project          Project?
+
+  @@index([artistId, status])
+  @@index([clientId])
+  @@schema("public")
+}
+
+model EnquiryStatusEvent {
+  id          String         @id @default(cuid())
+  requestId   String
+  request     BookingRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  fromStatus  EnquiryStatus?
+  toStatus    EnquiryStatus
+  actorId     String?
+  actorLabel  String         // "Client", "Artist: Mo", "System: deposit webhook"
+  note        String?
+  createdAt   DateTime       @default(now()) @db.Timestamptz(3)
+
+  @@index([requestId, createdAt])
+  @@schema("public")
+}
+
+model Conversation {
+  id         String         @id @default(cuid())
+  requestId  String         @unique
+  request    BookingRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  createdAt  DateTime       @default(now()) @db.Timestamptz(3)
+  messages   Message[]
+
+  @@schema("public")
+}
+
+enum MessageVisibility {
+  CLIENT_VISIBLE
+  INTERNAL_ONLY
+
+  @@schema("public")
+}
+
+model Message {
+  id             String            @id @default(cuid())
+  conversationId String
+  conversation   Conversation      @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User              @relation(fields: [senderId], references: [id])
+  body           String
+  visibility     MessageVisibility @default(CLIENT_VISIBLE)
+  readAt         DateTime?         @db.Timestamptz(3)
+  createdAt      DateTime          @default(now()) @db.Timestamptz(3)
+  attachments    ImageAsset[]
+
+  @@index([conversationId, createdAt])
+  @@schema("public")
+}
+
+enum QuoteStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  DECLINED
+  SUPERSEDED
+  EXPIRED
+
+  @@schema("public")
+}
+
+model Quote {
+  id               String         @id @default(cuid())
+  requestId        String
+  request          BookingRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  artistId         String
+  artist           ArtistProfile  @relation(fields: [artistId], references: [id])
+  issuedById       String
+  issuedBy         User           @relation("QuoteIssuer", fields: [issuedById], references: [id])
+  version          Int            @default(1)
+  status           QuoteStatus    @default(DRAFT)
+  scope            String
+  priceBasis       String         // hourly | fixed | per_session | day_rate
+  amountPence      Int
+  depositPence     Int
+  estimatedMinutes Int
+  sessions         Int            @default(1)
+  termsVersion     String
+  termsText        String
+  expiresAt        DateTime?      @db.Timestamptz(3)
+  sentAt           DateTime?      @db.Timestamptz(3)
+  respondedAt      DateTime?      @db.Timestamptz(3)
+  createdAt        DateTime       @default(now()) @db.Timestamptz(3)
+
+  @@unique([requestId, version])
+  @@schema("public")
+}
+
+model Project {
+  id         String         @id @default(cuid())
+  requestId  String         @unique
+  request    BookingRequest @relation(fields: [requestId], references: [id])
+  title      String
+  plannedSessions Int       @default(1)
+  notes      String?
+  createdAt  DateTime       @default(now()) @db.Timestamptz(3)
+
+  @@schema("public")
+}
+
+model BookingReferenceCounter {
+  prefix String
+  year   Int
+  next   Int    @default(1)
+
+  @@id([prefix, year])
+  @@schema("public")
+}
+
+/// Short-lived reservation of a slot while the client pays the deposit.
+model BookingHold {
+  id          String         @id @default(cuid())
+  requestId   String
+  request     BookingRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  clientId    String
+  client      User           @relation(fields: [clientId], references: [id])
+  artistId    String
+  artist      ArtistProfile  @relation(fields: [artistId], references: [id])
+  stationId   String?
+  station     Station?       @relation(fields: [stationId], references: [id])
+  startsAt    DateTime       @db.Timestamptz(3)
+  endsAt      DateTime       @db.Timestamptz(3)
+  expiresAt   DateTime       @db.Timestamptz(3)
+  consumedAt  DateTime?      @db.Timestamptz(3)
+  createdAt   DateTime       @default(now()) @db.Timestamptz(3)
+
+  @@index([artistId, startsAt, endsAt])
+  @@schema("public")
+}
+
+enum AppointmentStatus {
+  PENDING_DEPOSIT
+  CONFIRMED
+  CHECKED_IN
+  IN_SESSION
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+
+  @@schema("public")
+}
+
+model Appointment {
+  id            String            @id @default(cuid())
+  reference     String            @unique // RI-2026-001234
+  studioId      String
+  studio        Studio            @relation(fields: [studioId], references: [id])
+  requestId     String?
+  request       BookingRequest?   @relation(fields: [requestId], references: [id])
+  clientId      String
+  client        User              @relation("ClientAppointments", fields: [clientId], references: [id])
+  artistId      String
+  artist        ArtistProfile     @relation(fields: [artistId], references: [id])
+  stationId     String?
+  station       Station?          @relation(fields: [stationId], references: [id])
+  serviceId     String?
+  service       Service?          @relation(fields: [serviceId], references: [id])
+  category      ServiceCategory
+  status        AppointmentStatus @default(PENDING_DEPOSIT)
+  /// Blocked window including setup and clean-down buffers.
+  startsAt      DateTime          @db.Timestamptz(3)
+  endsAt        DateTime          @db.Timestamptz(3)
+  setupMinutes  Int               @default(0)
+  cleanMinutes  Int               @default(0)
+  quotedPence   Int?
+  depositPence  Int               @default(0)
+  depositPaidAt DateTime?         @db.Timestamptz(3)
+  creditAppliedPence Int          @default(0)
+  completedAt   DateTime?         @db.Timestamptz(3)
+  finalPricePence Int?
+  holdExpiresAt DateTime?         @db.Timestamptz(3)
+  noShowFlag    Boolean           @default(false)
+  noShowReviewNote String?
+  cancelledAt   DateTime?         @db.Timestamptz(3)
+  cancelReason  String?
+  createdAt     DateTime          @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime          @updatedAt @db.Timestamptz(3)
+
+  payments         Payment[]
+  ageVerifications AgeVerification[]
+  consentResponses ConsentResponse[]
+  sessionLogs      SessionLog[]
+  generatedPdfs    GeneratedPDF[]
+  cancellation     Cancellation?
+  ledgerEntries    FinancialLedgerEntry[]
+
+  @@index([artistId, startsAt])
+  @@index([clientId])
+  @@index([stationId, startsAt])
+  @@schema("public")
+}
+
+model Cancellation {
+  id            String      @id @default(cuid())
+  appointmentId String      @unique
+  appointment   Appointment @relation(fields: [appointmentId], references: [id])
+  initiatedBy   String      // client | artist | owner | system
+  reason        String
+  depositOutcome String     // retained | refunded | credited | pending_review
+  createdAt     DateTime    @default(now()) @db.Timestamptz(3)
+
+  @@schema("public")
+}
+
+model Waitlist {
+  id          String   @id @default(cuid())
+  clientEmail String
+  artistId    String?
+  category    ServiceCategory
+  note        String?
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+
+  @@schema("public")
+}
+
+// ═══════════════════════════════ Media ══════════════════════════════════════
+
+enum MediaVisibility {
+  PRIVATE_REFERENCE   // client uploads, design drafts — never publishable
+  PRIVATE_TREATMENT   // photos taken in session — publication needs permission
+  PORTFOLIO_PENDING   // approved for internal review
+  PORTFOLIO_PUBLIC
+
+  @@schema("public")
+}
+
+enum ScanStatus {
+  PENDING
+  CLEAN
+  FLAGGED
+  SKIPPED
+
+  @@schema("public")
+}
+
+model ImageAsset {
+  id              String          @id @default(cuid())
+  uploadedById    String?
+  uploadedBy      User?           @relation(fields: [uploadedById], references: [id])
+  requestId       String?
+  request         BookingRequest? @relation(fields: [requestId], references: [id])
+  messageId       String?
+  message         Message?        @relation(fields: [messageId], references: [id])
+  storageKey      String          @unique
+  originalName    String
+  mimeType        String
+  sizeBytes       Int
+  width           Int?
+  height          Int?
+  visibility      MediaVisibility @default(PRIVATE_REFERENCE)
+  scanStatus      ScanStatus      @default(PENDING)
+  photographer    String?
+  rightsHolder    String?
+  takenAt         DateTime?       @db.Timestamptz(3)
+  createdAt       DateTime        @default(now()) @db.Timestamptz(3)
+
+  permissions     ImagePermission[]
+  portfolioItems  PortfolioItem[]
+  evidence        ApprenticeEvidence[]
+  socialPosts     SocialPost[]
+
+  @@schema("public")
+}
+
+model ImagePermission {
+  id        String         @id @default(cuid())
+  assetId   String
+  asset     ImageAsset     @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  purpose   PrivacyPurpose
+  granted   Boolean
+  grantedById String?
+  grantedAt DateTime       @default(now()) @db.Timestamptz(3)
+  withdrawnAt DateTime?    @db.Timestamptz(3)
+
+  @@schema("public")
+}
+
+model PortfolioItem {
+  id          String        @id @default(cuid())
+  artistId    String
+  artist      ArtistProfile @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  assetId     String
+  asset       ImageAsset    @relation(fields: [assetId], references: [id])
+  caption     String?
+  styleTags   String[]      @default([])
+  placement   String?
+  isHealed    Boolean       @default(false)
+  isCover     Boolean       @default(false)
+  sortOrder   Int           @default(0)
+  publishedAt DateTime?     @db.Timestamptz(3)
+  createdAt   DateTime      @default(now()) @db.Timestamptz(3)
+
+  @@index([artistId, publishedAt])
+  @@schema("public")
+}
+
+model Review {
+  id          String   @id @default(cuid())
+  artistId    String?
+  clientName  String
+  rating      Int
+  body        String
+  isPublic    Boolean  @default(false)
+  isFlagged   Boolean  @default(false)
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+
+  @@schema("public")
+}
+
+// ═══════════════════════════════ Payments & finance ═════════════════════════
+
+enum PaymentMethod {
+  CARD_STRIPE
+  BANK_TRANSFER
+  CASH
+  VOUCHER
+
+  @@schema("public")
+}
+
+enum PaymentPurpose {
+  DEPOSIT
+  BALANCE
+  JEWELLERY
+  RETAIL
+  TIP
+  CHAIR_RENT
+
+  @@schema("public")
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+  DISPUTED
+
+  @@schema("public")
+}
+
+model Payment {
+  id               String        @id @default(cuid())
+  appointmentId    String?
+  appointment      Appointment?  @relation(fields: [appointmentId], references: [id])
+  clientId         String
+  client           User          @relation("ClientPayments", fields: [clientId], references: [id])
+  purpose          PaymentPurpose
+  method           PaymentMethod
+  status           PaymentStatus @default(PENDING)
+  amountPence      Int
+  currency         String        @default("GBP")
+  providerRef      String?       @unique // Stripe PaymentIntent / Checkout Session id
+  providerEventId  String?       // Stripe event id that confirmed it
+  bankReference    String?       // what the client was told to quote
+  idempotencyKey   String?       @unique
+  /// Manual verification (bank transfer / cash) must be by an authorised finance user.
+  verifiedById     String?
+  verifiedBy       User?         @relation("PaymentVerifier", fields: [verifiedById], references: [id])
+  verifiedAt       DateTime?     @db.Timestamptz(3)
+  failureReason    String?
+  createdAt        DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime      @updatedAt @db.Timestamptz(3)
+
+  allocations      PaymentAllocation[]
+  refunds          Refund[]
+  ledgerEntries    FinancialLedgerEntry[]
+
+  @@index([appointmentId])
+  @@schema("public")
+}
+
+model PaymentAllocation {
+  id          String   @id @default(cuid())
+  paymentId   String
+  payment     Payment  @relation(fields: [paymentId], references: [id])
+  invoiceId   String?
+  invoice     Invoice? @relation(fields: [invoiceId], references: [id])
+  amountPence Int
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+
+  @@schema("public")
+}
+
+model Refund {
+  id           String   @id @default(cuid())
+  paymentId    String
+  payment      Payment  @relation(fields: [paymentId], references: [id])
+  amountPence  Int
+  reason       String
+  providerRef  String?
+  approvedById String
+  createdAt    DateTime @default(now()) @db.Timestamptz(3)
+
+  @@schema("public")
+}
+
+model WebhookEvent {
+  id          String   @id @default(cuid())
+  provider    String   // stripe
+  eventId     String
+  type        String
+  receivedAt  DateTime @default(now()) @db.Timestamptz(3)
+  processedAt DateTime? @db.Timestamptz(3)
+  outcome     String?
+  payload     Json
+
+  @@unique([provider, eventId])
+  @@schema("public")
+}
+
+enum LedgerAccount {
+  CLIENT_DEPOSITS_HELD
+  CLIENT_BALANCES
+  SERVICE_SALES_GROSS
+  STUDIO_SHARE
+  ARTIST_SHARE
+  CHAIR_RENT_RECEIVABLE
+  CHAIR_RENT_INCOME
+  PAYMENT_FEES
+  TIPS_PAYABLE
+  REFUNDS
+  CASH
+  BANK
+  STRIPE_CLEARING
+  EXPENSES
+  VAT
+  ARTIST_RECEIVABLE
+  STOCK_SALES
+  INVENTORY
+
+  @@schema("public")
+}
+
+/// Append-only double-entry style ledger. Corrections are reversals.
+model FinancialLedgerEntry {
+  id            String        @id @default(cuid())
+  entryGroupId  String        // ties debit and credit lines of one journal together
+  account       LedgerAccount
+  debitPence    Int           @default(0)
+  creditPence   Int           @default(0)
+  description   String
+  occurredAt    DateTime      @db.Timestamptz(3)
+  appointmentId String?
+  appointment   Appointment?  @relation(fields: [appointmentId], references: [id])
+  paymentId     String?
+  payment       Payment?      @relation(fields: [paymentId], references: [id])
+  artistId      String?
+  artist        ArtistProfile? @relation(fields: [artistId], references: [id])
+  reversalOfId  String?
+  reversalOf    FinancialLedgerEntry? @relation("Reversal", fields: [reversalOfId], references: [id])
+  reversedBy    FinancialLedgerEntry[] @relation("Reversal")
+  createdById   String?
+  createdAt     DateTime      @default(now()) @db.Timestamptz(3)
+
+  @@index([account, occurredAt])
+  @@index([entryGroupId])
+  @@schema("public")
+}
+
+enum CompensationModelType {
+  CHAIR_RENT_WEEKLY
+  COMMISSION_SPLIT
+  CUSTOM_PERCENTAGE
+  SALARIED
+  GUEST_DAILY_RENT
+  GUEST_WEEKLY_RENT
+  APPRENTICE
+  HYBRID
+
+  @@schema("public")
+}
+
+/// Effective-dated. Historic calculations are never rewritten by a later change.
+model CompensationModel {
+  id                 String                @id @default(cuid())
+  membershipId       String
+  membership         Membership            @relation(fields: [membershipId], references: [id])
+  type               CompensationModelType
+  weeklyRentPence    Int?
+  dailyRentPence     Int?
+  artistPercent      Int?                  // e.g. 60
+  studioPercent      Int?                  // e.g. 40
+  salaryPenceAnnual  Int?
+  /// Explicit definition of the eligible sales base, e.g.
+  /// { "excludeVat": true, "excludeTips": true, "excludeCardFees": false, "excludeMaterials": false }
+  eligibleBase       Json                  @default("{}")
+  rentDueWeekday     Int?                  // 1 = Monday
+  vatOnRent          Boolean               @default(false)
+  /// Consumables from studio stock are included in this arrangement (issued free); otherwise the artist buys them.
+  suppliesIncluded   Boolean               @default(false)
+  suppliesNote       String?
+  notes              String?
+  effectiveFrom      DateTime              @db.Date
+  effectiveTo        DateTime?             @db.Date
+  createdAt          DateTime              @default(now()) @db.Timestamptz(3)
+
+  chairRentCharges   ChairRentCharge[]
+  commissionEntries  CommissionEntry[]
+
+  @@index([membershipId, effectiveFrom])
+  @@schema("public")
+}
+
+model ArtistContractVersion {
+  id             String       @id @default(cuid())
+  membershipId   String
+  membership     Membership   @relation(fields: [membershipId], references: [id])
+  legalEntityId  String?
+  legalEntity    LegalEntity? @relation(fields: [legalEntityId], references: [id])
+  version        Int
+  title          String
+  documentKey    String       // immutable PDF in storage
+  documentHash   String
+  signedAt       DateTime?    @db.Timestamptz(3)
+  effectiveFrom  DateTime     @db.Date
+  effectiveTo    DateTime?    @db.Date
+  createdAt      DateTime     @default(now()) @db.Timestamptz(3)
+
+  @@unique([membershipId, version])
+  @@schema("public")
+}
+
+model Invoice {
+  id             String       @id @default(cuid())
+  number         String       @unique
+  legalEntityId  String
+  issuer         LegalEntity  @relation(fields: [legalEntityId], references: [id])
+  recipientName  String
+  recipientMembershipId String?
+  kind           String       // chair_rent | client_balance | commission_statement
+  netPence       Int
+  vatPence       Int          @default(0)
+  grossPence     Int
+  dueAt          DateTime     @db.Timestamptz(3)
+  issuedAt       DateTime     @default(now()) @db.Timestamptz(3)
+  paidAt         DateTime?    @db.Timestamptz(3)
+  documentKey    String?
+
+  allocations    PaymentAllocation[]
+  chairRentCharges ChairRentCharge[]
+
+  @@schema("public")
+}
+
+model ChairRentCharge {
+  id             String            @id @default(cuid())
+  artistId       String
+  artist         ArtistProfile     @relation(fields: [artistId], references: [id])
+  modelId        String
+  model          CompensationModel @relation(fields: [modelId], references: [id])
+  periodStart    DateTime          @db.Date
+  periodEnd      DateTime          @db.Date
+  netPence       Int
+  vatPence       Int               @default(0)
+  invoiceId      String?
+  invoice        Invoice?          @relation(fields: [invoiceId], references: [id])
+  status         String            @default("due") // due | paid | overdue | waived
+  createdAt      DateTime          @default(now()) @db.Timestamptz(3)
+
+  @@unique([artistId, periodStart])
+  @@schema("public")
+}
+
+model CommissionEntry {
+  id             String            @id @default(cuid())
+  artistId       String
+  artist         ArtistProfile     @relation(fields: [artistId], references: [id])
+  modelId        String
+  model          CompensationModel @relation(fields: [modelId], references: [id])
+  appointmentId  String?
+  eligibleBasePence Int
+  artistPence    Int
+  studioPence    Int
+  occurredAt     DateTime          @db.Timestamptz(3)
+  createdAt      DateTime          @default(now()) @db.Timestamptz(3)
+
+  @@schema("public")
+}
+
+model Payout {
+  id          String        @id @default(cuid())
+  artistId    String
+  artist      ArtistProfile @relation(fields: [artistId], references: [id])
+  amountPence Int
+  periodStart DateTime      @db.Date
+  periodEnd   DateTime      @db.Date
+  method      String        // bank_transfer | stripe_connect
+  providerRef String?
+  approvedById String
+  paidAt      DateTime?     @db.Timestamptz(3)
+  createdAt   DateTime      @default(now()) @db.Timestamptz(3)
+
+  @@schema("public")
+}
+
+model Expense {
+  id          String   @id @default(cuid())
+  category    String   // rent | rates | insurance | electricity | waste | software | salaries | consumables | fees | other
+  description String
+  netPence    Int
+  vatPence    Int      @default(0)
+  occurredAt  DateTime @db.Date
+  supplierId  String?
+  receiptKey  String?
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+
+  @@schema("public")
+}
+
+// ═══════════════════════════════ Documents & consent ════════════════════════
+
+enum DocumentKind {
+  PREPARATION_GUIDE
+  AFTERCARE_GUIDE
+  INFORMATION
+  CONSENT_FORM
+  RECEIPT
+  STATEMENT
+
+  @@schema("public")
+}
+
+model DocumentTemplateVersion {
+  id            String       @id @default(cuid())
+  templateKey   String       // e.g. before-your-tattoo
+  version       Int
+  kind          DocumentKind
+  title         String
+  procedureType String?      // tattoo | piercing_ear | piercing_oral | …
+  locale        String       @default("en-GB")
+  bodyMarkdown  String
+  ownerName     String
+  approverName  String?
+  approvedAt    DateTime?    @db.Timestamptz(3)
+  issueDate     DateTime     @db.Date
+  reviewDate    DateTime     @db.Date
+  isCurrent     Boolean      @default(false)
+  createdAt     DateTime     @default(now()) @db.Timestamptz(3)
+
+  generatedPdfs GeneratedPDF[]
+  consentTemplates ConsentTemplateVersion[]
+
+  @@unique([templateKey, version])
+  @@schema("public")
+}
+
+model GeneratedPDF {
+  id                String                  @id @default(cuid())
+  templateVersionId String?
+  templateVersion   DocumentTemplateVersion? @relation(fields: [templateVersionId], references: [id])
+  appointmentId     String?
+  appointment       Appointment?            @relation(fields: [appointmentId], references: [id])
+  recipientUserId   String?
+  storageKey        String
+  sha256            String
+  title             String
+  createdAt         DateTime                @default(now()) @db.Timestamptz(3)
+
+  deliveries        DeliveryEvent[]
+
+  @@schema("public")
+}
+
+model DeliveryEvent {
+  id         String       @id @default(cuid())
+  pdfId      String
+  pdf        GeneratedPDF @relation(fields: [pdfId], references: [id])
+  channel    String       // email | portal | print | qr
+  event      String       // sent | delivered | downloaded | acknowledged | bounced | resent
+  recipient  String?
+  providerId String?
+  createdAt  DateTime     @default(now()) @db.Timestamptz(3)
+
+  @@schema("public")
+}
+
+enum ConsentStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  SUBMITTED
+  PRACTITIONER_REVIEW_NEEDED
+  REVIEWED_APPROVED
+  SIGNED
+  SUPERSEDED
+  REFUSED
+
+  @@schema("public")
+}
+
+model ConsentTemplateVersion {
+  id              String   @id @default(cuid())
+  templateKey     String   // tattoo-consent | piercing-consent-ear | …
+  version         Int
+  procedureType   String
+  title           String
+  /// Ordered question/declaration schema (JSON) rendered by the form engine.
+  schema          Json
+  documentTemplateId String?
+  documentTemplate   DocumentTemplateVersion? @relation(fields: [documentTemplateId], references: [id])
+  legalReviewedBy String?
+  legalReviewedAt DateTime? @db.Timestamptz(3)
+  isCurrent       Boolean  @default(false)
+  createdAt       DateTime @default(now()) @db.Timestamptz(3)
+
+  responses       ConsentResponse[]
+
+  @@unique([templateKey, version])
+  @@schema("public")
+}
+
+model ConsentResponse {
+  id                 String                 @id @default(cuid())
+  appointmentId      String
+  appointment        Appointment            @relation(fields: [appointmentId], references: [id])
+  templateVersionId  String
+  templateVersion    ConsentTemplateVersion @relation(fields: [templateVersionId], references: [id])
+  status             ConsentStatus          @default(NOT_STARTED)
+  /// Non-health declarations only (design confirmed, not intoxicated, aftercare received…)
+  declarations       Json                   @default("{}")
+  healthRecordId     String?                @unique
+  snapshotKey        String?                // immutable PDF
+  snapshotHash       String?
+  reviewedById       String?
+  reviewedAt         DateTime?              @db.Timestamptz(3)
+  supersededById     String?
+  createdAt          DateTime               @default(now()) @db.Timestamptz(3)
+  updatedAt          DateTime               @updatedAt @db.Timestamptz(3)
+
+  signatures         Signature[]
+
+  @@index([appointmentId])
+  @@schema("public")
+}
+
+model Signature {
+  id          String          @id @default(cuid())
+  responseId  String
+  response    ConsentResponse @relation(fields: [responseId], references: [id])
+  signerId    String?
+  signer      User?           @relation(fields: [signerId], references: [id])
+  signerRole  String          // client | practitioner | witness | guardian
+  signerName  String
+  method      String          // drawn | typed | tap_to_sign
+  imageKey    String?
+  documentHash String
+  ipHash      String?
+  userAgent   String?
+  signedAt    DateTime        @default(now()) @db.Timestamptz(3)
+
+  @@schema("public")
+}
+
+/// Special-category (health) data, physically separated. Access is mediated and logged.
+model ClientHealthRecord {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  appointmentId String?
+  /// Encrypted JSON blob of answers (AES-256-GCM, key from env, never logged).
+  answersCiphertext Bytes
+  answersIv     Bytes
+  preferToDiscuss Boolean @default(false)
+  escalatedToId String?
+  escalationNote String?
+  retentionUntil DateTime @db.Date
+  createdAt     DateTime @default(now()) @db.Timestamptz(3)
+
+  @@index([userId])
+  @@schema("restricted")
+}
+
+model HealthAccessLog {
+  id         String   @id @default(cuid())
+  recordId   String
+  accessorId String
+  accessor   User     @relation(fields: [accessorId], references: [id])
+  purpose    String
+  accessedAt DateTime @default(now()) @db.Timestamptz(3)
+
+  @@schema("restricted")
+}
+
+model SessionLog {
+  id            String      @id @default(cuid())
+  appointmentId String
+  appointment   Appointment @relation(fields: [appointmentId], references: [id])
+  practitionerId String
+  dressingType  String?     // standard | adhesive_film
+  dressingRemovalAdvice String?
+  aftercareIssued Boolean   @default(false)
+  notes         String?     // operational notes only; never health answers
+  startedAt     DateTime?   @db.Timestamptz(3)
+  endedAt       DateTime?   @db.Timestamptz(3)
+  createdAt     DateTime    @default(now()) @db.Timestamptz(3)
+
+  consumables   SessionConsumable[]
+  incidents     Incident[]
+
+  @@schema("public")
+}
+
+// ═══════════════════════════════ Inventory & hygiene ════════════════════════
+
+model Supplier {
+  id        String   @id @default(cuid())
+  name      String
+  email     String?
+  phone     String?
+  notes     String?
+  products  Product[]
+  purchaseOrders PurchaseOrder[]
+
+  @@schema("public")
+}
+
+model Product {
+  id           String    @id @default(cuid())
+  sku          String    @unique
+  name         String
+  category     String    // ink | needle | cartridge | glove | barrier | cleaning | dressing | jewellery | aftercare_retail | other
+  brand        String?
+  colour       String?
+  unit         String    @default("each")
+  reorderLevel Int       @default(0)
+  costPence    Int?
+  retailPence  Int?
+  supplierId   String?
+  supplier     Supplier? @relation(fields: [supplierId], references: [id])
+  // Piercing jewellery attributes
+  material     String?
+  gauge        String?
+  length       String?
+  imageKey     String?   // product photo in private storage, served via signed URL
+  isActive     Boolean   @default(true)
+
+  lots         InventoryLot[]
+  retailSales  RetailSale[]
+
+  @@schema("public")
+}
+
+model InventoryLot {
+  id          String    @id @default(cuid())
+  productId   String
+  product     Product   @relation(fields: [productId], references: [id])
+  lotNumber   String?
+  expiresAt   DateTime? @db.Date
+  quantity    Int
+  receivedAt  DateTime  @default(now()) @db.Timestamptz(3)
+  purchaseOrderId String?
+
+  movements   StockMovement[]
+  usages      SessionConsumable[]
+
+  @@schema("public")
+}
+
+model StockMovement {
+  id             String         @id @default(cuid())
+  lotId          String
+  lot            InventoryLot   @relation(fields: [lotId], references: [id])
+  delta          Int
+  reason         String         // received | used_in_session | adjustment | shrinkage | transfer | count | issued_to_artist | sold_to_artist
+  reference      String?
+  actorId        String?
+  /// Set when stock leaves to a practitioner (issued under their arrangement, or sold to them).
+  artistId       String?
+  artist         ArtistProfile? @relation(fields: [artistId], references: [id])
+  unitPricePence Int?           // only for sold_to_artist
+  ledgerGroupId  String?        // journal posted for a sale
+  note           String?
+  createdAt      DateTime       @default(now()) @db.Timestamptz(3)
+
+  @@index([artistId, createdAt])
+
+  @@schema("public")
+}
+
+model SessionConsumable {
+  id           String       @id @default(cuid())
+  sessionLogId String
+  sessionLog   SessionLog   @relation(fields: [sessionLogId], references: [id])
+  lotId        String
+  lot          InventoryLot @relation(fields: [lotId], references: [id])
+  quantity     Int
+  createdAt    DateTime     @default(now()) @db.Timestamptz(3)
+
+  @@unique([sessionLogId, lotId])
+  @@schema("public")
+}
+
+model PurchaseOrder {
+  id         String   @id @default(cuid())
+  supplierId String
+  supplier   Supplier @relation(fields: [supplierId], references: [id])
+  status     String   @default("draft")
+  lines      Json
+  orderedAt  DateTime? @db.Timestamptz(3)
+  receivedAt DateTime? @db.Timestamptz(3)
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+
+  @@schema("public")
+}
+
+model Equipment {
+  id           String   @id @default(cuid())
+  name         String
+  serial       String?
+  kind         String
+  nextServiceAt DateTime? @db.Date
+  maintenance  Maintenance[]
+
+  @@schema("public")
+}
+
+model Maintenance {
+  id          String    @id @default(cuid())
+  equipmentId String
+  equipment   Equipment @relation(fields: [equipmentId], references: [id])
+  performedAt DateTime  @db.Date
+  performedBy String
+  notes       String?
+
+  @@schema("public")
+}
+
+model CleaningChecklist {
+  id          String   @id @default(cuid())
+  stationName String
+  kind        String   // setup | clean_down | daily | weekly
+  items       Json
+  completedBy String
+  completedAt DateTime @default(now()) @db.Timestamptz(3)
+
+  @@schema("public")
+}
+
+model Incident {
+  id           String      @id @default(cuid())
+  sessionLogId String?
+  sessionLog   SessionLog? @relation(fields: [sessionLogId], references: [id])
+  kind         String      // sharps | exposure | first_aid | complaint | other
+  severity     String
+  description  String      // restricted access
+  reportedById String
+  correctiveAction String?
+  closedAt     DateTime?   @db.Timestamptz(3)
+  createdAt    DateTime    @default(now()) @db.Timestamptz(3)
+
+  @@schema("public")
+}
+
+// ═══════════════════════════════ Recruitment & academy ══════════════════════
+
+model ArtistApplication {
+  id           String         @id @default(cuid())
+  name         String
+  email        String
+  portfolioUrl String?
+  styles       String[]       @default([])
+  experience   String?
+  desiredModel String?
+  stage        String         @default("applied") // applied | screening | portfolio_review | meeting | offer | agreement | verification | provisioned | active | review | leaver
+  recruitmentConsentAt DateTime @db.Timestamptz(3)
+  artistId     String?
+  artist       ArtistProfile? @relation(fields: [artistId], references: [id])
+  notes        String?
+  createdAt    DateTime       @default(now()) @db.Timestamptz(3)
+
+  @@schema("public")
+}
+
+model TrainingModule {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  title       String
+  area        String
+  content     Json
+  requiresSupervisor Boolean @default(true)
+  enrolments  Enrolment[]
+
+  @@schema("public")
+}
+
+model Enrolment {
+  id        String         @id @default(cuid())
+  userId    String
+  user      User           @relation(fields: [userId], references: [id])
+  moduleId  String
+  module    TrainingModule @relation(fields: [moduleId], references: [id])
+  status    String         @default("enrolled")
+  assessments Assessment[]
+  signoffs  MentorSignoff[]
+  createdAt DateTime       @default(now()) @db.Timestamptz(3)
+
+  @@unique([userId, moduleId])
+  @@schema("public")
+}
+
+model Assessment {
+  id          String    @id @default(cuid())
+  enrolmentId String
+  enrolment   Enrolment @relation(fields: [enrolmentId], references: [id])
+  kind        String    // quiz | reflection | evidence | practical_log
+  payload     Json
+  score       Int?
+  createdAt   DateTime  @default(now()) @db.Timestamptz(3)
+
+  @@schema("public")
+}
+
+/// Only a mentor/supervisor can create one; apprentices cannot self-certify.
+model MentorSignoff {
+  id          String    @id @default(cuid())
+  enrolmentId String
+  enrolment   Enrolment @relation(fields: [enrolmentId], references: [id])
+  mentorId    String
+  mentor      User      @relation("Mentor", fields: [mentorId], references: [id])
+  competence  String
+  outcome     String    // competent | not_yet | renewal_due
+  note        String?
+  expiresAt   DateTime? @db.Date
+  createdAt   DateTime  @default(now()) @db.Timestamptz(3)
+
+  @@schema("public")
+}
+
+// ─── Referral and loyalty ─────────────────────────────────────────────────────
+
+model LoyaltyAccount {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  referralCode  String   @unique
+  balancePence  Int      @default(0)
+  createdAt     DateTime @default(now()) @db.Timestamptz(3)
+
+  transactions  LoyaltyTransaction[]
+  referralsMade Referral[] @relation("Referrer")
+  referredBy    Referral?  @relation("Referred")
+
+  @@schema("public")
+}
+
+enum LoyaltyTxType {
+  REFERRED_WELCOME
+  REFERRAL_BONUS
+  POINTS_EARNED
+  REDEEMED
+  ADJUSTMENT
+  EXPIRED
+
+  @@schema("public")
+}
+
+model LoyaltyTransaction {
+  id            String         @id @default(cuid())
+  accountId     String
+  account       LoyaltyAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  type          LoyaltyTxType
+  amountPence   Int            // positive = credit, negative = redemption
+  note          String?
+  appointmentId String?
+  actorId       String?
+  createdAt     DateTime       @default(now()) @db.Timestamptz(3)
+
+  @@index([accountId, createdAt])
+  @@schema("public")
+}
+
+enum ReferralStatus {
+  PENDING
+  QUALIFIED
+  REWARDED
+  VOID
+
+  @@schema("public")
+}
+
+model Referral {
+  id          String         @id @default(cuid())
+  referrerId  String
+  referrer    LoyaltyAccount @relation("Referrer", fields: [referrerId], references: [id])
+  referredId  String         @unique
+  referred    LoyaltyAccount @relation("Referred", fields: [referredId], references: [id])
+  code        String
+  status      ReferralStatus @default(PENDING)
+  qualifiedAt DateTime?      @db.Timestamptz(3)
+  createdAt   DateTime       @default(now()) @db.Timestamptz(3)
+
+  @@schema("public")
+}
+
+// ─── Social posting ───────────────────────────────────────────────────────────
+
+enum SocialPostStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHED
+  FAILED
+
+  @@schema("public")
+}
+
+model SocialPost {
+  id           String           @id @default(cuid())
+  caption      String
+  channels     String[]         @default([])   // provider channel ids
+  assetId      String?
+  asset        ImageAsset?      @relation(fields: [assetId], references: [id])
+  scheduledFor DateTime?        @db.Timestamptz(3)
+  status       SocialPostStatus @default(DRAFT)
+  provider     String?          // buffer
+  providerRef  String?
+  error        String?
+  createdById  String
+  publishedAt  DateTime?        @db.Timestamptz(3)
+  createdAt    DateTime         @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime         @updatedAt @db.Timestamptz(3)
+
+  @@schema("public")
+}
+
+// ─── Apprentice portal ────────────────────────────────────────────────────────
+
+model Skill {
+  id           String   @id @default(cuid())
+  key          String   @unique
+  area         String   // see SKILL_AREAS in src/content/skills.ts
+  stage        Int      @default(1) // 0 = prerequisites, 1..5 = apprenticeship stages
+  title        String
+  description  String?
+  evidenceType String?  // observation | written | certificate | practical | portfolio
+  isCore       Boolean  @default(true)
+  isActive     Boolean  @default(true) // retired catalogue items keep their progress history but are hidden
+  sortOrder    Int      @default(0)
+
+  progress    SkillProgress[]
+  evidence    ApprenticeEvidence[]
+
+  @@schema("public")
+}
+
+enum SkillStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  READY_FOR_REVIEW
+  COMPETENT
+  RENEWAL_DUE
+
+  @@schema("public")
+}
+
+/// Only a mentor/supervisor/owner may set COMPETENT; apprentices can only mark READY_FOR_REVIEW.
+model SkillProgress {
+  id              String      @id @default(cuid())
+  apprenticeId    String
+  apprentice      User        @relation("ApprenticeProgress", fields: [apprenticeId], references: [id], onDelete: Cascade)
+  skillId         String
+  skill           Skill       @relation(fields: [skillId], references: [id])
+  status          SkillStatus @default(NOT_STARTED)
+  apprenticeNote  String?
+  mentorNote      String?
+  signedOffById   String?
+  signedOffBy     User?       @relation("SkillSignoffs", fields: [signedOffById], references: [id])
+  signedOffAt     DateTime?   @db.Timestamptz(3)
+  updatedAt       DateTime    @updatedAt @db.Timestamptz(3)
+
+  @@unique([apprenticeId, skillId])
+  @@schema("public")
+}
+
+/// Supervised practice hours. Counted towards sign-off only once verified by a mentor.
+model PracticeLog {
+  id            String         @id @default(cuid())
+  apprenticeId  String
+  apprentice    User           @relation("ApprenticeLogs", fields: [apprenticeId], references: [id], onDelete: Cascade)
+  date          DateTime       @db.Date
+  minutes       Int
+  activity      String
+  notes         String?
+  supervisorId  String?
+  supervisor    ArtistProfile? @relation("LogSupervisor", fields: [supervisorId], references: [id])
+  verifiedById  String?
+  verifiedBy    User?          @relation("LogVerifier", fields: [verifiedById], references: [id])
+  verifiedAt    DateTime?      @db.Timestamptz(3)
+  rejectedNote  String?
+  createdAt     DateTime       @default(now()) @db.Timestamptz(3)
+
+  @@index([apprenticeId, date])
+  @@schema("public")
+}
+
+/// Photos of practice work and progression. Private training material, never published.
+model ApprenticeEvidence {
+  id           String      @id @default(cuid())
+  apprenticeId String
+  apprentice   User        @relation("ApprenticeEvidence", fields: [apprenticeId], references: [id], onDelete: Cascade)
+  assetId      String
+  asset        ImageAsset  @relation(fields: [assetId], references: [id])
+  skillId      String?
+  skill        Skill?      @relation(fields: [skillId], references: [id])
+  caption      String?
+  stage        String?     // practice_skin | supervised_client | design | other
+  mentorComment String?
+  createdAt    DateTime    @default(now()) @db.Timestamptz(3)
+
+  @@index([apprenticeId, createdAt])
+  @@schema("public")
+}
+
+/// The owner's formal decision that an apprentice may work as a junior artist. Immutable.
+model JuniorArtistSignoff {
+  id               String   @id @default(cuid())
+  apprenticeId     String   @unique
+  apprentice       User     @relation("JuniorSignoff", fields: [apprenticeId], references: [id])
+  signedOffById    String
+  signedOffBy      User     @relation("JuniorSignoffBy", fields: [signedOffById], references: [id])
+  verifiedMinutes  Int
+  skillsSnapshot   Json
+  conditions       String?
+  statement        String
+  createdAt        DateTime @default(now()) @db.Timestamptz(3)
+
+  @@schema("public")
+}
+
+// ═══════════════════════════════ Platform ═══════════════════════════════════
+
+model StudioSetting {
+  id        String   @id @default(cuid())
+  studioId  String
+  studio    Studio   @relation(fields: [studioId], references: [id])
+  key       String
+  value     Json
+  updatedBy String?
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+  @@unique([studioId, key])
+  @@schema("public")
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  actorId     String?
+  actor       User?    @relation("AuditActor", fields: [actorId], references: [id])
+  actorLabel  String
+  onBehalfOfId String?
+  action      String   // e.g. appointment.rescheduled
+  entityType  String
+  entityId    String
+  before      Json?
+  after       Json?
+  reason      String?
+  ipHash      String?
+  result      String   @default("ok")
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+
+  @@index([entityType, entityId])
+  @@index([actorId, createdAt])
+  @@schema("public")
+}
+
+enum NotificationStatus {
+  QUEUED
+  SENT
+  DELIVERED
+  FAILED
+  SKIPPED
+
+  @@schema("public")
+}
+
+model Notification {
+  id          String             @id @default(cuid())
+  userId      String?
+  user        User?              @relation(fields: [userId], references: [id])
+  channel     String             // email | sms | whatsapp | push
+  templateKey String
+  to          String
+  subject     String?
+  status      NotificationStatus @default(QUEUED)
+  providerId  String?
+  error       String?
+  payload     Json               @default("{}")
+  sentAt      DateTime?          @db.Timestamptz(3)
+  createdAt   DateTime           @default(now()) @db.Timestamptz(3)
+
+  @@index([userId, createdAt])
+  @@schema("public")
+}
+
+/// Development-only outbox used when no email provider is configured.
+model DevMailbox {
+  id        String   @id @default(cuid())
+  to        String
+  subject   String
+  text      String
+  html      String
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+
+  @@schema("public")
+}
+
+model MessageTemplate {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  channel   String
+  subject   String?
+  body      String
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+  @@schema("public")
+}
+
+model IntegrationConnection {
+  id        String   @id @default(cuid())
+  provider  String   @unique // stripe | resend | whatsapp | google_calendar | xero
+  status    String   @default("not_configured") // not_configured | test_mode | live | error
+  config    Json     @default("{}")
+  lastCheckedAt DateTime? @db.Timestamptz(3)
+  lastError String?
+
+  @@schema("public")
+}
+
+// ─── Flash catalogue (stock for every novelty game) ───────────────────────────
+
+enum DesignCollection {
+  CATALOGUE
+  GUMBALL
+  TAROT
+  CLAW
+  DROP
+  ADVENT
+  NEEDLE_TOWN
+
+  @@schema("public")
+}
+
+enum DesignStatus {
+  AVAILABLE
+  HELD
+  BOOKED
+  RETIRED
+
+  @@schema("public")
+}
+
+enum ColourMode {
+  BLACK
+  COLOUR
+
+  @@schema("public")
+}
+
+/// A whole flash sheet as the artist posts it; designs on it are located by hotspot.
+model FlashSheet {
+  id        String        @id @default(cuid())
+  artistId  String
+  artist    ArtistProfile @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  title     String
+  imageKey  String
+  createdAt DateTime      @default(now()) @db.Timestamptz(3)
+
+  designs   Design[]
+
+  @@schema("public")
+}
+
+/// One bookable flash design. Prices are per size; null falls back to the studio defaults.
+/// One-off designs (repeatable = false) are held while a client books and retired once booked.
+model Design {
+  id                   String           @id @default(cuid())
+  title                String
+  artistId             String
+  artist               ArtistProfile    @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  imageKey             String
+  sheetId              String?
+  sheet                FlashSheet?      @relation(fields: [sheetId], references: [id], onDelete: SetNull)
+  hotspotX             Float?           // percent of sheet width
+  hotspotY             Float?
+  hotspotW             Float?
+  hotspotH             Float?
+  theme                String?
+  colourMode           ColourMode       @default(BLACK)
+  collection           DesignCollection @default(CATALOGUE)
+  priceSmallPence      Int?
+  pricePalmPence       Int?
+  apprenticeAvailable  Boolean          @default(false)
+  apprenticeSmallPence Int?
+  apprenticePalmPence  Int?
+  repeatable           Boolean          @default(true)
+  status               DesignStatus     @default(AVAILABLE)
+  heldUntil            DateTime?        @db.Timestamptz(3)
+  heldRequestId        String?
+  bookedRequestId      String?
+  editionSize          Int?             // Needle Town: how many times it may be tattooed
+  funLine              String?          // tarot: one light line written by the artist
+  sortOrder            Int              @default(0)
+  retiredAt            DateTime?        @db.Timestamptz(3)
+  createdAt            DateTime         @default(now()) @db.Timestamptz(3)
+  updatedAt            DateTime         @updatedAt @db.Timestamptz(3)
+
+  requests             BookingRequest[]
+  plays                Play[]
+
+  @@index([collection, status])
+  @@index([artistId, status])
+  @@schema("public")
+}
+
+// ─── Novelty games (free to play; every play leads to a fixed-price booking) ──
+
+enum PlayStatus {
+  RESULT_SHOWN
+  BOOKED
+  EXPIRED
+
+  @@schema("public")
+}
+
+/// One spin of a game. The server chose the design; the browser only animates it.
+model Play {
+  id          String     @id @default(cuid())
+  game        String     // gumball | wheel | tarot | slots | claw
+  visitorId   String     // anonymous cookie id, so spin limits work before sign-in
+  userId      String?
+  user        User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  designId    String?
+  design      Design?    @relation(fields: [designId], references: [id], onDelete: SetNull)
+  result      Json?      // game-specific payload (wheel segment, slot reels)
+  status      PlayStatus @default(RESULT_SHOWN)
+  requestId   String?    // the booking it turned into
+  createdAt   DateTime   @default(now()) @db.Timestamptz(3)
+
+  @@index([game, visitorId, createdAt])
+  @@index([game, userId, createdAt])
+  @@schema("public")
+}
+
+/// "Tell me when the machine is restocked" sign-ups.
+model PlayAlert {
+  id        String   @id @default(cuid())
+  game      String
+  email     String
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  notifiedAt DateTime? @db.Timestamptz(3)
+
+  @@unique([game, email])
+  @@schema("public")
+}
+
+/// First-party analytics events: no third-party tracker, nothing leaves the site.
+model AnalyticsEvent {
+  id        String   @id @default(cuid())
+  name      String   // game_viewed | play_started | result_shown | deposit_paid | replay_bought
+  game      String?
+  visitorId String?
+  userId    String?
+  designId  String?
+  playId    String?
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+
+  @@index([name, createdAt])
+  @@schema("public")
+}
+
+// ─── Promotions ───────────────────────────────────────────────────────────────
+
+enum PromotionScope {
+  STUDIO
+  ARTIST
+
+  @@schema("public")
+}
+
+/// A studio-wide or single-artist offer. Live promotions show as a ribbon on the
+/// artist's public card and page (ARTIST) or as a banner across the public site (STUDIO).
+model Promotion {
+  id           String         @id @default(cuid())
+  scope        PromotionScope
+  artistId     String?
+  artist       ArtistProfile? @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  title        String         // ribbon text, e.g. "20% off flash"
+  details      String?        // public terms in plain words
+  code         String?        // optional code to quote
+  startsAt     DateTime       @db.Timestamptz(3)
+  endsAt       DateTime?      @db.Timestamptz(3)
+  isActive     Boolean        @default(true)
+  showOnPublic Boolean        @default(true)
+  createdById  String
+  createdAt    DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime       @updatedAt @db.Timestamptz(3)
+
+  @@index([scope, isActive, startsAt, endsAt])
+  @@schema("public")
+}
+
+model MarketingCampaign {
+  id        String   @id @default(cuid())
+  name      String
+  channel   String   // email
+  status    String   @default("draft") // draft | sending | sent | failed
+  subject   String?
+  scheduledFor DateTime? @db.Timestamptz(3)
+  body      String?
+  audience  Json     @default("{}")
+  recipientCount Int @default(0)
+  sentCount Int      @default(0)
+  failedCount Int    @default(0)
+  createdById String?
+  sentAt    DateTime? @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+
+  @@schema("public")
+}
+
+model AIActionApproval {
+  id           String    @id @default(cuid())
+  requestedById String
+  requestedBy  User      @relation(fields: [requestedById], references: [id])
+  tool         String
+  arguments    Json
+  preview      String
+  status       String    @default("pending") // pending | approved | rejected | executed | failed
+  decidedById  String?
+  decidedAt    DateTime? @db.Timestamptz(3)
+  result       Json?
+  createdAt    DateTime  @default(now()) @db.Timestamptz(3)
+
+  @@schema("public")
+}
+
+/// Staff chat: a studio-wide channel for everyone on the team, a management channel for owners and managers, and direct messages.
+enum ChatChannelKind {
+  STUDIO
+  MANAGEMENT
+  DIRECT
+
+  @@schema("public")
+}
+
+model ChatChannel {
+  id        String          @id @default(cuid())
+  kind      ChatChannelKind
+  name      String
+  createdAt DateTime        @default(now()) @db.Timestamptz(3)
+  members   ChatMember[]
+  messages  ChatMessage[]
+
+  @@schema("public")
+}
+
+model ChatMember {
+  id         String      @id @default(cuid())
+  channelId  String
+  channel    ChatChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lastReadAt DateTime?   @db.Timestamptz(3)
+
+  @@unique([channelId, userId])
+  @@schema("public")
+}
+
+model ChatMessage {
+  id        String      @id @default(cuid())
+  channelId String
+  channel   ChatChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  senderId  String
+  sender    User        @relation(fields: [senderId], references: [id])
+  body      String
+  createdAt DateTime    @default(now()) @db.Timestamptz(3)
+
+  @@index([channelId, createdAt])
+  @@schema("public")
+}
