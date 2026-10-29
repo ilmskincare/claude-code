@@ -29,3 +29,7 @@ Six postage-stamp-style designs (`flash/stamps/stamp-*.png`) are original vector
 
 Ten images under `flash/house/` (five subjects in colour and black and grey) supplied by the studio on 28 October 2026 as its own artwork. Rights: the studio. The archive catalogue designs are retired but kept on record.
 
+## Connor's portfolio
+
+Nine photographs under `portfolio/connor/` supplied by the artist via the studio on 29 October 2026, selected from 36 in his shared folder. Rights: the artist; publication permission recorded against each image on the studio's instruction. Shots with clearly identifiable client faces were left out.
+

@@ -257,4 +257,5 @@ Note: during one full local test run the marketing integration test failed once 
 - Public guides library lists approved documents only, with a "being finalised" line while none are approved; unapproved guides and their PDFs return Not found to the public but stay viewable to staff who hold documents.manage (the Documents page links). Booking pages list approved guides only.
 - Privacy notice: draft badge removed and the placeholder "legal entity to be confirmed" wording replaced with Rebellious Ink. The owner should confirm the legal entity name and address with their adviser.
 - Accounts added this week: Sophie (username tidied), Honey (apprentice, supervised by Elle Evaa), Chris (resident artist, 60/40 commission split recorded).
+- 29 October: the new resident artist's account renamed twice on the owner's instruction (Chris, Cooper, finally Connor: username `connor`, page /artists/connor); nine portfolio photos loaded from his Drive folder with bio and styles set.
 
