@@ -39,7 +39,7 @@ export default async function ArtistPage({ params }: { params: Promise<{ slug: s
           <h2 className="text-xl font-bold">Work with {a.displayName.split(" ")[0]}</h2>
           {promo && <div className="mt-3 rounded-lg bg-acid/15 border border-acid p-3 text-sm"><p className="font-bold uppercase tracking-wide text-xs">Current offer</p><p className="font-semibold">{promo.title}</p>{promo.details && <p className="mt-1 opacity-90">{promo.details}</p>}{promo.code && <p className="mt-1">Quote <strong>{promo.code}</strong></p>}{promo.endsAt && <p className="hint mt-1">Until {promo.endsAt.toLocaleDateString("en-GB")}</p>}</div>}
           <p className="mt-2 opacity-80 text-sm">Send your idea and references. You will get a reference number straight away and a reply in your private thread.</p>
-          {a.acceptsEnquiries ? <Link href={`/enquire?artist=${a.slug}`} className="btn btn-primary mt-4 w-full justify-center">Start an enquiry</Link> : <p className="mt-4 badge badge-muted">Books currently closed</p>}
+          {a.acceptsEnquiries ? <div className="mt-4 flex flex-col gap-2"><Link href={`/messages/start?artist=${a.slug}`} className="btn btn-primary w-full justify-center">Message {a.displayName.split(" ")[0]}</Link><Link href={`/enquire?artist=${a.slug}`} className="btn btn-secondary w-full justify-center">Start an enquiry</Link></div> : <p className="mt-4 badge badge-muted">Books currently closed</p>}
           <Hours rules={a.availabilityRules} />
         </aside>
       </div>

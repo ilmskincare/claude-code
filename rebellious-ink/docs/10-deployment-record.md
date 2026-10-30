@@ -267,3 +267,9 @@ Note: during one full local test run the marketing integration test failed once 
 - 29 October: letters, the artist set-up form, the formulation brief and the user manual (v3, screenshots re-captured) regenerated in the red brand with the new logo.
 - 29 October: the new resident artist's correct name is Damian Cooper (username `damian`, page /artists/damian-cooper). A reusable artist welcome guide (login steps, what to fill in, day-to-day use, mentoring) lives in docs/letters as a template; the personalised copy with a one-time password is never committed.
 
+## 30 October 2026: client chat and even artist cards
+
+- Clients can message an artist directly: Message buttons on the home page, the Artists page and each artist's page open a private client channel (migration `20261030090000_client_chat`: CLIENT channel kind, artist link on the channel, image attachments on messages). Clients see it under Messages in their portal; artists under Clients in Chat; owners and managers can read it. Staff replies email the client a link. Privacy notice updated.
+- Home page artist cards are now the same size: square cover (image pinned inside the square so its natural size cannot stretch the card), fixed-height name block, fixed-height button row with Portfolio and Message buttons that never wrap. Artists with books closed show a greyed "Messages closed" button so every card matches. The Artists page shows three equal photo slots per artist.
+- Verified on staging with a browser walkthrough: client presses Message Mo on the home page, lands in their private chat, sends text plus a photo; the artist sees the photo under Clients in Chat (signed file fetch 200, image/png) and replies; the client sees the reply; another client gets 404 on that channel; a signed-out visitor is sent to sign in and back. Live home cards measured identical at desktop, tablet and phone widths (537, 562 and 538 px tall respectively). Deployed to staging and production.
+

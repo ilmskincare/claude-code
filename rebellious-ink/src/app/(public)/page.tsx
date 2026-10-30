@@ -32,14 +32,21 @@ export default async function HomePage() {
         {artists.length === 0 ? <p className="opacity-70">Artist profiles are being set up.</p> : (
           <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {artists.map((a) => (
-              <li key={a.id} className="card overflow-hidden relative">
+              <li key={a.id} className="card overflow-hidden relative flex flex-col">
                 {promos.byArtist.get(a.id) && <PromotionRibbon title={promos.byArtist.get(a.id)!.title} />}
-                <Link href={`/artists/${a.slug}`}>
-                  <div className="aspect-[4/3] bg-steel relative">
-                    {a.portfolioItems[0] ? <img src={signedUrl(a.portfolioItems[0].asset.storageKey, 3600)} alt={a.portfolioItems[0].caption ?? `Work by ${a.displayName}`} className="w-full h-full object-cover" /> : <div className="absolute inset-0 grid place-items-center text-bone/50">Portfolio coming soon</div>}
+                <Link href={`/artists/${a.slug}`} className="block">
+                  <div className="aspect-square bg-steel relative overflow-hidden">
+                    {a.portfolioItems[0] ? <img src={signedUrl(a.portfolioItems[0].asset.storageKey, 3600)} alt={a.portfolioItems[0].caption ?? `Work by ${a.displayName}`} className="absolute inset-0 w-full h-full object-cover" /> : a.avatarKey ? <img src={signedUrl(a.avatarKey, 3600)} alt="" className="absolute inset-0 w-full h-full object-cover" /> : <div className="absolute inset-0 grid place-items-center text-bone/50">Portfolio coming soon</div>}
                   </div>
-                  <div className="p-4 flex items-center gap-3">{a.avatarKey && <img src={signedUrl(a.avatarKey, 3600)} alt="" className="w-12 h-12 rounded-full object-cover bg-bone shrink-0" />}<div><h3 className="text-xl font-bold">{a.displayName}</h3><p className="hint mt-1">{a.styles.join(" · ") || a.kind.replace("_", " ").toLowerCase()}</p></div></div>
                 </Link>
+                <div className="p-4 flex items-center gap-3 h-[6.5rem]">
+                  {a.avatarKey ? <img src={signedUrl(a.avatarKey, 3600)} alt="" className="w-12 h-12 rounded-full object-cover bg-bone shrink-0" /> : <span className="w-12 h-12 rounded-full bg-steel text-bone grid place-items-center font-bold shrink-0" aria-hidden="true">{a.displayName.slice(0, 1)}</span>}
+                  <div className="min-w-0"><h3 className="text-xl font-bold truncate"><Link href={`/artists/${a.slug}`}>{a.displayName}</Link></h3><p className="hint mt-1 line-clamp-2">{a.styles.join(" · ") || a.kind.replace("_", " ").toLowerCase()}</p></div>
+                </div>
+                <div className="px-4 pb-4 mt-auto grid grid-cols-2 gap-2 h-[4.75rem]">
+                  <Link href={`/artists/${a.slug}`} className="btn btn-secondary justify-center whitespace-nowrap px-2 text-sm sm:text-base">Portfolio</Link>
+                  {a.acceptsEnquiries ? <Link href={`/messages/start?artist=${a.slug}`} className="btn btn-primary justify-center whitespace-nowrap px-2 text-sm sm:text-base">Message {a.displayName.split(" ")[0]}</Link> : <span className="btn btn-secondary justify-center whitespace-nowrap px-2 text-sm sm:text-base opacity-50 cursor-not-allowed" aria-disabled="true" title="Not taking messages at the moment">Messages closed</span>}
+                </div>
               </li>
             ))}
           </ul>

@@ -94,3 +94,28 @@ describe("owner reports", () => {
     expect(csv).toContain("All,2,55.00");
   });
 });
+
+describe("client chat with an artist", () => {
+  it("a client opens a chat from the artist's page, sends a photo, the artist replies and the client is emailed; other clients cannot read it; owners can", async () => {
+    const { openClientChat, channelMessages, sendMessage, listChannels } = await import("@/lib/chat");
+    const { capabilitiesFor } = await import("@/lib/rbac");
+    const mk = (userId: string, email: string, roles: Parameters<typeof capabilitiesFor>[0], artistProfileId: string | null = null) => ({ userId, email, name: "T", roles, capabilities: capabilitiesFor(roles), artistProfileId, membershipId: null, isSuspended: false });
+    const client = mk(s.c1.id, "c1@test.local", ["CLIENT"]), other = mk(s.c2.id, "c2@test.local", ["CLIENT"]), artist = mk(s.artistUser.id, "a@test.local", ["RESIDENT_ARTIST"], s.artist.id), owner = mk(s.owner.id, "owner@test.local", ["OWNER"]);
+    const c = await openClientChat(client, s.artist.slug);
+    expect(c.kind).toBe("CLIENT");
+    expect((await openClientChat(client, s.artist.slug)).id).toBe(c.id);                      // reopening finds the same chat
+    const png = new File([Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==", "base64")], "ref.png", { type: "image/png" });
+    await sendMessage(client, c.id, "Hi, could you do something like this?", [png]);
+    const seenByArtist = await channelMessages(artist, c.id);
+    expect(seenByArtist.messages[0].attachments).toHaveLength(1); expect(seenByArtist.messages[0].attachments[0]).toContain("/api/files/");
+    await expect(channelMessages(other, c.id)).rejects.toThrow();
+    await expect(sendMessage(other, c.id, "hello")).rejects.toThrow();
+    await expect(sendMessage(client, c.id, "", [])).rejects.toThrow(/Write something/);
+    await sendMessage(artist, c.id, "Yes, happy to. Send a placement photo when you can.");
+    const note = await testDb.notification.findFirst({ where: { templateKey: "chat.reply", to: "c1@test.local" } });
+    expect(note).not.toBeNull();
+    expect((await listChannels(client)).map((x) => x.kind)).toEqual(["CLIENT"]);
+    expect((await listChannels(owner)).some((x) => x.id === c.id)).toBe(true);
+    await expect(openClientChat(artist, s.artist.slug)).rejects.toThrow(/own profile/);
+  });
+});

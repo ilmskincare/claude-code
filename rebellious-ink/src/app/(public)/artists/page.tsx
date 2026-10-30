@@ -8,10 +8,12 @@ import { PromotionRibbon } from "@/components/promotion-ribbon";
 
 export const metadata = { title: "Artists" };
 
-export default async function ArtistsPage() {
+export default async function ArtistsPage({ searchParams }: { searchParams: Promise<{ message?: string }> }) {
+  const { message } = await searchParams;
   const [artists, promos] = await Promise.all([db.artistProfile.findMany({ where: { isPublished: true, isHouse: false }, include: { portfolioItems: { where: { publishedAt: { not: null } }, include: { asset: true }, orderBy: [{ isCover: "desc" }, { sortOrder: "asc" }], take: 3 }, supervisor: true }, orderBy: { displayName: "asc" } }), livePromotions()]);
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
+      {message && <p className="mb-4 badge badge-warn">{message}</p>}
       <PageHeader title="Our artists and piercers" intro="Every image here is genuine client work published with that client's separate permission. Nothing is AI-generated or retouched to change the result." />
       <ul className="grid gap-6 md:grid-cols-2">
         {artists.map((a) => (
@@ -26,9 +28,9 @@ export default async function ArtistsPage() {
             {promos.byArtist.get(a.id) && <p className="mt-2 text-sm"><span className="badge badge-acid mr-2">Offer</span>{promos.byArtist.get(a.id)!.title}{promos.byArtist.get(a.id)!.details ? ` · ${promos.byArtist.get(a.id)!.details}` : ""}</p>}
             <p className="mt-2 text-sm">{a.styles.map((s) => <span key={s} className="badge badge-outline mr-1">{s}</span>)}</p>
             <div className="mt-4 grid grid-cols-3 gap-2">
-              {a.portfolioItems.map((p) => <img key={p.id} src={signedUrl(p.asset.storageKey, 3600)} alt={p.caption ?? ""} className="aspect-square object-cover rounded-lg" />)}
+              {[0, 1, 2].map((k) => a.portfolioItems[k] ? <img key={a.portfolioItems[k].id} src={signedUrl(a.portfolioItems[k].asset.storageKey, 3600)} alt={a.portfolioItems[k].caption ?? ""} className="aspect-square object-cover rounded-lg w-full" /> : <div key={k} className="aspect-square rounded-lg bg-surface-muted border border-border grid place-items-center text-xs opacity-50">Coming soon</div>)}
             </div>
-            <div className="mt-4 flex gap-2"><Link href={`/artists/${a.slug}`} className="btn btn-secondary">Portfolio</Link>{a.acceptsEnquiries && <Link href={`/enquire?artist=${a.slug}`} className="btn btn-primary">Enquire with {a.displayName.split(" ")[0]}</Link>}</div>
+            <div className="mt-4 flex flex-wrap gap-2"><Link href={`/artists/${a.slug}`} className="btn btn-secondary">Portfolio</Link>{a.acceptsEnquiries && <Link href={`/messages/start?artist=${a.slug}`} className="btn btn-primary">Message {a.displayName.split(" ")[0]}</Link>}{a.acceptsEnquiries && <Link href={`/enquire?artist=${a.slug}`} className="btn btn-secondary">Book with {a.displayName.split(" ")[0]}</Link>}</div>
           </li>
         ))}
       </ul>

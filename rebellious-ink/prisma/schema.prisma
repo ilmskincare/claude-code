@@ -2175,6 +2175,7 @@ enum ChatChannelKind {
   STUDIO
   MANAGEMENT
   DIRECT
+  CLIENT
 
   @@schema("public")
 }
@@ -2183,6 +2184,8 @@ model ChatChannel {
   id        String          @id @default(cuid())
   kind      ChatChannelKind
   name      String
+  /// For CLIENT channels: the artist the client is talking to.
+  artistProfileId String?
   createdAt DateTime        @default(now()) @db.Timestamptz(3)
   members   ChatMember[]
   messages  ChatMessage[]
@@ -2209,6 +2212,8 @@ model ChatMessage {
   senderId  String
   sender    User        @relation(fields: [senderId], references: [id])
   body      String
+  /// Image attachments (storage keys), served through signed links.
+  attachments String[] @default([])
   createdAt DateTime    @default(now()) @db.Timestamptz(3)
 
   @@index([channelId, createdAt])

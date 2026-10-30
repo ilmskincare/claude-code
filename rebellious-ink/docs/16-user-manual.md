@@ -206,6 +206,10 @@ A flash booking, a gumball "Keep it" and a three-machines "Keep it" all create a
 
 ---
 
+### Messaging an artist directly
+
+Every artist card and page has a **Message** button. A client presses it, signs in with their email link if they are not already, and lands in a private chat with that artist under Messages in their portal. They can type and attach photos. The artist sees the chat under Clients in their Chat screen and replies there; the client gets an email nudge with a link each time staff reply. The desk and the owners can read these chats, and the privacy notice says so. A chat is for questions and ideas; a booking still starts from the enquiry form or a quote, which is where the formal record, the deposit and the consent live.
+
 ## 4. Enquiry statuses explained
 
 | Status | Meaning | Whose move | How it gets set today |
