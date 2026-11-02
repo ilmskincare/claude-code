@@ -273,3 +273,7 @@ Note: during one full local test run the marketing integration test failed once 
 - Home page artist cards are now the same size: square cover (image pinned inside the square so its natural size cannot stretch the card), fixed-height name block, fixed-height button row with Portfolio and Message buttons that never wrap. Artists with books closed show a greyed "Messages closed" button so every card matches. The Artists page shows three equal photo slots per artist.
 - Verified on staging with a browser walkthrough: client presses Message Mo on the home page, lands in their private chat, sends text plus a photo; the artist sees the photo under Clients in Chat (signed file fetch 200, image/png) and replies; the client sees the reply; another client gets 404 on that channel; a signed-out visitor is sent to sign in and back. Live home cards measured identical at desktop, tablet and phone widths (537, 562 and 538 px tall respectively). Deployed to staging and production.
 
+
+## 2 November 2026: Sophie's portfolio
+
+- Seven pieces added to apprentice Sophie's live portfolio (five graphite and charcoal studies, two practice-skin big cat pieces), stored under `portfolio/sophie/` in the private Blob store with publication permission granted; the leopard practice skin is the cover shown on the home page card. Verified on the live artist page: seven images, all fetched successfully.
