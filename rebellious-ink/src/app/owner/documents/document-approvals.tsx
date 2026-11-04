@@ -1,7 +1,7 @@
 "use client";
 import { useActionState } from "react";
 import Link from "next/link";
-import { approveDocumentAction, withdrawDocumentApprovalAction } from "@/app/actions/documents";
+import { approveAllDocumentsAction, approveDocumentAction, withdrawDocumentApprovalAction } from "@/app/actions/documents";
 
 export type DocRow = { id: string; templateKey: string; version: number; kind: string; title: string; procedureType: string | null; approvedAt: Date | null; approverName: string | null; reviewDate: Date; toConfirm: number };
 
@@ -29,12 +29,26 @@ function WithdrawForm({ d }: { d: DocRow }) {
   );
 }
 
+function ApproveAllForm({ drafts, defaultName }: { drafts: number; defaultName: string }) {
+  const [state, action, pending] = useActionState(approveAllDocumentsAction, undefined);
+  return (
+    <form action={action} className="card p-4 flex flex-wrap gap-2 items-end border-2 border-acid">
+      <div className="w-full"><strong>Publish everything that is still in draft</strong><p className="hint">{drafts} document{drafts === 1 ? "" : "s"} will go live on the website at once, each one recorded in the audit log under the name below. Use this once you have read them.</p></div>
+      <div><label className="field text-sm" htmlFor="ap-all">Approved by</label><input id="ap-all" name="approverName" className="input text-sm" defaultValue={defaultName} placeholder="Approved by" required /></div>
+      <button className="btn btn-primary" disabled={pending} onClick={(e) => { if (!confirm(`Approve all ${drafts} draft document${drafts === 1 ? "" : "s"} and publish them live on the website?`)) e.preventDefault(); }}>{pending ? "…" : `Approve all ${drafts} and publish`}</button>
+      {state?.error && <span className="block w-full text-xs text-danger" role="alert">{state.error}</span>}{state?.ok && <span className="block w-full text-xs text-acid-bright">{state.message}</span>}
+    </form>
+  );
+}
+
 const KIND_LABEL: Record<string, string> = { PREPARATION_GUIDE: "Preparation guides", AFTERCARE_GUIDE: "Aftercare guides", INFORMATION: "Information and policies", CONSENT_FORM: "Consent forms" };
 
 export function DocumentApprovals({ rows, defaultName }: { rows: DocRow[]; defaultName: string }) {
   const kinds = Array.from(new Set(rows.map((r) => r.kind)));
+  const drafts = rows.filter((r) => !r.approvedAt).length;
   return (
     <div className="space-y-8">
+      {drafts > 1 && <ApproveAllForm drafts={drafts} defaultName={defaultName} />}
       {kinds.map((kind) => (
         <section key={kind} className="card p-4">
           <h2 className="text-xl font-bold mb-3">{KIND_LABEL[kind] ?? kind}</h2>

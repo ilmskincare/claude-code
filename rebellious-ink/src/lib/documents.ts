@@ -24,6 +24,16 @@ export async function approveDocument(p: Principal, id: string, approverName: st
   await audit({ actorId: p.userId, actorLabel: p.name ?? p.email, action: "document.approved", entityType: "DocumentTemplateVersion", entityId: id, after: { templateKey: d.templateKey, version: d.version, approverName: name, approvedAt: now } });
 }
 
+/** Approves every current draft in one go, each one audited as its own approval. Returns how many were approved. */
+export async function approveAllDocuments(p: Principal, approverName: string) {
+  if (!can(p, "documents.manage")) throw new ForbiddenError();
+  const name = approverName.trim();
+  if (name.length < 2 || name.length > 80) throw new ValidationError("Enter the name of the practitioner approving them.");
+  const drafts = await db.documentTemplateVersion.findMany({ where: { isCurrent: true, approvedAt: null }, select: { id: true } });
+  for (const d of drafts) await approveDocument(p, d.id, name);
+  return drafts.length;
+}
+
 export async function withdrawDocumentApproval(p: Principal, id: string, reason: string) {
   if (!can(p, "documents.manage")) throw new ForbiddenError();
   const d = await db.documentTemplateVersion.findUnique({ where: { id } });

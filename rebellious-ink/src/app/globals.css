@@ -151,3 +151,12 @@ table.data th { font-size: .78rem; text-transform: uppercase; letter-spacing: .0
 .flap-glow { animation: flap-glow 1.4s ease-in-out infinite; }
 .reveal-in { animation: reveal-in .6s ease-out forwards; }
 @media (prefers-reduced-motion: reduce) { .gumball-globe, .gumball-crank.spinning, .capsule-drop, .capsule-pop, .reveal-in, .attention, .reel-flicker, .flap-glow { animation: none !important; } }
+
+/* Safari before 15 has no aspect-ratio. Keep square boxes square with a padding fallback and let
+   images that carry the class fall back to their natural shape, so nothing collapses to zero height. */
+@supports not (aspect-ratio: 1 / 1) {
+  .aspect-square:not(img) { position: relative; }
+  .aspect-square:not(img)::before { content: ""; display: block; padding-top: 100%; }
+  .aspect-square:not(img) > img, .aspect-square:not(img) > a > img { position: absolute; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%; object-fit: cover; }
+  img.aspect-square { height: auto; }
+}
