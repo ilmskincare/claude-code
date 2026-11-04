@@ -277,3 +277,7 @@ Note: during one full local test run the marketing integration test failed once 
 ## 2 November 2026: Sophie's portfolio
 
 - Seven pieces added to apprentice Sophie's live portfolio (five graphite and charcoal studies, two practice-skin big cat pieces), stored under `portfolio/sophie/` in the private Blob store with publication permission granted; the leopard practice skin is the cover shown on the home page card. Verified on the live artist page: seven images, all fetched successfully.
+
+## 4 November 2026: "connection is not private" on www
+
+- Cause: only `rebelliousink.tattoo` was attached to the production project, so `www.rebelliousink.tattoo` (which the wildcard DNS record already pointed at Vercel) had no certificate of its own and browsers showed a privacy warning. Fix: added `www.rebelliousink.tattoo` to the project as a permanent (308) redirect to the bare domain. Vercel issued the www certificate within a minute (valid to 2 February 2027, auto-renewing). Verified: www now answers 308 to https://rebelliousink.tattoo/, the bare domain answers 200, and plain http redirects to https.
