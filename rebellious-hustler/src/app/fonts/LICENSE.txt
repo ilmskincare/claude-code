@@ -1,0 +1,5 @@
+Pinyon Script (Copyright 2011 The Pinyon Script Project Authors) and Montserrat
+(Copyright 2011 The Montserrat Project Authors) are distributed under the
+SIL Open Font License, Version 1.1 (https://openfontlicense.org). The latin
+subsets here were downloaded from Google Fonts and are self-hosted so that the
+site does not depend on Google Fonts at build or run time.
