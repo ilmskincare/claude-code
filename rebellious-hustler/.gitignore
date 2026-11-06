@@ -1,11 +1,30 @@
-node_modules
-.next
+# dependencies
+/node_modules
+
+# next.js
+/.next/
+/out/
+next-env.d.ts
+*.tsbuildinfo
+
+# environment files: never commit real values
 .env
 .env.local
-.env*.local
-storage
-test-results
-playwright-report
+.env.*.local
+
+# generated Prisma client
+/src/generated
+
+# local uploads (development storage driver)
+/storage
+/storage-test
+
+# test output
+/test-results
+/playwright-report
+/coverage
+
+# misc
+.DS_Store
 .vercel
-*.tsbuildinfo
-src/generated
+npm-debug.log*
