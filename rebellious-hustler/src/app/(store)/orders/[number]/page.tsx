@@ -63,7 +63,7 @@ export default async function OrderPage({ params, searchParams }: { params: Prom
         <address className="mt-1 not-italic">{address.map((l) => <span key={l} className="block">{l}</span>)}</address>
       </div>
 
-      <p className="hint mt-6 text-sm">Problem with your order? <Link href="/contact" className="text-gold underline">Get in touch</Link> and quote {order.number}. See our <Link href="/returns" className="text-gold underline">returns policy</Link> for how to send something back.</p>
+      <p className="hint mt-6 text-sm">Problem with your order? <Link href="/contact" className="text-accent underline">Get in touch</Link> and quote {order.number}. See our <Link href="/returns" className="text-accent underline">returns policy</Link> for how to send something back.</p>
     </div>
   );
 }

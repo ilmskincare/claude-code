@@ -29,7 +29,7 @@ export default async function HomePage() {
           <div>
             <p className="eyebrow">Birmingham, UK</p>
             <h1 className="script mt-3 text-[3.4rem] leading-[0.95] sm:text-[4.6rem] md:text-[5.2rem]">Rebellious Hustler</h1>
-            <p className="display mt-4 text-sm text-gold sm:text-base">{SITE.madeOf}</p>
+            <p className="display mt-4 text-sm text-accent sm:text-base">{SITE.madeOf}</p>
             <p className="mt-5 max-w-md text-lg text-bone/90">Streetwear for the whole family. Mens, womens, boys and girls. Tracksuits, hoodies, tees, sportswear and accessories, straight out of Fox &amp; Goose.</p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link href="/shop" className="btn btn-primary">Shop everything</Link>
@@ -37,7 +37,7 @@ export default async function HomePage() {
             </div>
           </div>
           <div className="mx-auto w-full max-w-sm md:max-w-md">
-            <Image src="/brand/rebellious-hustler-logo.png" alt="Rebellious Hustler bear logo: a bear in a red hoodie, tartan flat cap, sunglasses and gold chains" width={320} height={320} priority className="w-full rounded-2xl border border-border bg-night" />
+            <Image src="/brand/rebellious-hustler-crest-transparent.png" alt="Rebellious Hustler crest: a crowned winged shield with RH in electric blue chrome and a silver rim" width={320} height={320} priority className="w-full rounded-2xl border border-border bg-night" />
           </div>
         </div>
       </section>
@@ -48,13 +48,13 @@ export default async function HomePage() {
             <p className="eyebrow">Who it is for</p>
             <h2 id="ranges" className="mt-1 text-2xl font-extrabold">Pick your range</h2>
           </div>
-          <Link href="/shop" className="text-sm font-semibold text-gold hover:underline">All products</Link>
+          <Link href="/shop" className="text-sm font-semibold text-accent hover:underline">All products</Link>
         </div>
         <ul className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
           {TILES.map((t) => (
             <li key={t.href}>
-              <Link href={t.href} className="card group flex h-full flex-col justify-between p-4 transition hover:border-gold sm:p-6">
-                <span className="display text-xl group-hover:text-gold sm:text-2xl">{t.label}</span>
+              <Link href={t.href} className="card group flex h-full flex-col justify-between p-4 transition hover:border-accent sm:p-6">
+                <span className="display text-xl group-hover:text-accent sm:text-2xl">{t.label}</span>
                 <span className="mt-6 text-sm text-muted">{t.blurb}</span>
               </Link>
             </li>
@@ -81,10 +81,10 @@ export default async function HomePage() {
             <p className="mt-3 text-muted">High quality clothing for men, women, boys and girls. Tracksuits, t-shirts, hoodies, sportswear and accessories.</p>
           </div>
           <div className="card-2 p-6">
-            <p className="display text-sm text-gold">Come and see us</p>
+            <p className="display text-sm text-accent">Come and see us</p>
             <p className="mt-3">{settings.storeAddress || SITE.address}</p>
             <p className="mt-4 text-sm text-muted">Follow the drops and message us to order anything you cannot find online.</p>
-            <a href={`https://www.instagram.com/${handle}/`} target="_blank" rel="noopener noreferrer" className="btn btn-gold mt-5 w-full sm:w-auto">Instagram @{handle}</a>
+            <a href={`https://www.instagram.com/${handle}/`} target="_blank" rel="noopener noreferrer" className="btn btn-primary mt-5 w-full sm:w-auto">Instagram @{handle}</a>
           </div>
         </div>
       </section>

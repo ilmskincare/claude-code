@@ -45,7 +45,7 @@ export default async function CartPage() {
                   <div className="flex min-w-0 flex-1 flex-col gap-2">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <Link href={`/shop/${line.slug}`} className="font-bold hover:text-gold">{line.name}</Link>
+                        <Link href={`/shop/${line.slug}`} className="font-bold hover:text-accent">{line.name}</Link>
                         <p className="hint">{line.size}, {line.colour}</p>
                       </div>
                       <p className="font-bold">{formatPence(line.unitPence * line.quantity)}</p>
@@ -70,7 +70,7 @@ export default async function CartPage() {
                 </li>
               ))}
             </ul>
-            <Link href="/shop" className="mt-4 inline-block text-sm font-semibold text-gold hover:underline">Continue shopping</Link>
+            <Link href="/shop" className="mt-4 inline-block text-sm font-semibold text-accent hover:underline">Continue shopping</Link>
           </section>
 
           <aside className="card h-fit p-5" aria-label="Order summary">
@@ -91,7 +91,7 @@ export default async function CartPage() {
               ) : (
                 <div className="card-2 p-4 text-sm" role="status">
                   <p className="font-bold">Online checkout is being connected. Message us on Instagram to order.</p>
-                  <a href={`https://www.instagram.com/${handle}/`} target="_blank" rel="noopener noreferrer" className="btn btn-gold mt-3 w-full">Message @{handle}</a>
+                  <a href={`https://www.instagram.com/${handle}/`} target="_blank" rel="noopener noreferrer" className="btn btn-primary mt-3 w-full">Message @{handle}</a>
                 </div>
               )}
             </div>

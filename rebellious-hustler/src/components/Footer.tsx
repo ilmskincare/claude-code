@@ -19,26 +19,26 @@ export function Footer({ settings }: { settings: Settings }) {
           </address>
           {settings.contactEmail && (
             <p className="mt-2 text-sm">
-              <a href={`mailto:${settings.contactEmail}`} className="hover:text-gold">{settings.contactEmail}</a>
+              <a href={`mailto:${settings.contactEmail}`} className="hover:text-accent">{settings.contactEmail}</a>
             </p>
           )}
         </div>
         <div>
           <h2 className="display text-sm text-muted">Follow</h2>
           <ul className="mt-3 space-y-2 text-sm">
-            <li><a href={`https://www.instagram.com/${handle}/`} className="hover:text-gold" rel="noopener noreferrer" target="_blank">Instagram @{handle}</a></li>
-            <li><a href={SITE.facebookUrl} className="hover:text-gold" rel="noopener noreferrer" target="_blank">Facebook</a></li>
+            <li><a href={`https://www.instagram.com/${handle}/`} className="hover:text-accent" rel="noopener noreferrer" target="_blank">Instagram @{handle}</a></li>
+            <li><a href={SITE.facebookUrl} className="hover:text-accent" rel="noopener noreferrer" target="_blank">Facebook</a></li>
           </ul>
         </div>
         <div>
           <h2 className="display text-sm text-muted">Help</h2>
           <ul className="mt-3 space-y-2 text-sm">
-            <li><Link href="/delivery" className="hover:text-gold">Delivery</Link></li>
-            <li><Link href="/returns" className="hover:text-gold">Returns and refunds</Link></li>
-            <li><Link href="/contact" className="hover:text-gold">Contact</Link></li>
-            <li><Link href="/about" className="hover:text-gold">About</Link></li>
-            <li><Link href="/terms" className="hover:text-gold">Terms</Link></li>
-            <li><Link href="/privacy" className="hover:text-gold">Privacy and cookies</Link></li>
+            <li><Link href="/delivery" className="hover:text-accent">Delivery</Link></li>
+            <li><Link href="/returns" className="hover:text-accent">Returns and refunds</Link></li>
+            <li><Link href="/contact" className="hover:text-accent">Contact</Link></li>
+            <li><Link href="/about" className="hover:text-accent">About</Link></li>
+            <li><Link href="/terms" className="hover:text-accent">Terms</Link></li>
+            <li><Link href="/privacy" className="hover:text-accent">Privacy and cookies</Link></li>
           </ul>
         </div>
       </div>

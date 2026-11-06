@@ -25,13 +25,13 @@ export function ProductCard({ product, priority = false }: { product: ProductCar
           <div className="flex h-full items-center justify-center text-muted">No photo yet</div>
         )}
         {!product.inStock && <span className="badge badge-muted absolute left-3 top-3">Sold out</span>}
-        {product.compareAtPence && product.compareAtPence > product.pricePence && product.inStock && <span className="badge badge-red absolute left-3 top-3">Offer</span>}
+        {product.compareAtPence && product.compareAtPence > product.pricePence && product.inStock && <span className="badge badge-accent absolute left-3 top-3">Offer</span>}
       </div>
       <div className="p-3 sm:p-4">
         <p className="text-xs text-muted">{AUDIENCE_LABEL[product.audience]} / {CATEGORY_LABEL[product.category]}</p>
-        <h3 className="mt-1 font-bold leading-snug group-hover:text-gold">{product.name}</h3>
+        <h3 className="mt-1 font-bold leading-snug group-hover:text-accent">{product.name}</h3>
         <p className="mt-1 flex items-baseline gap-2">
-          <span className="font-bold text-gold">{formatPence(product.pricePence)}</span>
+          <span className="font-bold text-accent">{formatPence(product.pricePence)}</span>
           {product.compareAtPence && product.compareAtPence > product.pricePence && <s className="text-sm text-muted">{formatPence(product.compareAtPence)}</s>}
         </p>
       </div>

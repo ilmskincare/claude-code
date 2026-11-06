@@ -35,9 +35,9 @@ export default async function ProductPage({ params }: Params) {
     <div className="mx-auto max-w-6xl px-4 py-8">
       <nav aria-label="Breadcrumb" className="text-sm text-muted">
         <ol className="flex flex-wrap gap-1">
-          <li><Link href="/shop" className="hover:text-gold">Shop</Link><span aria-hidden="true"> /</span></li>
-          <li><Link href={`/shop?audience=${AUDIENCE_SLUG[product.audience]}`} className="hover:text-gold">{AUDIENCE_LABEL[product.audience]}</Link><span aria-hidden="true"> /</span></li>
-          <li><Link href={`/shop?category=${CATEGORY_SLUG[product.category]}`} className="hover:text-gold">{CATEGORY_LABEL[product.category]}</Link></li>
+          <li><Link href="/shop" className="hover:text-accent">Shop</Link><span aria-hidden="true"> /</span></li>
+          <li><Link href={`/shop?audience=${AUDIENCE_SLUG[product.audience]}`} className="hover:text-accent">{AUDIENCE_LABEL[product.audience]}</Link><span aria-hidden="true"> /</span></li>
+          <li><Link href={`/shop?category=${CATEGORY_SLUG[product.category]}`} className="hover:text-accent">{CATEGORY_LABEL[product.category]}</Link></li>
         </ol>
       </nav>
 
@@ -47,9 +47,9 @@ export default async function ProductPage({ params }: Params) {
         <div>
           <h1 className="text-3xl font-extrabold leading-tight">{product.name}</h1>
           <p className="mt-3 flex items-baseline gap-3">
-            <span className="text-2xl font-bold text-gold" data-testid="product-price">{formatPence(product.pricePence)}</span>
+            <span className="text-2xl font-bold text-accent" data-testid="product-price">{formatPence(product.pricePence)}</span>
             {onOffer && <s className="text-muted">{formatPence(product.compareAtPence!)}</s>}
-            {onOffer && <span className="badge badge-red">Offer</span>}
+            {onOffer && <span className="badge badge-accent">Offer</span>}
           </p>
 
           <div className="mt-6">
@@ -68,7 +68,7 @@ export default async function ProductPage({ params }: Params) {
             </div>
             <div className="p-4">
               <p className="font-bold">Returns</p>
-              <p className="hint mt-1">14 days to change your mind from the day you receive it, then 14 more days to send it back. Unworn, with tags. Faulty items are sorted at our cost. <Link href="/returns" className="text-gold underline">Full returns policy</Link>.</p>
+              <p className="hint mt-1">14 days to change your mind from the day you receive it, then 14 more days to send it back. Unworn, with tags. Faulty items are sorted at our cost. <Link href="/returns" className="text-accent underline">Full returns policy</Link>.</p>
             </div>
           </div>
         </div>

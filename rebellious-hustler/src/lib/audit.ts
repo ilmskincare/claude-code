@@ -1,6 +1,7 @@
 import { db, type Tx } from "./db";
+import type { InputJsonValue } from "@/generated/prisma/internal/prismaNamespace";
 
-type Json = Record<string, unknown> | unknown[] | string | number | boolean | null;
+type Json = InputJsonValue;
 
 /** Record who changed what. Called from every admin write, inside its transaction where one exists. */
 export async function recordAudit(
@@ -20,6 +21,6 @@ export async function recordAudit(
 }
 
 function toJson(value: unknown): Json | undefined {
-  if (value === undefined) return undefined;
+  if (value === undefined || value === null) return undefined;
   return JSON.parse(JSON.stringify(value, (_k, v) => (typeof v === "bigint" ? v.toString() : v))) as Json;
 }

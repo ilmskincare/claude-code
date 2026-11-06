@@ -1,7 +1,19 @@
 import { db } from "./db";
 import { SITE } from "./site";
 
-export const DEFAULT_SETTINGS = {
+export type Settings = {
+  id: string;
+  shippingStandardPence: number;
+  shippingExpressPence: number;
+  freeShippingThresholdPence: number;
+  announcement: string;
+  contactEmail: string;
+  instagramHandle: string;
+  storeAddress: string;
+  updatedAt?: Date;
+};
+
+export const DEFAULT_SETTINGS: Settings = {
   id: "default",
   shippingStandardPence: 395,
   shippingExpressPence: 695,
@@ -11,8 +23,6 @@ export const DEFAULT_SETTINGS = {
   instagramHandle: SITE.instagramHandle,
   storeAddress: SITE.address,
 };
-
-export type Settings = typeof DEFAULT_SETTINGS & { updatedAt?: Date };
 
 /** The single settings row, created with defaults on first read. */
 export async function getSettings(): Promise<Settings> {

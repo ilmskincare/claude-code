@@ -57,7 +57,7 @@ export function AddToCart({ variants }: { variants: VariantOption[] }) {
                 onClick={() => pickColour(c)}
                 aria-pressed={colour === c}
                 disabled={!any}
-                className={`btn btn-sm ${colour === c ? "btn-gold" : "btn-secondary"}`}
+                className={`btn btn-sm ${colour === c ? "btn-primary" : "btn-secondary"}`}
                 title={any ? c : `${c}: sold out`}
               >
                 {c}{!any ? " (sold out)" : ""}
@@ -80,7 +80,7 @@ export function AddToCart({ variants }: { variants: VariantOption[] }) {
                 onClick={() => ok && setSize(s)}
                 aria-pressed={size === s}
                 disabled={!ok}
-                className={`btn btn-sm min-w-[3.2rem] ${size === s ? "btn-gold" : "btn-secondary"}`}
+                className={`btn btn-sm min-w-[3.2rem] ${size === s ? "btn-primary" : "btn-secondary"}`}
                 title={ok ? s : `${s}: sold out`}
               >
                 {s}
@@ -108,7 +108,7 @@ export function AddToCart({ variants }: { variants: VariantOption[] }) {
 
       {state?.message && (
         <p role="status" aria-live="polite" className={state.ok ? "text-sm text-ok" : "text-sm text-danger"}>
-          {state.message}{state.ok && <> <Link href="/cart" className="font-semibold text-gold underline">View cart</Link></>}
+          {state.message}{state.ok && <> <Link href="/cart" className="font-semibold text-accent underline">View cart</Link></>}
         </p>
       )}
     </form>

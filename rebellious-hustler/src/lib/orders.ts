@@ -58,11 +58,11 @@ function itemsHtml(order: OrderForEmail) {
   return `<table style="width:100%;border-collapse:collapse;margin:16px 0;">${order.items
     .map(
       (i) =>
-        `<tr><td style="padding:8px 0;border-bottom:1px solid #2a2a2a;color:#f3efe9;">${i.quantity} x ${escapeHtml(i.productName)}<br><span style="color:#8f8a86;font-size:13px;">${escapeHtml(i.size)}, ${escapeHtml(i.colour)}</span></td><td style="padding:8px 0;border-bottom:1px solid #2a2a2a;text-align:right;color:#f3efe9;">${formatPence(i.unitPence * i.quantity)}</td></tr>`,
+        `<tr><td style="padding:8px 0;border-bottom:1px solid #2a2e32;color:#f3f5f6;">${i.quantity} x ${escapeHtml(i.productName)}<br><span style="color:#8f8a86;font-size:13px;">${escapeHtml(i.size)}, ${escapeHtml(i.colour)}</span></td><td style="padding:8px 0;border-bottom:1px solid #2a2e32;text-align:right;color:#f3f5f6;">${formatPence(i.unitPence * i.quantity)}</td></tr>`,
     )
     .join("")}
-<tr><td style="padding:8px 0;color:#8f8a86;">Delivery (${escapeHtml(order.shippingMethod)})</td><td style="padding:8px 0;text-align:right;color:#f3efe9;">${formatPence(order.shippingPence)}</td></tr>
-<tr><td style="padding:8px 0;font-weight:bold;color:#f3efe9;">Total</td><td style="padding:8px 0;text-align:right;font-weight:bold;color:#d4a53a;">${formatPence(order.totalPence)}</td></tr></table>`;
+<tr><td style="padding:8px 0;color:#8f8a86;">Delivery (${escapeHtml(order.shippingMethod)})</td><td style="padding:8px 0;text-align:right;color:#f3f5f6;">${formatPence(order.shippingPence)}</td></tr>
+<tr><td style="padding:8px 0;font-weight:bold;color:#f3f5f6;">Total</td><td style="padding:8px 0;text-align:right;font-weight:bold;color:#5fe0ff;">${formatPence(order.totalPence)}</td></tr></table>`;
 }
 
 export async function sendOrderConfirmation(order: OrderForEmail) {
@@ -86,10 +86,10 @@ We will email again when it is on its way. Reply to this email or message us on 
 Rebellious Hustler, Birmingham`;
   const html = emailShell(
     `Thanks for your order, ${order.customerName || "hustler"}`,
-    `<p style="color:#8f8a86;margin:0 0 8px;">Order <strong style="color:#f3efe9;">${escapeHtml(order.number)}</strong></p>
+    `<p style="color:#8f8a86;margin:0 0 8px;">Order <strong style="color:#f3f5f6;">${escapeHtml(order.number)}</strong></p>
 ${itemsHtml(order)}
-<p style="color:#8f8a86;margin:16px 0 4px;">Delivering to</p><p style="margin:0;color:#f3efe9;">${address.map(escapeHtml).join("<br>")}</p>
-<p style="margin:24px 0;"><a href="${link}" style="background:#d61f2c;color:#fff;text-decoration:none;padding:12px 20px;border-radius:8px;display:inline-block;">See your order</a></p>
+<p style="color:#8f8a86;margin:16px 0 4px;">Delivering to</p><p style="margin:0;color:#f3f5f6;">${address.map(escapeHtml).join("<br>")}</p>
+<p style="margin:24px 0;"><a href="${link}" style="background:#19c8ff;color:#0a0a0a;text-decoration:none;padding:12px 20px;border-radius:8px;display:inline-block;">See your order</a></p>
 <p style="color:#8f8a86;">We will email again when it is on its way. Reply to this email or message us on Instagram if anything is wrong.</p>`,
   );
   return sendEmail({ to: order.email, subject: `Order ${order.number} confirmed`, text, html });
@@ -109,10 +109,10 @@ See your order: ${link}
 Rebellious Hustler, Birmingham`;
   const html = emailShell(
     "Your order is on its way",
-    `<p style="color:#8f8a86;margin:0 0 8px;">Order <strong style="color:#f3efe9;">${escapeHtml(order.number)}</strong> has been dispatched.</p>
+    `<p style="color:#8f8a86;margin:0 0 8px;">Order <strong style="color:#f3f5f6;">${escapeHtml(order.number)}</strong> has been dispatched.</p>
 ${itemsHtml(order)}
-<p style="color:#f3efe9;">${escapeHtml(tracking)}</p>
-<p style="margin:24px 0;"><a href="${link}" style="background:#d61f2c;color:#fff;text-decoration:none;padding:12px 20px;border-radius:8px;display:inline-block;">See your order</a></p>`,
+<p style="color:#f3f5f6;">${escapeHtml(tracking)}</p>
+<p style="margin:24px 0;"><a href="${link}" style="background:#19c8ff;color:#0a0a0a;text-decoration:none;padding:12px 20px;border-radius:8px;display:inline-block;">See your order</a></p>`,
   );
   return sendEmail({ to: order.email, subject: `Order ${order.number} dispatched`, text, html });
 }

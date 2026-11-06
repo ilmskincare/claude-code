@@ -20,7 +20,7 @@ export function Gallery({ images, name }: { images: GalleryImage[]; name: string
         <ul className="mt-3 flex gap-2 overflow-x-auto" aria-label="More photos">
           {images.map((img, i) => (
             <li key={img.id} className="shrink-0">
-              <button type="button" onClick={() => setIndex(i)} aria-label={`Photo ${i + 1} of ${images.length}`} aria-pressed={i === index} className={`relative block h-20 w-16 overflow-hidden rounded-md border-2 ${i === index ? "border-gold" : "border-border"}`}>
+              <button type="button" onClick={() => setIndex(i)} aria-label={`Photo ${i + 1} of ${images.length}`} aria-pressed={i === index} className={`relative block h-20 w-16 overflow-hidden rounded-md border-2 ${i === index ? "border-accent" : "border-border"}`}>
                 <Image src={img.thumbUrl} alt="" fill sizes="64px" className="object-cover" />
               </button>
             </li>

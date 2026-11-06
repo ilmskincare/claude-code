@@ -15,7 +15,7 @@ export function CheckoutButton({ options, disabled }: { options: ShippingOption[
           {options.map((o, i) => (
             <label key={o.id} className="card-2 flex cursor-pointer items-center justify-between gap-3 p-3 text-sm">
               <span className="flex items-center gap-3">
-                <input type="radio" name="shipping" value={o.id} defaultChecked={i === 0} className="h-4 w-4 accent-[#d61f2c]" />
+                <input type="radio" name="shipping" value={o.id} defaultChecked={i === 0} className="h-4 w-4 accent-[#19c8ff]" />
                 <span>
                   <span className="font-semibold">{o.name}</span>
                   <span className="hint block">{o.estimate}</span>

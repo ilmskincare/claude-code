@@ -35,22 +35,22 @@ const products: SeedProduct[] = [
     pricePence: 6499,
     compareAtPence: 7499,
     featured: true,
-    description: "The full set. Heavyweight cotton-blend hoodie and joggers with the bear on the chest and the script down the leg. Ribbed cuffs, deep pockets, built to be worn every day. Made of hustle, grit and loyalty.",
+    description: "The full set. Heavyweight cotton-blend hoodie and joggers with the crest on the chest and the script down the leg. Ribbed cuffs, deep pockets, built to be worn every day. Made of hustle, grit and loyalty.",
     sizes: ADULT_SIZES,
     colours: ["Black", "Grey"],
     skuPrefix: "RH-TS",
     stock: (size, colour) => (size === "3XL" && colour === "Grey" ? 0 : size === "XS" ? 3 : 12),
   },
   {
-    name: "Bear Logo Hoodie",
-    slug: "bear-logo-hoodie",
+    name: "Crest Hoodie",
+    slug: "crest-hoodie",
     audience: "MENS",
     category: "HOODIES",
     pricePence: 4499,
     featured: true,
-    description: "Our bear, front and centre. 400gsm brushed-back fleece, double-lined hood, kangaroo pocket. The red one is the one from the logo.",
+    description: "The crest, front and centre. 400gsm brushed-back fleece, double-lined hood, kangaroo pocket. Blue and black, straight off the badge.",
     sizes: ADULT_SIZES,
-    colours: ["Black", "Red"],
+    colours: ["Black", "Blue"],
     skuPrefix: "RH-HD",
     stock: (size) => (size === "2XL" ? 4 : 15),
   },
@@ -67,15 +67,15 @@ const products: SeedProduct[] = [
     stock: () => 20,
   },
   {
-    name: "Kids Bear Tee",
-    slug: "kids-bear-tee",
+    name: "Kids Crest Tee",
+    slug: "kids-crest-tee",
     audience: "BOYS",
     category: "T_SHIRTS",
     pricePence: 1699,
     featured: true,
-    description: "The bear for the little hustlers. Soft cotton tee with a crew neck and the flat cap bear on the front. Ages 3 to 14.",
+    description: "The crest for the little hustlers. Soft cotton tee with a crew neck and the winged shield on the front. Ages 3 to 14.",
     sizes: KID_SIZES,
-    colours: ["Black", "Red"],
+    colours: ["Black", "Blue"],
     skuPrefix: "RH-KT",
     stock: (size) => (size === "13-14" ? 2 : 10),
   },
@@ -85,7 +85,7 @@ const products: SeedProduct[] = [
     audience: "UNISEX",
     category: "ACCESSORIES",
     pricePence: 1999,
-    description: "Flat peak snapback with the script embroidered on the front and the bear on the side. One size, adjustable strap.",
+    description: "Flat peak snapback with the script embroidered on the front and the crest on the side. One size, adjustable strap.",
     sizes: ["One size"],
     colours: ["Black"],
     skuPrefix: "RH-CAP",
@@ -112,7 +112,7 @@ const products: SeedProduct[] = [
     featured: true,
     description: "Cropped, boxy and brushed soft inside. Dropped shoulders, raw hem, script on the back. Pairs with the joggers from the Signature set.",
     sizes: ADULT_SIZES.slice(0, 5),
-    colours: ["Black", "Red"],
+    colours: ["Black", "Blue"],
     skuPrefix: "RH-WCH",
     stock: (size) => (size === "XL" ? 3 : 10),
   },
@@ -122,7 +122,7 @@ const products: SeedProduct[] = [
     audience: "GIRLS",
     category: "TRACKSUITS",
     pricePence: 4499,
-    description: "Matching hoodie and joggers for the girls. Soft fleece, elasticated waist with a drawcord, bear on the chest. Ages 3 to 14.",
+    description: "Matching hoodie and joggers for the girls. Soft fleece, elasticated waist with a drawcord, crest on the chest. Ages 3 to 14.",
     sizes: KID_SIZES,
     colours: ["Black", "Pink"],
     skuPrefix: "RH-GTS",
@@ -159,22 +159,22 @@ async function seedSettings() {
 async function seedProducts() {
   for (const p of products) {
     const art = await ensurePlaceholder(p.slug, p.name, `${p.audience === "UNISEX" ? "Everyone" : p.audience.charAt(0) + p.audience.slice(1).toLowerCase()} / ${p.category.replace("_", "-").toLowerCase()}`);
-    const product = await db.product.upsert({
-      where: { slug: p.slug },
-      create: {
-        name: p.name,
-        slug: p.slug,
-        description: p.description,
-        audience: p.audience,
-        category: p.category,
-        pricePence: p.pricePence,
-        compareAtPence: p.compareAtPence ?? null,
-        status: "LIVE",
-        featured: p.featured ?? false,
-        isSample: true,
-      },
-      update: {},
-    });
+    const fields = {
+      name: p.name,
+      description: p.description,
+      audience: p.audience,
+      category: p.category,
+      pricePence: p.pricePence,
+      compareAtPence: p.compareAtPence ?? null,
+      featured: p.featured ?? false,
+    };
+    const existing = await db.product.findUnique({ where: { slug: p.slug } });
+    // A sample that has been edited in the admin (isSample cleared) is left alone on reseed.
+    const product = existing
+      ? existing.isSample
+        ? await db.product.update({ where: { id: existing.id }, data: fields })
+        : existing
+      : await db.product.create({ data: { ...fields, slug: p.slug, status: "LIVE", isSample: true } });
     const imageCount = await db.productImage.count({ where: { productId: product.id } });
     if (imageCount === 0) {
       await db.productImage.create({ data: { productId: product.id, url: art.url, thumbUrl: art.thumbUrl, storageKey: art.storageKey, thumbKey: art.thumbKey, alt: `${p.name} placeholder`, position: 0 } });

@@ -15,7 +15,7 @@ export default async function CheckoutSuccessPage({ searchParams }: { searchPara
       {order ? (
         <p className="mt-4">
           Your order number is <strong>{order.number}</strong>.{" "}
-          <Link href={`/orders/${order.number}?email=${encodeURIComponent(order.email)}`} className="font-semibold text-gold underline">See your order</Link>
+          <Link href={`/orders/${order.number}?email=${encodeURIComponent(order.email)}`} className="font-semibold text-accent underline">See your order</Link>
         </p>
       ) : (
         <p className="hint mt-4">Your order number will be in the confirmation email within a few minutes.</p>
